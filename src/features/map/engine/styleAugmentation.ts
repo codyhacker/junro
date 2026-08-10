@@ -4,8 +4,8 @@ import type { RootState } from '../../../app/store'
 import { getPalette } from '../../../shared/constants/uiThemes'
 import { dayColorAt } from '../../../shared/constants/dayColors'
 import { selectDays, selectPlaceDayHex, selectPlaces } from '../../trip/selectors'
-import { selectDayRouteRequests } from '../../planner/selectors'
-import { PLACES_SOURCE, DAY_ROUTES_SOURCE } from './TripLayerController'
+import { selectDayRouteRequests, selectClusterHullsGeoJSON } from '../../planner/selectors'
+import { PLACES_SOURCE, DAY_ROUTES_SOURCE, CLUSTERS_SOURCE } from './TripLayerController'
 
 export interface AugmentationSpec {
   version: 8
@@ -79,10 +79,11 @@ export const selectAugmentationSpec = createSelector(
   [
     selectPlacesGeoJSON,
     selectDayRoutesGeoJSON,
+    selectClusterHullsGeoJSON,
     (s: RootState) => s.terrain.terrainExaggeration,
     (s: RootState) => s.mapStyle.uiMode,
   ],
-  (placesGeoJSON, dayRoutesGeoJSON, terrainExaggeration, uiMode): AugmentationSpec => {
+  (placesGeoJSON, dayRoutesGeoJSON, clusterHullsGeoJSON, terrainExaggeration, uiMode): AugmentationSpec => {
     const palette = getPalette(uiMode)
     const sources: Record<string, SourceSpecification> = {
       'mapbox-dem': {
@@ -90,6 +91,10 @@ export const selectAugmentationSpec = createSelector(
         url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
         tileSize: 512,
         maxzoom: 14,
+      } as SourceSpecification,
+      [CLUSTERS_SOURCE]: {
+        type: 'geojson',
+        data: clusterHullsGeoJSON,
       } as SourceSpecification,
       [PLACES_SOURCE]: {
         type: 'geojson',
@@ -103,6 +108,31 @@ export const selectAugmentationSpec = createSelector(
     }
 
     const layers: LayerSpecification[] = [
+      // Neighborhood hulls — slot 'bottom', beneath everything, as a soft
+      // ambient "your unassigned pins form these neighborhoods" cue. Pine
+      // secondary so it never competes with the vermilion pins or day colors;
+      // excursions get a dashed outline to read as "a trip out of town".
+      {
+        id: 'cluster-hull-fill',
+        type: 'fill',
+        source: CLUSTERS_SOURCE,
+        slot: 'bottom',
+        paint: {
+          'fill-color': palette.accentWarmHex,
+          'fill-opacity': 0.10,
+        },
+      } as LayerSpecification,
+      {
+        id: 'cluster-hull-outline',
+        type: 'line',
+        source: CLUSTERS_SOURCE,
+        slot: 'bottom',
+        paint: {
+          'line-color': palette.accentWarmHex,
+          'line-width': 1.5,
+          'line-opacity': 0.4,
+        },
+      } as LayerSpecification,
       // Day routes — slot 'middle' keeps them under the basemap's labels but
       // over its fills. Casing first (darker, wider), then the day's color.
       {

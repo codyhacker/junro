@@ -2,7 +2,8 @@ import { createSelector } from '@reduxjs/toolkit'
 import type { RootState } from '../../app/store'
 import type { TravelMode } from '../../shared/types/trip'
 import { DEFAULT_PREFS } from '../../shared/types/trip'
-import { dayCoords, selectDays, selectLodgings, selectPlaces } from '../trip/selectors'
+import { dayCoords, selectDays, selectLodgings, selectPlaces, selectUnassignedPlaces } from '../trip/selectors'
+import { clusterPlaces, type ClusterResult } from './clustering'
 import { routeHash } from './routeHash'
 
 // What each day *wants* routed, derived purely from the trip document. The
@@ -39,3 +40,28 @@ export const selectDayRouteRequests = createSelector(
 export const selectRequestByDayId = createSelector([selectDayRouteRequests], (requests) =>
   new Map(requests.map(r => [r.dayId, r])),
 )
+
+// ── Stage 1: neighborhood clustering (pure, no I/O) ─────────────────────────
+// Clusters the *unassigned* pool — the pins still waiting to be planned — so
+// the hulls read as "here are your neighborhoods to place," shrinking as you
+// assign. This same result feeds the "Suggest days" flow (Stage 2).
+const NO_CLUSTERS: ClusterResult = { clusters: [], excursions: [] }
+
+export const selectClusters = createSelector(
+  [selectUnassignedPlaces, (s: RootState) => s.trip.active?.destination.center],
+  (places, center): ClusterResult =>
+    center ? clusterPlaces(places.map(p => ({ id: p.id, coord: p.coord })), center) : NO_CLUSTERS,
+)
+
+// Soft neighborhood blobs for the map — only clusters of 2+ pins earn a hull
+// (a lone pin isn't a neighborhood). Local + excursion alike.
+export const selectClusterHullsGeoJSON = createSelector([selectClusters], ({ clusters, excursions }) => ({
+  type: 'FeatureCollection' as const,
+  features: [...clusters, ...excursions]
+    .filter(c => c.placeIds.length >= 2 && c.hull)
+    .map(c => ({
+      type: 'Feature' as const,
+      geometry: c.hull!,
+      properties: { id: c.id, count: c.placeIds.length, isExcursion: c.isExcursion },
+    })),
+}))
