@@ -282,7 +282,7 @@ Each phase ends green: `npx tsc --noEmit` clean + the verification demo.
 
 **Dogfood fixture: Paris** — cafes, the Louvre (a natural `fixedTime` anchor), stores. Entered in Phase 1; every later phase's verify runs against it (with Versailles as the excursion-day test when Phase 4 lands). Synthetic pins can't tell you the DBSCAN epsilon is wrong or a suggested day is inhuman — a trip you'd actually take can.
 
-**Phase 0 — Extraction & scaffold** (the architectural surgery) ✅ *shipped 2026-08-09*
+**Phase 0 — Extraction & scaffold** (the architectural surgery) ✅ *shipped 2026-08-09. Deploy note: the Pages workflow shipped and verified green, then was **disabled by decision** — development is local-only for now. Re-enable with `gh workflow enable "Deploy to GitHub Pages"` + set the `VITE_MAPBOX_ACCESS_TOKEN` Actions secret; Phase 5's today view is the natural forcing function.*
 Copy `app/`, `engine/` (minus Park/Trail controllers), `shell/`, `shared/constants`, `shared/types` core; delete parks/trails features; collapse `UI_THEMES` to the single Junro palette (dark/light) and wire Mapbox Standard with day/night presets (basemap decision, §3); empty augmentation spec; wire an empty `trip` slice; copy silkymaps' GH Pages deploy workflow — **deployed from day one** (decided: Phase 5's today view needs a hosted URL anyway, and every phase becomes phone-testable), with the Mapbox token URL-restricted to the Pages domain from the first deploy.
 ✓ *Verify:* the Standard basemap renders with Junro chrome in both modes; the dark/light toggle flips map light preset + CSS vars in step, with no style reload; no console errors; no references to WDPA/trails remain (`grep -ri "wdpa\|trail\|park" src/` ≈ empty); push to main → live on the Pages URL.
 
