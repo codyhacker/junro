@@ -199,6 +199,26 @@ const tripSlice = createSlice({
       touch(state.active)
     },
 
+    // Atomic apply of a "Suggest days" plan — all days in one action so a
+    // single undo reverses the whole suggestion (PROJECT_PLAN.md §8 Phase 5).
+    applyDaySuggestions(
+      state,
+      action: PayloadAction<{ dayId: string; placeIds: string[]; travelMode?: TravelMode }[]>,
+    ) {
+      if (!state.active) return
+      for (const a of action.payload) {
+        const target = state.active.days.find(d => d.id === a.dayId)
+        if (!target || target.locked) continue
+        const claimed = new Set(a.placeIds)
+        for (const day of state.active.days) {
+          if (day.id !== a.dayId) day.stopIds = day.stopIds.filter(id => !claimed.has(id))
+        }
+        target.stopIds = [...a.placeIds]
+        if (a.travelMode) target.travelMode = a.travelMode
+      }
+      touch(state.active)
+    },
+
     moveStop(state, action: PayloadAction<{ dayId: string; placeId: string; delta: -1 | 1 }>) {
       if (!state.active) return
       const day = state.active.days.find(d => d.id === action.payload.dayId)
@@ -216,6 +236,6 @@ const tripSlice = createSlice({
 export const {
   tripHydrated, createTrip, addPlace, updatePlace, removePlace,
   setTripDates, addLodging, updateLodging, removeLodging, assignStop, moveStop,
-  setDayStops, setTravelMode, setDayTravelMode,
+  setDayStops, applyDaySuggestions, setTravelMode, setDayTravelMode,
 } = tripSlice.actions
 export default tripSlice.reducer

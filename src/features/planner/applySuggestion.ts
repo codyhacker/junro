@@ -1,19 +1,21 @@
 import type { AppStore } from '../../app/store'
-import type { SavedPlace } from '../../shared/types/trip'
-import { setDayStops, setDayTravelMode } from '../trip/tripSlice'
+import type { SavedPlace, TravelMode } from '../../shared/types/trip'
+import { applyDaySuggestions } from '../trip/tripSlice'
 import { getTravelMatrix } from './matrixService'
 import { orderStops } from './ordering'
 import type { Suggestion } from './suggest'
 
 // Applies a Stage-2 suggestion: for each proposed day, merge its new places
 // with anything already there, run Stage-3 ordering over [lodging, …stops]
-// (which the Matrix service resolves, or haversine offline), and commit the
-// optimized order. Async because the matrix is a network call; the existing
-// routing listeners then redraw each day from the new order.
+// (which the Matrix service resolves, or haversine offline), then commit ALL
+// days in one atomic action so a single undo reverses the whole plan. Async
+// because the matrix is a network call; the routing listeners then redraw.
 export async function applySuggestion(store: AppStore, suggestion: Suggestion): Promise<void> {
   const trip = store.getState().trip.active
   if (!trip) return
   const byId = new Map<string, SavedPlace>(trip.places.map(p => [p.id, p]))
+
+  const entries: { dayId: string; placeIds: string[]; travelMode?: TravelMode }[] = []
 
   for (const assignment of suggestion.assignments) {
     const day = trip.days.find(d => d.id === assignment.dayId)
@@ -45,9 +47,12 @@ export async function applySuggestion(store: AppStore, suggestion: Suggestion): 
       }
     }
 
-    store.dispatch(setDayStops({ dayId: assignment.dayId, placeIds: ordered }))
-    if (assignment.travelModeOverride) {
-      store.dispatch(setDayTravelMode({ dayId: assignment.dayId, mode: assignment.travelModeOverride }))
-    }
+    entries.push({
+      dayId: assignment.dayId,
+      placeIds: ordered,
+      ...(assignment.travelModeOverride ? { travelMode: assignment.travelModeOverride } : {}),
+    })
   }
+
+  if (entries.length > 0) store.dispatch(applyDaySuggestions(entries))
 }

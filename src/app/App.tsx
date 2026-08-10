@@ -5,6 +5,7 @@ import { TripGate } from '../features/trip/TripGate'
 import { AddPlace } from '../features/trip/AddPlace'
 import { Scrapbook } from '../features/trip/Scrapbook'
 import { PlacePanel } from '../features/trip/PlacePanel'
+import { UndoBar } from '../features/trip/UndoBar'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <AddPlace />
         <Scrapbook />
         <PlacePanel />
+        <UndoBar />
       </MapView>
     </div>
   )

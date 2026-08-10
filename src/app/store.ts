@@ -1,6 +1,7 @@
-import { configureStore } from '@reduxjs/toolkit'
+import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import { listenerMiddleware } from './listenerMiddleware'
 import { savePersisted } from './persist'
+import { withHistory, historyReducer } from '../features/trip/history'
 
 // ── map/ ────────────────────────────────────────────────────────────────────
 import mapStyleReducer    from '../features/map/styleSlice'
@@ -18,17 +19,23 @@ import tripInteractionReducer from '../features/trip/tripInteractionSlice'
 import plannerReducer   from '../features/planner/plannerSlice'
 import isochroneReducer from '../features/planner/isochroneSlice'
 
+// Root reducer is wrapped with the undo/redo history layer, which snapshots
+// trip.active on each edit (see features/trip/history.ts).
+const combined = combineReducers({
+  mapStyle:        mapStyleReducer,
+  terrain:         terrainReducer,
+  camera:          cameraReducer,
+  ui:              uiReducer,
+  trip:            tripReducer,
+  tripInteraction: tripInteractionReducer,
+  planner:         plannerReducer,
+  isochrone:       isochroneReducer,
+  history:         historyReducer,
+})
+const rootReducer = withHistory(combined)
+
 export const store = configureStore({
-  reducer: {
-    mapStyle:        mapStyleReducer,
-    terrain:         terrainReducer,
-    camera:          cameraReducer,
-    ui:              uiReducer,
-    trip:            tripReducer,
-    tripInteraction: tripInteractionReducer,
-    planner:         plannerReducer,
-    isochrone:       isochroneReducer,
-  },
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().prepend(listenerMiddleware.middleware),
 })
