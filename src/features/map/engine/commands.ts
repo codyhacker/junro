@@ -15,6 +15,7 @@ export type MapCommand =
   // ── Trip places ───────────────────────────────────────────────────────────
   | { type: 'PLACE_HOVER';  placeId: string | null }
   | { type: 'PLACE_SELECT'; placeId: string | null }
+  | { type: 'DAY_FOCUS';    dayId: string | null }   // fitBounds to day's stops + lodging
 
   // ── Data / layers (future) ────────────────────────────────────────────────
   | { type: 'UPDATE_GEOJSON';       sourceId: string; data: unknown }

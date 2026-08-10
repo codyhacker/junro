@@ -1,7 +1,9 @@
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { setSelectedPlace } from './tripInteractionSlice'
-import { updatePlace, removePlace } from './tripSlice'
+import { updatePlace, removePlace, assignStop } from './tripSlice'
 import { CATEGORY_META } from './categoryMeta'
+import { selectDays } from './selectors'
+import { dayLabel } from './DayRail'
 import type { PlaceCategory } from '../../shared/types/trip'
 
 // Detail card for the selected place — edit the note ("why did I save
@@ -11,8 +13,11 @@ export function PlacePanel() {
   const selectedId = useAppSelector(s => s.tripInteraction.selectedPlaceId)
   const place = useAppSelector(s =>
     s.trip.active?.places.find(p => p.id === s.tripInteraction.selectedPlaceId) ?? null)
+  const days = useAppSelector(selectDays)
 
   if (!selectedId || !place) return null
+
+  const assignedDayId = days.find(d => d.stopIds.includes(place.id))?.id ?? ''
 
   return (
     <div className="place-panel">
@@ -37,6 +42,20 @@ export function PlacePanel() {
           <option key={cat} value={cat}>{CATEGORY_META[cat].emoji} {CATEGORY_META[cat].label}</option>
         ))}
       </select>
+
+      {days.length > 0 && (
+        <select
+          className="junro-input place-panel-day"
+          aria-label="Assign to a day"
+          value={assignedDayId}
+          onChange={e => dispatch(assignStop({ placeId: place.id, dayId: e.target.value || null }))}
+        >
+          <option value="">Unassigned</option>
+          {days.map((d, i) => (
+            <option key={d.id} value={d.id}>Day {i + 1} · {dayLabel(d.date)}</option>
+          ))}
+        </select>
+      )}
 
       <textarea
         className="junro-input place-panel-note"

@@ -1,17 +1,21 @@
 import type { Map as MapboxMap } from 'mapbox-gl'
+import type { AppStore } from '../../../app/store'
+import { selectDayBounds } from '../../trip/selectors'
 
 export const PLACES_SOURCE = 'trip-places'
 
-// Feature-state driver for the trip places layer. The layer/source specs
-// live in styleAugmentation (never here); this controller only translates
-// hover/select ids into setFeatureState calls.
+// Feature-state driver for the trip places layer, plus the day camera. The
+// layer/source specs live in styleAugmentation (never here); this controller
+// only translates ids into setFeatureState / camera calls.
 export class TripLayerController {
   private map: MapboxMap
+  private store: AppStore
   private hoveredId: string | null = null
   private selectedId: string | null = null
 
-  constructor(map: MapboxMap) {
+  constructor(map: MapboxMap, store: AppStore) {
     this.map = map
+    this.store = store
   }
 
   private setState(id: string | null, key: 'hover' | 'selected', value: boolean): void {
@@ -31,6 +35,15 @@ export class TripLayerController {
     this.setState(this.selectedId, 'selected', false)
     this.selectedId = placeId
     this.setState(this.selectedId, 'selected', true)
+  }
+
+  // Frames a day: its stops plus the lodging that anchors it. Bounds come
+  // from a trip selector — the controller stays Mapbox-only.
+  focusDay(dayId: string | null): void {
+    if (!dayId) return
+    const bounds = selectDayBounds(this.store.getState(), dayId)
+    if (!bounds) return
+    this.map.fitBounds(bounds, { padding: 80, maxZoom: 15.5, duration: 900 })
   }
 
   // Feature-state is wiped when a source is re-added (e.g. HMR/style reset).

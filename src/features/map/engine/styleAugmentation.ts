@@ -1,7 +1,8 @@
 import { createSelector } from '@reduxjs/toolkit'
 import type { LayerSpecification, SourceSpecification } from 'mapbox-gl'
 import type { RootState } from '../../../app/store'
-import type { SavedPlace } from '../../../shared/types/trip'
+import { getPalette } from '../../../shared/constants/uiThemes'
+import { selectPlaceDayHex, selectPlaces } from '../../trip/selectors'
 import { PLACES_SOURCE } from './TripLayerController'
 
 export interface AugmentationSpec {
@@ -21,20 +22,33 @@ export interface AugmentationSpec {
 // 'middle' | 'top') instead of relying on before-id ordering. Pins live in
 // 'top', future route lines in 'middle', hulls/isochrones in 'bottom'.
 
-const selectPlaces = (s: RootState): SavedPlace[] => s.trip.active?.places ?? []
-
-const selectPlacesGeoJSON = createSelector([selectPlaces], (places) => ({
-  type: 'FeatureCollection' as const,
-  features: places.map(p => ({
-    type: 'Feature' as const,
-    geometry: { type: 'Point' as const, coordinates: p.coord },
-    properties: { id: p.id, name: p.name, category: p.category },
-  })),
-}))
+// `dayColor` is present only on assigned places — the ring layer filters on
+// it, so unassigned pins simply have no ring.
+const selectPlacesGeoJSON = createSelector(
+  [selectPlaces, selectPlaceDayHex],
+  (places, dayHex) => ({
+    type: 'FeatureCollection' as const,
+    features: places.map(p => ({
+      type: 'Feature' as const,
+      geometry: { type: 'Point' as const, coordinates: p.coord },
+      properties: {
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        ...(dayHex[p.id] ? { dayColor: dayHex[p.id] } : {}),
+      },
+    })),
+  }),
+)
 
 export const selectAugmentationSpec = createSelector(
-  [selectPlacesGeoJSON, (s: RootState) => s.terrain.terrainExaggeration],
-  (placesGeoJSON, terrainExaggeration): AugmentationSpec => {
+  [
+    selectPlacesGeoJSON,
+    (s: RootState) => s.terrain.terrainExaggeration,
+    (s: RootState) => s.mapStyle.uiMode,
+  ],
+  (placesGeoJSON, terrainExaggeration, uiMode): AugmentationSpec => {
+    const palette = getPalette(uiMode)
     const sources: Record<string, SourceSpecification> = {
       'mapbox-dem': {
         type: 'raster-dem',
@@ -72,6 +86,26 @@ export const selectAugmentationSpec = createSelector(
           ],
           'circle-blur': 0.4,
         },
+      } as LayerSpecification,
+      // Day-color ring — a colored disc at the pin's anchor point, so an
+      // assigned pin wears its day at a glance (PROJECT_PLAN.md §8 Phase 2).
+      {
+        id: 'places-day-ring',
+        type: 'circle',
+        source: PLACES_SOURCE,
+        slot: 'top',
+        filter: ['has', 'dayColor'],
+        paint: {
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            8, 4.5, 13, 6, 16, 7.5,
+          ],
+          'circle-color': ['get', 'dayColor'],
+          'circle-opacity': 0.95,
+          'circle-stroke-color': `rgba(${palette.bgRichRgb}, 0.95)`,
+          'circle-stroke-width': 1.6,
+        },
+        minzoom: 8,
       } as LayerSpecification,
       {
         id: 'places-pins',

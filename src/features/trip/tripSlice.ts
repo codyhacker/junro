@@ -1,8 +1,9 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import type { Trip, TripSummary, SavedPlace, PlaceCategory } from '../../shared/types/trip'
+import { createSlice, current, type PayloadAction } from '@reduxjs/toolkit'
+import type { Trip, TripSummary, SavedPlace, PlaceCategory, Lodging } from '../../shared/types/trip'
 import { DEFAULT_PREFS, DEFAULT_DWELL_MIN } from '../../shared/types/trip'
 import { TRIP_SCHEMA_VERSION } from './storage'
 import { uuidv7 } from '../../shared/lib/uuidv7'
+import { materializeDays } from './days'
 
 interface TripState {
   hydrated: boolean            // storage read finished (even if empty)
@@ -18,6 +19,20 @@ const initialState: TripState = {
 
 function touch(trip: Trip): void {
   trip.updatedAt = new Date().toISOString()
+}
+
+// Re-runs the day reconcile against the trip's current dates + lodgings.
+// Every date/lodging edit goes through here so `days` is never stale and
+// lodging resolution is never hand-maintained. Orphaned stops simply stop
+// being referenced by a day — that *is* "back in the scrapbook".
+function reconcileDays(trip: Trip): void {
+  const snapshot = current(trip)
+  trip.days = materializeDays(
+    snapshot.days,
+    snapshot.startDate,
+    snapshot.endDate,
+    snapshot.lodgings,
+  ).days
 }
 
 const tripSlice = createSlice({
@@ -96,8 +111,77 @@ const tripSlice = createSlice({
       }
       touch(state.active)
     },
+
+    // ── Dates & days ───────────────────────────────────────────────────────
+    // Both dates are optional until both are set; days materialize the moment
+    // they both exist (PROJECT_PLAN.md §2 principle 5). Shrinking the range
+    // orphans stops — the UI confirms before dispatching this.
+    setTripDates(state, action: PayloadAction<{ startDate?: string; endDate?: string }>) {
+      if (!state.active) return
+      state.active.startDate = action.payload.startDate || undefined
+      state.active.endDate = action.payload.endDate || undefined
+      reconcileDays(state.active)
+      touch(state.active)
+    },
+
+    // ── Lodging ────────────────────────────────────────────────────────────
+    addLodging: {
+      prepare(input: { name: string; coord: [number, number]; checkIn: string; checkOut: string }) {
+        return { payload: { id: uuidv7(), ...input } satisfies Lodging }
+      },
+      reducer(state, action: PayloadAction<Lodging>) {
+        if (!state.active) return
+        state.active.lodgings.push(action.payload)
+        reconcileDays(state.active)
+        touch(state.active)
+      },
+    },
+
+    updateLodging(state, action: PayloadAction<{ id: string; patch: Partial<Omit<Lodging, 'id'>> }>) {
+      if (!state.active) return
+      const lodging = state.active.lodgings.find(l => l.id === action.payload.id)
+      if (!lodging) return
+      Object.assign(lodging, action.payload.patch)
+      reconcileDays(state.active)
+      touch(state.active)
+    },
+
+    removeLodging(state, action: PayloadAction<string>) {
+      if (!state.active) return
+      state.active.lodgings = state.active.lodgings.filter(l => l.id !== action.payload)
+      reconcileDays(state.active)
+      touch(state.active)
+    },
+
+    // ── Stop assignment ────────────────────────────────────────────────────
+    // A stop belongs to at most one day: assigning removes it everywhere else,
+    // and `dayId: null` is "return to the scrapbook".
+    assignStop(state, action: PayloadAction<{ placeId: string; dayId: string | null }>) {
+      if (!state.active) return
+      const { placeId, dayId } = action.payload
+      for (const day of state.active.days) {
+        day.stopIds = day.stopIds.filter(id => id !== placeId)
+      }
+      if (dayId) state.active.days.find(d => d.id === dayId)?.stopIds.push(placeId)
+      touch(state.active)
+    },
+
+    moveStop(state, action: PayloadAction<{ dayId: string; placeId: string; delta: -1 | 1 }>) {
+      if (!state.active) return
+      const day = state.active.days.find(d => d.id === action.payload.dayId)
+      if (!day) return
+      const from = day.stopIds.indexOf(action.payload.placeId)
+      const to = from + action.payload.delta
+      if (from < 0 || to < 0 || to >= day.stopIds.length) return
+      const [moved] = day.stopIds.splice(from, 1)
+      day.stopIds.splice(to, 0, moved)
+      touch(state.active)
+    },
   },
 })
 
-export const { tripHydrated, createTrip, addPlace, updatePlace, removePlace } = tripSlice.actions
+export const {
+  tripHydrated, createTrip, addPlace, updatePlace, removePlace,
+  setTripDates, addLodging, updateLodging, removeLodging, assignStop, moveStop,
+} = tripSlice.actions
 export default tripSlice.reducer
