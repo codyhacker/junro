@@ -119,7 +119,7 @@ export const selectAugmentationSpec = createSelector(
         slot: 'bottom',
         paint: {
           'fill-color': palette.accentWarmHex,
-          'fill-opacity': 0.10,
+          'fill-opacity': 0.16,
         },
       } as LayerSpecification,
       {
@@ -129,8 +129,8 @@ export const selectAugmentationSpec = createSelector(
         slot: 'bottom',
         paint: {
           'line-color': palette.accentWarmHex,
-          'line-width': 1.5,
-          'line-opacity': 0.4,
+          'line-width': 1.75,
+          'line-opacity': 0.6,
         },
       } as LayerSpecification,
       // Day routes — slot 'middle' keeps them under the basemap's labels but

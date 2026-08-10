@@ -639,3 +639,52 @@ html, body {
 }
 .place-panel-note { resize: vertical; }
 .place-panel-remove { align-self: flex-start; padding: 7px 12px; font-size: 12.5px; }
+
+/* ─── Suggest days ───────────────────────────────────────────────────────── */
+.suggest-btn {
+  width: 100%;
+  margin: 4px 0 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px dashed rgba(var(--accent-rgb), 0.5);
+  background: rgba(var(--accent-rgb), 0.06);
+  color: var(--accent-hex);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.suggest-btn:hover { background: rgba(var(--accent-rgb), 0.12); }
+
+.suggest-preview {
+  margin: 4px 0 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  background: rgba(var(--bg-warm-rgb), 0.5);
+  overflow: hidden;
+}
+.suggest-head {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid rgba(var(--accent-rgb), 0.15);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.suggest-sub { color: var(--text-muted); font-size: 11px; font-weight: 400; }
+.suggest-rows { list-style: none; padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+.suggest-row { padding: 7px 8px; border-radius: 8px; background: rgba(var(--bg-rich-rgb), 0.6); }
+.suggest-row-head { color: var(--text-primary); font-size: 12.5px; }
+.suggest-row-meta { display: block; color: var(--text-secondary); font-size: 11px; margin-top: 1px; }
+.suggest-row-names { color: var(--text-muted); font-size: 11px; margin-top: 3px; line-height: 1.35; }
+.suggest-empty, .suggest-unplaced {
+  padding: 8px 12px; color: var(--text-muted); font-size: 11.5px;
+}
+.suggest-unplaced { border-top: 1px solid rgba(var(--accent-rgb), 0.12); }
+.suggest-actions {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 8px 10px; border-top: 1px solid rgba(var(--accent-rgb), 0.15);
+}
+.suggest-actions .junro-primary, .suggest-actions .junro-secondary { padding: 7px 12px; font-size: 12.5px; }

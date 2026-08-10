@@ -8,6 +8,7 @@ import { CATEGORY_META } from './categoryMeta'
 import { selectDays, selectUnassignedPlaces } from './selectors'
 import { TripSettings } from './TripSettings'
 import { DayRail, dayLabel } from './DayRail'
+import { SuggestDays } from './SuggestDays'
 
 // The planning rail (right drawer): trip settings, the day list, and the
 // unassigned scrapbook at the bottom. Hover a row ↔ highlight the pin; click
@@ -53,6 +54,7 @@ export function Scrapbook() {
 
           <div className="scrapbook-body">
             {settingsOpen && <TripSettings />}
+            <SuggestDays />
             <DayRail />
 
             {unassigned.length > 0 && (

@@ -183,6 +183,22 @@ const tripSlice = createSlice({
       touch(state.active)
     },
 
+    // Bulk-set a day's ordered stops — used by "Suggest days" apply. Each id
+    // is first removed from every other day (a place lives on one day), then
+    // the target day's list becomes exactly `placeIds` in the given order.
+    // Locked days are never touched.
+    setDayStops(state, action: PayloadAction<{ dayId: string; placeIds: string[] }>) {
+      if (!state.active) return
+      const target = state.active.days.find(d => d.id === action.payload.dayId)
+      if (!target || target.locked) return
+      const claimed = new Set(action.payload.placeIds)
+      for (const day of state.active.days) {
+        if (day.id !== action.payload.dayId) day.stopIds = day.stopIds.filter(id => !claimed.has(id))
+      }
+      target.stopIds = [...action.payload.placeIds]
+      touch(state.active)
+    },
+
     moveStop(state, action: PayloadAction<{ dayId: string; placeId: string; delta: -1 | 1 }>) {
       if (!state.active) return
       const day = state.active.days.find(d => d.id === action.payload.dayId)
@@ -200,6 +216,6 @@ const tripSlice = createSlice({
 export const {
   tripHydrated, createTrip, addPlace, updatePlace, removePlace,
   setTripDates, addLodging, updateLodging, removeLodging, assignStop, moveStop,
-  setTravelMode, setDayTravelMode,
+  setDayStops, setTravelMode, setDayTravelMode,
 } = tripSlice.actions
 export default tripSlice.reducer
