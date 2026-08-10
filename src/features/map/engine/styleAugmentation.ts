@@ -109,16 +109,16 @@ export const selectAugmentationSpec = createSelector(
 
     const layers: LayerSpecification[] = [
       // Neighborhood hulls — slot 'bottom', beneath everything, as a soft
-      // ambient "your unassigned pins form these neighborhoods" cue. Pine
-      // secondary so it never competes with the vermilion pins or day colors;
-      // excursions get a dashed outline to read as "a trip out of town".
+      // ambient "your unassigned pins form these neighborhoods" cue. Each hull
+      // is tinted from the day-color ramp (per-cluster `color`) so the
+      // neighborhoods read as the days they'll likely become.
       {
         id: 'cluster-hull-fill',
         type: 'fill',
         source: CLUSTERS_SOURCE,
         slot: 'bottom',
         paint: {
-          'fill-color': palette.accentWarmHex,
+          'fill-color': ['get', 'color'],
           'fill-opacity': 0.16,
         },
       } as LayerSpecification,
@@ -128,9 +128,9 @@ export const selectAugmentationSpec = createSelector(
         source: CLUSTERS_SOURCE,
         slot: 'bottom',
         paint: {
-          'line-color': palette.accentWarmHex,
+          'line-color': ['get', 'color'],
           'line-width': 1.75,
-          'line-opacity': 0.6,
+          'line-opacity': 0.65,
         },
       } as LayerSpecification,
       // Day routes — slot 'middle' keeps them under the basemap's labels but

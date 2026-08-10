@@ -4,6 +4,7 @@ import type { TravelMode } from '../../shared/types/trip'
 import { DEFAULT_PREFS } from '../../shared/types/trip'
 import { dayCoords, selectDays, selectLodgings, selectPlaces, selectUnassignedPlaces } from '../trip/selectors'
 import { clusterPlaces, type ClusterResult } from './clustering'
+import { dayColorAt } from '../../shared/constants/dayColors'
 import { routeHash } from './routeHash'
 
 // What each day *wants* routed, derived purely from the trip document. The
@@ -54,14 +55,26 @@ export const selectClusters = createSelector(
 )
 
 // Soft neighborhood blobs for the map — only clusters of 2+ pins earn a hull
-// (a lone pin isn't a neighborhood). Local + excursion alike.
-export const selectClusterHullsGeoJSON = createSelector([selectClusters], ({ clusters, excursions }) => ({
-  type: 'FeatureCollection' as const,
-  features: [...clusters, ...excursions]
-    .filter(c => c.placeIds.length >= 2 && c.hull)
-    .map(c => ({
-      type: 'Feature' as const,
-      geometry: c.hull!,
-      properties: { id: c.id, count: c.placeIds.length, isExcursion: c.isExcursion },
-    })),
-}))
+// (a lone pin isn't a neighborhood). Each cluster is tinted from the day-color
+// ramp by its index, so neighborhoods speak the same colour language as days,
+// pins, and routes (and a suggestion that assigns clusters in order lands each
+// on the matching day colour). Local + excursion alike.
+export const selectClusterHullsGeoJSON = createSelector(
+  [selectClusters, (s: RootState) => s.mapStyle.uiMode],
+  ({ clusters, excursions }, uiMode) => ({
+    type: 'FeatureCollection' as const,
+    features: [...clusters, ...excursions]
+      .map((c, i) => ({ c, color: dayColorAt(i) }))
+      .filter(({ c }) => c.placeIds.length >= 2 && c.hull)
+      .map(({ c, color }) => ({
+        type: 'Feature' as const,
+        geometry: c.hull!,
+        properties: {
+          id: c.id,
+          count: c.placeIds.length,
+          isExcursion: c.isExcursion,
+          color: uiMode === 'dark' ? color.dark : color.light,
+        },
+      })),
+  }),
+)
