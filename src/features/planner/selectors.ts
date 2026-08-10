@@ -24,12 +24,15 @@ export const selectDayRouteRequests = createSelector(
   [selectDays, selectPlaces, selectLodgings, selectTripMode],
   (days, places, lodgings, tripMode): DayRouteRequest[] =>
     days
+      // A day with no stops has nothing to route — [lodging, lodging] would
+      // otherwise produce a nonsense 1-minute self-route (found in review).
+      .filter(day => day.stopIds.length > 0)
       .map(day => {
         const coords = dayCoords(day, places, lodgings)
         const mode = day.travelMode ?? tripMode
         return { dayId: day.id, coords, mode, hash: routeHash(coords, mode) }
       })
-      // A day needs at least an origin and a destination to be routable.
+      // …and at least an origin and a destination overall.
       .filter(req => req.coords.length >= 2),
 )
 
