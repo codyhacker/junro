@@ -13,13 +13,16 @@ import { cameraObserved } from '../cameraSlice'
 import { getPalette, applyUiTheme, lightPresetFor } from '../../../shared/constants/uiThemes'
 import type { MapCommand } from './commands'
 import { StyleController } from './StyleController'
+import { TripLayerController } from './TripLayerController'
 import { registerPointerRouter } from './pointer/registerPointerRouter'
+import { placesLayer } from './pointer/layers/places'
 
 export class MapEngine {
   private map: mapboxgl.Map
   private store: AppStore
 
   private style: StyleController
+  private tripLayer: TripLayerController
   private unsubPointer: () => void
 
   constructor(container: HTMLDivElement, store: AppStore) {
@@ -50,9 +53,9 @@ export class MapEngine {
     })
 
     this.style = new StyleController(this.map, store)
+    this.tripLayer = new TripLayerController(this.map)
 
-    // No interactive trip layers yet — Phase 1 registers the places layer.
-    this.unsubPointer = registerPointerRouter(this.map, store, [])
+    this.unsubPointer = registerPointerRouter(this.map, store, [placesLayer])
 
     this.map.on('moveend', () => {
       const { lng, lat } = this.map.getCenter()
@@ -89,6 +92,8 @@ export class MapEngine {
       case 'FLY_TO':               return void this.map.flyTo(cmd.options as mapboxgl.EasingOptions)
       case 'FIT_BOUNDS':           return void this.map.fitBounds(cmd.bounds, cmd.options)
       case 'EASE_TO':              return void this.map.easeTo(cmd.options as mapboxgl.EasingOptions & { duration?: number })
+      case 'PLACE_HOVER':          return this.tripLayer.setHover(cmd.placeId)
+      case 'PLACE_SELECT':         return this.tripLayer.setSelected(cmd.placeId)
       case 'UPDATE_GEOJSON':       break
       case 'ADD_LAYER':            break
       case 'REMOVE_LAYER':         break

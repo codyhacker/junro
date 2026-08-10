@@ -10,12 +10,18 @@ import cameraReducer      from '../features/map/cameraSlice'
 // ── shell/ ──────────────────────────────────────────────────────────────────
 import uiReducer from '../features/shell/uiSlice'
 
+// ── trip/ ───────────────────────────────────────────────────────────────────
+import tripReducer            from '../features/trip/tripSlice'
+import tripInteractionReducer from '../features/trip/tripInteractionSlice'
+
 export const store = configureStore({
   reducer: {
-    mapStyle: mapStyleReducer,
-    terrain:  terrainReducer,
-    camera:   cameraReducer,
-    ui:       uiReducer,
+    mapStyle:        mapStyleReducer,
+    terrain:         terrainReducer,
+    camera:          cameraReducer,
+    ui:              uiReducer,
+    trip:            tripReducer,
+    tripInteraction: tripInteractionReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().prepend(listenerMiddleware.middleware),

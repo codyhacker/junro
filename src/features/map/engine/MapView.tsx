@@ -19,6 +19,11 @@ export function MapView({ children }: MapViewProps) {
 
     const eng = new MapEngine(containerRef.current, store)
     const unregister = registerMapListeners(eng)
+    // Replay a camera command dispatched before the engine existed (boot
+    // hydration flies to the trip destination; the listener wasn't
+    // registered yet to hear it).
+    const pendingFlyTo = store.getState().camera.lastFlyTo
+    if (pendingFlyTo) eng.execute({ type: 'FLY_TO', options: pendingFlyTo })
     setEngine(eng)
 
     return () => {

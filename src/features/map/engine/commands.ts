@@ -12,6 +12,10 @@ export type MapCommand =
   | { type: 'FIT_BOUNDS'; bounds: LngLatBoundsLike; options?: FitBoundsOptions }
   | { type: 'EASE_TO';    options: EasingOptions }
 
+  // ── Trip places ───────────────────────────────────────────────────────────
+  | { type: 'PLACE_HOVER';  placeId: string | null }
+  | { type: 'PLACE_SELECT'; placeId: string | null }
+
   // ── Data / layers (future) ────────────────────────────────────────────────
   | { type: 'UPDATE_GEOJSON';       sourceId: string; data: unknown }
   | { type: 'ADD_LAYER';            spec: AnyLayer; before?: string }

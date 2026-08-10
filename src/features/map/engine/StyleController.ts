@@ -9,6 +9,7 @@ import { diff } from '@mapbox/mapbox-gl-style-spec'
 import type { AppStore } from '../../../app/store'
 import { getPalette, applyUiTheme, lightPresetFor, type UiMode } from '../../../shared/constants/uiThemes'
 import { selectAugmentationSpec, type AugmentationSpec } from './styleAugmentation'
+import { registerPinIcons } from './icons'
 
 // Standard's config API isn't in the installed type defs yet.
 type StandardMap = MapboxMap & {
@@ -35,8 +36,12 @@ export class StyleController {
       // style settles (a toggle during load would otherwise be lost — the
       // UI_THEME_CHANGE handler is gated on styleReady).
       this.applyStandardConfig(this.store.getState().mapStyle.uiMode)
+      registerPinIcons(this.map)
       this.reconcile(selectAugmentationSpec(this.store.getState()))
     })
+    // Safety net: if a symbol layer references a pin before its image has
+    // decoded, re-kick registration (idempotent).
+    this.map.on('styleimagemissing', () => registerPinIcons(this.map))
   }
 
   execute(cmd:

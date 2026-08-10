@@ -5,10 +5,14 @@ import { store } from './app/store'
 import App from './app/App'
 import './index.css'
 import { applyUiTheme, getPalette } from './shared/constants/uiThemes'
+import { hydrateTrips, registerTripPersistence } from './features/trip/persistence'
 
 // Apply the persisted mode to :root before first paint so the chrome never
 // flashes the CSS default palette when the stored mode is dark.
 applyUiTheme(getPalette(store.getState().mapStyle.uiMode))
+
+registerTripPersistence()
+void hydrateTrips(store)
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

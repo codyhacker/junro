@@ -38,5 +38,22 @@ export function registerMapListeners(engine: MapEngine): () => void {
     },
   }))
 
+  // ── Trip place interaction → feature-state ────────────────────────────
+  unsubs.push(startAppListening({
+    predicate: (_action, currentState, previousState) =>
+      currentState.tripInteraction.hoveredPlaceId !== previousState.tripInteraction.hoveredPlaceId,
+    effect: (_action, api) => {
+      engine.execute({ type: 'PLACE_HOVER', placeId: api.getState().tripInteraction.hoveredPlaceId })
+    },
+  }))
+
+  unsubs.push(startAppListening({
+    predicate: (_action, currentState, previousState) =>
+      currentState.tripInteraction.selectedPlaceId !== previousState.tripInteraction.selectedPlaceId,
+    effect: (_action, api) => {
+      engine.execute({ type: 'PLACE_SELECT', placeId: api.getState().tripInteraction.selectedPlaceId })
+    },
+  }))
+
   return () => unsubs.forEach(u => u())
 }
