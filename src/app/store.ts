@@ -14,6 +14,9 @@ import uiReducer from '../features/shell/uiSlice'
 import tripReducer            from '../features/trip/tripSlice'
 import tripInteractionReducer from '../features/trip/tripInteractionSlice'
 
+// ── planner/ ────────────────────────────────────────────────────────────────
+import plannerReducer from '../features/planner/plannerSlice'
+
 export const store = configureStore({
   reducer: {
     mapStyle:        mapStyleReducer,
@@ -22,6 +25,7 @@ export const store = configureStore({
     ui:              uiReducer,
     trip:            tripReducer,
     tripInteraction: tripInteractionReducer,
+    planner:         plannerReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().prepend(listenerMiddleware.middleware),

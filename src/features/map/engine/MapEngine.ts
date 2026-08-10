@@ -53,7 +53,7 @@ export class MapEngine {
     })
 
     this.style = new StyleController(this.map, store)
-    this.tripLayer = new TripLayerController(this.map)
+    this.tripLayer = new TripLayerController(this.map, store)
 
     this.unsubPointer = registerPointerRouter(this.map, store, [placesLayer])
 
@@ -94,6 +94,7 @@ export class MapEngine {
       case 'EASE_TO':              return void this.map.easeTo(cmd.options as mapboxgl.EasingOptions & { duration?: number })
       case 'PLACE_HOVER':          return this.tripLayer.setHover(cmd.placeId)
       case 'PLACE_SELECT':         return this.tripLayer.setSelected(cmd.placeId)
+      case 'DAY_FOCUS':            return this.tripLayer.focusDay(cmd.dayId)
       case 'UPDATE_GEOJSON':       break
       case 'ADD_LAYER':            break
       case 'REMOVE_LAYER':         break

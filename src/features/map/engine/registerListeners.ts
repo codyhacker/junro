@@ -55,5 +55,14 @@ export function registerMapListeners(engine: MapEngine): () => void {
     },
   }))
 
+  // Selecting a day frames it — stops plus the lodging that anchors it.
+  unsubs.push(startAppListening({
+    predicate: (_action, currentState, previousState) =>
+      currentState.tripInteraction.selectedDayId !== previousState.tripInteraction.selectedDayId,
+    effect: (_action, api) => {
+      engine.execute({ type: 'DAY_FOCUS', dayId: api.getState().tripInteraction.selectedDayId })
+    },
+  }))
+
   return () => unsubs.forEach(u => u())
 }

@@ -1,8 +1,11 @@
 import { createSelector } from '@reduxjs/toolkit'
 import type { LayerSpecification, SourceSpecification } from 'mapbox-gl'
 import type { RootState } from '../../../app/store'
-import type { SavedPlace } from '../../../shared/types/trip'
-import { PLACES_SOURCE } from './TripLayerController'
+import { getPalette } from '../../../shared/constants/uiThemes'
+import { dayColorAt } from '../../../shared/constants/dayColors'
+import { selectDays, selectPlaceDayHex, selectPlaces } from '../../trip/selectors'
+import { selectDayRouteRequests } from '../../planner/selectors'
+import { PLACES_SOURCE, DAY_ROUTES_SOURCE } from './TripLayerController'
 
 export interface AugmentationSpec {
   version: 8
@@ -19,22 +22,68 @@ export interface AugmentationSpec {
 //
 // NOTE (Mapbox Standard): custom layers must declare a `slot` ('bottom' |
 // 'middle' | 'top') instead of relying on before-id ordering. Pins live in
-// 'top', future route lines in 'middle', hulls/isochrones in 'bottom'.
+// 'top', route lines in 'middle' (under labels), hulls/isochrones in 'bottom'.
 
-const selectPlaces = (s: RootState): SavedPlace[] => s.trip.active?.places ?? []
+// `dayColor` is present only on assigned places — the ring layer filters on
+// it, so unassigned pins simply have no ring.
+const selectPlacesGeoJSON = createSelector(
+  [selectPlaces, selectPlaceDayHex],
+  (places, dayHex) => ({
+    type: 'FeatureCollection' as const,
+    features: places.map(p => ({
+      type: 'Feature' as const,
+      geometry: { type: 'Point' as const, coordinates: p.coord },
+      properties: {
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        ...(dayHex[p.id] ? { dayColor: dayHex[p.id] } : {}),
+      },
+    })),
+  }),
+)
 
-const selectPlacesGeoJSON = createSelector([selectPlaces], (places) => ({
-  type: 'FeatureCollection' as const,
-  features: places.map(p => ({
-    type: 'Feature' as const,
-    geometry: { type: 'Point' as const, coordinates: p.coord },
-    properties: { id: p.id, name: p.name, category: p.category },
-  })),
-}))
+// One feature per routed day, carrying the day's colors. A day appears only
+// when the stored route matches what the day currently asks for — a stale or
+// missing route draws nothing rather than a lie (PROJECT_PLAN.md §8 Phase 3).
+const selectDayRoutesGeoJSON = createSelector(
+  [
+    selectDayRouteRequests,
+    (s: RootState) => s.planner.dayRoutes,
+    selectDays,
+    (s: RootState) => s.mapStyle.uiMode,
+  ],
+  (requests, dayRoutes, days, uiMode) => {
+    const indexByDayId = new Map(days.map((d, i) => [d.id, i]))
+    return {
+      type: 'FeatureCollection' as const,
+      features: requests.flatMap(req => {
+        const route = dayRoutes[req.dayId]
+        if (!route || route.hash !== req.hash) return []
+        const color = dayColorAt(indexByDayId.get(req.dayId) ?? 0)
+        return [{
+          type: 'Feature' as const,
+          geometry: route.geometry,
+          properties: {
+            dayId: req.dayId,
+            dayColor: uiMode === 'dark' ? color.dark : color.light,
+            casingColor: color.casing,
+          },
+        }]
+      }),
+    }
+  },
+)
 
 export const selectAugmentationSpec = createSelector(
-  [selectPlacesGeoJSON, (s: RootState) => s.terrain.terrainExaggeration],
-  (placesGeoJSON, terrainExaggeration): AugmentationSpec => {
+  [
+    selectPlacesGeoJSON,
+    selectDayRoutesGeoJSON,
+    (s: RootState) => s.terrain.terrainExaggeration,
+    (s: RootState) => s.mapStyle.uiMode,
+  ],
+  (placesGeoJSON, dayRoutesGeoJSON, terrainExaggeration, uiMode): AugmentationSpec => {
+    const palette = getPalette(uiMode)
     const sources: Record<string, SourceSpecification> = {
       'mapbox-dem': {
         type: 'raster-dem',
@@ -47,9 +96,45 @@ export const selectAugmentationSpec = createSelector(
         data: placesGeoJSON,
         promoteId: 'id',       // UUID property → feature id, for feature-state
       } as SourceSpecification,
+      [DAY_ROUTES_SOURCE]: {
+        type: 'geojson',
+        data: dayRoutesGeoJSON,
+      } as SourceSpecification,
     }
 
     const layers: LayerSpecification[] = [
+      // Day routes — slot 'middle' keeps them under the basemap's labels but
+      // over its fills. Casing first (darker, wider), then the day's color.
+      {
+        id: 'day-routes-casing',
+        type: 'line',
+        source: DAY_ROUTES_SOURCE,
+        slot: 'middle',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': ['get', 'casingColor'],
+          'line-width': [
+            'interpolate', ['linear'], ['zoom'],
+            10, 4.5, 14, 7.5, 17, 11,
+          ],
+          'line-opacity': 0.55,
+        },
+      } as LayerSpecification,
+      {
+        id: 'day-routes-line',
+        type: 'line',
+        source: DAY_ROUTES_SOURCE,
+        slot: 'middle',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': ['get', 'dayColor'],
+          'line-width': [
+            'interpolate', ['linear'], ['zoom'],
+            10, 2.4, 14, 4.5, 17, 7,
+          ],
+          'line-opacity': 0.7,
+        },
+      } as LayerSpecification,
       // Hover/selection halo — a soft disc under the pin, feature-state driven.
       {
         id: 'places-halo',
@@ -72,6 +157,26 @@ export const selectAugmentationSpec = createSelector(
           ],
           'circle-blur': 0.4,
         },
+      } as LayerSpecification,
+      // Day-color ring — a colored disc at the pin's anchor point, so an
+      // assigned pin wears its day at a glance (PROJECT_PLAN.md §8 Phase 2).
+      {
+        id: 'places-day-ring',
+        type: 'circle',
+        source: PLACES_SOURCE,
+        slot: 'top',
+        filter: ['has', 'dayColor'],
+        paint: {
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            8, 4.5, 13, 6, 16, 7.5,
+          ],
+          'circle-color': ['get', 'dayColor'],
+          'circle-opacity': 0.95,
+          'circle-stroke-color': `rgba(${palette.bgRichRgb}, 0.95)`,
+          'circle-stroke-width': 1.6,
+        },
+        minzoom: 8,
       } as LayerSpecification,
       {
         id: 'places-pins',
