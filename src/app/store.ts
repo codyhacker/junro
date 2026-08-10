@@ -15,7 +15,8 @@ import tripReducer            from '../features/trip/tripSlice'
 import tripInteractionReducer from '../features/trip/tripInteractionSlice'
 
 // ── planner/ ────────────────────────────────────────────────────────────────
-import plannerReducer from '../features/planner/plannerSlice'
+import plannerReducer   from '../features/planner/plannerSlice'
+import isochroneReducer from '../features/planner/isochroneSlice'
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +27,7 @@ export const store = configureStore({
     trip:            tripReducer,
     tripInteraction: tripInteractionReducer,
     planner:         plannerReducer,
+    isochrone:       isochroneReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().prepend(listenerMiddleware.middleware),

@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { useSuggest } from '../search/useSuggest'
 import { retrieve } from '../search/searchBoxApi'
 import { setTripDates, addLodging, updateLodging, removeLodging, setTravelMode } from './tripSlice'
+import { setIsochroneVisible } from '../planner/isochroneSlice'
 import { materializeDays } from './days'
 import type { TravelMode } from '../../shared/types/trip'
 
@@ -17,6 +18,7 @@ const MODES: { value: TravelMode; label: string }[] = [
 export function TripSettings() {
   const dispatch = useAppDispatch()
   const trip = useAppSelector(s => s.trip.active)
+  const isochroneOn = useAppSelector(s => s.isochrone.visible)
 
   const [start, setStart] = useState(trip?.startDate ?? '')
   const [end, setEnd] = useState(trip?.endDate ?? '')
@@ -111,6 +113,16 @@ export function TripSettings() {
           ))}
         </div>
       </div>
+
+      {trip.lodgings.length > 0 && (
+        <div className="trip-settings-group">
+          <span className="trip-settings-label">Reachability</span>
+          <button
+            className={`add-place-cat${isochroneOn ? ' active' : ''}`}
+            onClick={() => dispatch(setIsochroneVisible(!isochroneOn))}
+          >🥾 Walk reach from hotel (15 · 30 · 45 min)</button>
+        </div>
+      )}
 
       <div className="trip-settings-group">
         <span className="trip-settings-label">Lodging</span>

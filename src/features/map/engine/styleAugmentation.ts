@@ -5,7 +5,10 @@ import { getPalette } from '../../../shared/constants/uiThemes'
 import { dayColorAt } from '../../../shared/constants/dayColors'
 import { selectDays, selectPlaceDayHex, selectPlaces } from '../../trip/selectors'
 import { selectDayRouteRequests, selectClusterHullsGeoJSON } from '../../planner/selectors'
-import { PLACES_SOURCE, DAY_ROUTES_SOURCE, CLUSTERS_SOURCE } from './TripLayerController'
+import { ISOCHRONE_MINUTES } from '../../planner/isochroneService'
+import { PLACES_SOURCE, DAY_ROUTES_SOURCE, CLUSTERS_SOURCE, ISOCHRONE_SOURCE } from './TripLayerController'
+
+const EMPTY_FC = { type: 'FeatureCollection' as const, features: [] }
 
 export interface AugmentationSpec {
   version: 8
@@ -80,10 +83,11 @@ export const selectAugmentationSpec = createSelector(
     selectPlacesGeoJSON,
     selectDayRoutesGeoJSON,
     selectClusterHullsGeoJSON,
+    (s: RootState) => s.isochrone.data,
     (s: RootState) => s.terrain.terrainExaggeration,
     (s: RootState) => s.mapStyle.uiMode,
   ],
-  (placesGeoJSON, dayRoutesGeoJSON, clusterHullsGeoJSON, terrainExaggeration, uiMode): AugmentationSpec => {
+  (placesGeoJSON, dayRoutesGeoJSON, clusterHullsGeoJSON, isochroneData, terrainExaggeration, uiMode): AugmentationSpec => {
     const palette = getPalette(uiMode)
     const sources: Record<string, SourceSpecification> = {
       'mapbox-dem': {
@@ -91,6 +95,10 @@ export const selectAugmentationSpec = createSelector(
         url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
         tileSize: 512,
         maxzoom: 14,
+      } as SourceSpecification,
+      [ISOCHRONE_SOURCE]: {
+        type: 'geojson',
+        data: isochroneData ?? EMPTY_FC,
       } as SourceSpecification,
       [CLUSTERS_SOURCE]: {
         type: 'geojson',
@@ -108,6 +116,22 @@ export const selectAugmentationSpec = createSelector(
     }
 
     const layers: LayerSpecification[] = [
+      // Reachability shading — concentric walking-time bands from the hotel,
+      // slot 'bottom' and first in the array so they sit beneath the hulls.
+      // One fill per contour (largest first): the nested polygons overlap, so
+      // separate low-opacity layers composite into a "closer = deeper" wash.
+      // Pine, freed up now that hulls wear the day colors.
+      ...[...ISOCHRONE_MINUTES].sort((a, b) => b - a).map(minutes => ({
+        id: `isochrone-${minutes}`,
+        type: 'fill',
+        source: ISOCHRONE_SOURCE,
+        slot: 'bottom',
+        filter: ['==', ['get', 'contour'], minutes],
+        paint: {
+          'fill-color': palette.accentWarmHex,
+          'fill-opacity': 0.09,
+        },
+      } as LayerSpecification)),
       // Neighborhood hulls — slot 'bottom', beneath everything, as a soft
       // ambient "your unassigned pins form these neighborhoods" cue. Each hull
       // is tinted from the day-color ramp (per-cluster `color`) so the
