@@ -282,11 +282,11 @@ Each phase ends green: `npx tsc --noEmit` clean + the verification demo.
 
 **Dogfood fixture: Paris** — cafes, the Louvre (a natural `fixedTime` anchor), stores. Entered in Phase 1; every later phase's verify runs against it (with Versailles as the excursion-day test when Phase 4 lands). Synthetic pins can't tell you the DBSCAN epsilon is wrong or a suggested day is inhuman — a trip you'd actually take can.
 
-**Phase 0 — Extraction & scaffold** (the architectural surgery)
+**Phase 0 — Extraction & scaffold** (the architectural surgery) ✅ *shipped 2026-08-09*
 Copy `app/`, `engine/` (minus Park/Trail controllers), `shell/`, `shared/constants`, `shared/types` core; delete parks/trails features; collapse `UI_THEMES` to the single Junro palette (dark/light) and wire Mapbox Standard with day/night presets (basemap decision, §3); empty augmentation spec; wire an empty `trip` slice; copy silkymaps' GH Pages deploy workflow — **deployed from day one** (decided: Phase 5's today view needs a hosted URL anyway, and every phase becomes phone-testable), with the Mapbox token URL-restricted to the Pages domain from the first deploy.
 ✓ *Verify:* the Standard basemap renders with Junro chrome in both modes; the dark/light toggle flips map light preset + CSS vars in step, with no style reload; no console errors; no references to WDPA/trails remain (`grep -ri "wdpa\|trail\|park" src/` ≈ empty); push to main → live on the Pages URL.
 
-**Phase 1 — Trip document & places**
+**Phase 1 — Trip document & places** ✅ *shipped 2026-08-09 (all verifies passed against the Paris fixture)*
 `trip` slice + `TripStorage` adapter (localStorage impl, `schemaVersion` + migration runner from day one, §5.6) + trip CRUD; destination geocode → flyTo; Search Box place search; save → category-icon pin renders via augmentation, with the "why did I save this?" note prompt; scrapbook drawer; place select/hover with feature-state; Place detail tab; **basemap calibration pass** — Standard is already street-tuned, so this is configuration rather than cartography: `showPointOfInterestLabels: false` so Mapbox's own POI icons never compete with Junro pins, plus a label-density/legibility check at planning zooms (z13–17) in both modes (navigation itself stays out per principle 6).
 ✓ *Verify:* search "café", save 3 with notes, reload browser — pins, icons, and scrapbook subtitles intact; hover rail row highlights pin and vice versa; street names readable at z15 in both modes, with no basemap POI icons competing with Junro pins.
 
