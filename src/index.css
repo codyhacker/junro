@@ -1,0 +1,129 @@
+@import "@fontsource-variable/geologica";
+@import "@fontsource-variable/fraunces";
+@import "tailwindcss/theme";
+@import "tailwindcss/utilities";
+
+@theme {
+  --color-surface:      rgb(var(--bg-deep-rgb));
+  --color-surface-2:    rgb(var(--bg-rich-rgb));
+  --color-surface-3:    rgb(var(--bg-warm-rgb));
+  --color-accent:       rgb(var(--accent-rgb));
+  --color-accent-warm:  rgb(var(--accent-warm-rgb));
+}
+
+@utility bg-panel {
+  background: linear-gradient(145deg, rgba(var(--bg-rich-rgb), 0.95), rgba(var(--bg-deep-rgb), 0.92));
+}
+@utility bg-active-gradient {
+  background: linear-gradient(135deg, var(--active-start), var(--active-end));
+}
+@utility text-gradient-title {
+  background: linear-gradient(135deg, var(--title-start), var(--title-mid), var(--title-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.5px;
+}
+
+/* ─── Theme tokens (defaults = Junro light; runtime `applyUiTheme` keeps
+       these in sync with the active mode) ──────────────────────────────── */
+:root {
+  --font-body: 'Geologica Variable', system-ui, sans-serif;
+  --font-display: 'Fraunces Variable', Georgia, serif;
+
+  --bg-deep-rgb: 246, 242, 235;
+  --bg-rich-rgb: 255, 253, 248;
+  --bg-warm-rgb: 236, 229, 218;
+  --accent-rgb: 214, 88, 62;
+  --accent-hex: #d6583e;
+  --active-start: #d6583e;
+  --active-end: #b64530;
+  --active-border: #c14e36;
+  --active-rgb: 214, 88, 62;
+  --text-primary: #2d2823;
+  --text-secondary: #6d6357;
+  --text-light: #453e36;
+  --text-muted: #9a9083;
+  --text-med: #7e7466;
+  --slider-start: #e07a52;
+  --slider-end: #c14e36;
+  --slider-glow-rgb: 224, 122, 82;
+  --title-start: #d6583e;
+  --title-mid: #c9683c;
+  --title-end: #a8552e;
+  --globe-glow-rgb: 214, 120, 90;
+  --globe-accent-rgb: 224, 140, 100;
+  --popup-tip-color: rgba(255, 253, 248, 0.98);
+  --option-bg: #fffdf8;
+  --ctrl-icon-filter: none;
+  --accent-warm-hex: #49796b;
+  --accent-warm-rgb: 73, 121, 107;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-body);
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+.map-container {
+  width: 100vw;
+  height: 100dvh;
+  position: relative;
+}
+
+/* ─── Mapbox GL controls ─────────────────────────────────────────────────── */
+.mapboxgl-ctrl-group {
+  background: rgba(var(--bg-rich-rgb), 0.92) !important;
+  border: 1px solid rgba(var(--accent-rgb), 0.3) !important;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.mapboxgl-ctrl button {
+  background-color: transparent;
+  color: var(--text-secondary);
+}
+
+.mapboxgl-ctrl button:hover {
+  background-color: rgba(var(--accent-rgb), 0.15);
+}
+
+.mapboxgl-ctrl-icon {
+  filter: var(--ctrl-icon-filter);
+}
+
+/* ─── Mode toggle ────────────────────────────────────────────────────────── */
+.mode-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 20;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  background: rgba(var(--bg-rich-rgb), 0.92);
+  color: var(--text-primary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.mode-toggle:hover {
+  transform: scale(1.08);
+  box-shadow: 0 3px 14px rgba(var(--accent-rgb), 0.25);
+}
