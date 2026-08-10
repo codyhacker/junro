@@ -4,6 +4,8 @@
 
 export type PlaceCategory = 'restaurant' | 'cafe' | 'sight' | 'shop' | 'other'
 
+export type TravelMode = 'walking' | 'driving'
+
 export interface SavedPlace {
   id: string                   // UUIDv7
   name: string
@@ -34,11 +36,11 @@ export interface Day {
   stopIds: string[]            // ordered SavedPlace ids
   locked: boolean              // user hand-ordered; optimizer must not touch
   usableHours?: { start: string; end: string }
-  travelMode?: 'walking' | 'driving'
+  travelMode?: TravelMode                        // excursion-day override
 }
 
 export interface TripPrefs {
-  travelMode: 'walking' | 'driving'
+  travelMode: TravelMode
   dayStart: string             // HH:mm
   dayEnd: string
   maxStopsPerDay: number

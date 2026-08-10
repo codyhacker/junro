@@ -2,8 +2,14 @@ import { useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { useSuggest } from '../search/useSuggest'
 import { retrieve } from '../search/searchBoxApi'
-import { setTripDates, addLodging, updateLodging, removeLodging } from './tripSlice'
+import { setTripDates, addLodging, updateLodging, removeLodging, setTravelMode } from './tripSlice'
 import { materializeDays } from './days'
+import type { TravelMode } from '../../shared/types/trip'
+
+const MODES: { value: TravelMode; label: string }[] = [
+  { value: 'walking', label: '🚶 Walk' },
+  { value: 'driving', label: '🚗 Drive' },
+]
 
 // Trip settings section (opens from the scrapbook header): the trip's date
 // range and its lodgings. Both are optional until the traveler has them —
@@ -91,6 +97,19 @@ export function TripSettings() {
             {orphanCount !== null ? 'Yes, apply' : 'Apply dates'}
           </button>
         )}
+      </div>
+
+      <div className="trip-settings-group">
+        <span className="trip-settings-label">Getting around</span>
+        <div className="add-place-cats">
+          {MODES.map(m => (
+            <button
+              key={m.value}
+              className={`add-place-cat${trip.prefs.travelMode === m.value ? ' active' : ''}`}
+              onClick={() => dispatch(setTravelMode(m.value))}
+            >{m.label}</button>
+          ))}
+        </div>
       </div>
 
       <div className="trip-settings-group">

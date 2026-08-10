@@ -1,5 +1,5 @@
 import { createSlice, current, type PayloadAction } from '@reduxjs/toolkit'
-import type { Trip, TripSummary, SavedPlace, PlaceCategory, Lodging } from '../../shared/types/trip'
+import type { Trip, TripSummary, SavedPlace, PlaceCategory, Lodging, TravelMode } from '../../shared/types/trip'
 import { DEFAULT_PREFS, DEFAULT_DWELL_MIN } from '../../shared/types/trip'
 import { TRIP_SCHEMA_VERSION } from './storage'
 import { uuidv7 } from '../../shared/lib/uuidv7'
@@ -166,6 +166,23 @@ const tripSlice = createSlice({
       touch(state.active)
     },
 
+    // ── Travel mode ────────────────────────────────────────────────────────
+    // Trip default; a day may override it (excursion days want driving).
+    setTravelMode(state, action: PayloadAction<TravelMode>) {
+      if (!state.active) return
+      state.active.prefs.travelMode = action.payload
+      touch(state.active)
+    },
+
+    setDayTravelMode(state, action: PayloadAction<{ dayId: string; mode: TravelMode | null }>) {
+      if (!state.active) return
+      const day = state.active.days.find(d => d.id === action.payload.dayId)
+      if (!day) return
+      if (action.payload.mode) day.travelMode = action.payload.mode
+      else delete day.travelMode
+      touch(state.active)
+    },
+
     moveStop(state, action: PayloadAction<{ dayId: string; placeId: string; delta: -1 | 1 }>) {
       if (!state.active) return
       const day = state.active.days.find(d => d.id === action.payload.dayId)
@@ -183,5 +200,6 @@ const tripSlice = createSlice({
 export const {
   tripHydrated, createTrip, addPlace, updatePlace, removePlace,
   setTripDates, addLodging, updateLodging, removeLodging, assignStop, moveStop,
+  setTravelMode, setDayTravelMode,
 } = tripSlice.actions
 export default tripSlice.reducer

@@ -3,6 +3,7 @@ import type { AppStore } from '../../../app/store'
 import { selectDayBounds } from '../../trip/selectors'
 
 export const PLACES_SOURCE = 'trip-places'
+export const DAY_ROUTES_SOURCE = 'day-routes'
 
 // Feature-state driver for the trip places layer, plus the day camera. The
 // layer/source specs live in styleAugmentation (never here); this controller
