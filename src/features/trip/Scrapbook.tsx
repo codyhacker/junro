@@ -54,6 +54,16 @@ export function Scrapbook() {
 
           <div className="scrapbook-body">
             {settingsOpen && <TripSettings />}
+
+            {/* Discoverability: planning is invisible until dates materialize
+                days, so a trip with places but no dates gets an explicit push
+                toward the settings gear. */}
+            {!settingsOpen && days.length === 0 && places.length > 0 && (
+              <button className="plan-nudge" onClick={() => setSettingsOpen(true)}>
+                📅 Set your trip dates to start planning →
+              </button>
+            )}
+
             <SuggestDays />
             <DayRail />
 

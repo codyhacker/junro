@@ -688,3 +688,20 @@ html, body {
   padding: 8px 10px; border-top: 1px solid rgba(var(--accent-rgb), 0.15);
 }
 .suggest-actions .junro-primary, .suggest-actions .junro-secondary { padding: 7px 12px; font-size: 12.5px; }
+
+/* ─── Plan nudge (discoverability) ───────────────────────────────────────── */
+.plan-nudge {
+  width: 100%;
+  margin: 4px 0 10px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.14), rgba(var(--accent-rgb), 0.06));
+  color: var(--accent-hex);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.plan-nudge:hover { background: rgba(var(--accent-rgb), 0.18); }

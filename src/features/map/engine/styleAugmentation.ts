@@ -134,22 +134,10 @@ export const selectAugmentationSpec = createSelector(
         },
       } as LayerSpecification,
       // Day routes — slot 'middle' keeps them under the basemap's labels but
-      // over its fills. Casing first (darker, wider), then the day's color.
-      {
-        id: 'day-routes-casing',
-        type: 'line',
-        source: DAY_ROUTES_SOURCE,
-        slot: 'middle',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: {
-          'line-color': ['get', 'casingColor'],
-          'line-width': [
-            'interpolate', ['linear'], ['zoom'],
-            10, 4.5, 14, 7.5, 17, 11,
-          ],
-          'line-opacity': 0.55,
-        },
-      } as LayerSpecification,
+      // over its fills. The casing is the line's own `line-border` (Mapbox GL
+      // v3), so there's no second layer whose z-order the reconcile diff could
+      // invert — a real bug in the earlier two-layer version where the dark
+      // casing ended up painting over the colored line.
       {
         id: 'day-routes-line',
         type: 'line',
@@ -160,9 +148,13 @@ export const selectAugmentationSpec = createSelector(
           'line-color': ['get', 'dayColor'],
           'line-width': [
             'interpolate', ['linear'], ['zoom'],
-            10, 2.4, 14, 4.5, 17, 7,
+            10, 3.5, 14, 6, 17, 8.5,
           ],
-          'line-opacity': 0.7,
+          'line-border-color': ['get', 'casingColor'],
+          'line-border-width': 1.2,
+          // Dark basemaps mute the fill (QA: gold read as olive), so the
+          // colored line runs near-opaque there and lighter over the day map.
+          'line-opacity': uiMode === 'dark' ? 0.95 : 0.8,
         },
       } as LayerSpecification,
       // Hover/selection halo — a soft disc under the pin, feature-state driven.
