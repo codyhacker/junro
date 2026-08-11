@@ -114,6 +114,41 @@ function centroid(placeIds: string[], byId: Map<string, SavedPlace>): [number, n
   return [s[0] / coords.length, s[1] / coords.length]
 }
 
+// Order pieces by a nearest-neighbor sweep from a start point (the hotel), so
+// consecutive days step across the map instead of ping-ponging.
+function chainOrder(pieces: Placeable[], start: [number, number]): Placeable[] {
+  const remaining = [...pieces]
+  const ordered: Placeable[] = []
+  let cur = start
+  while (remaining.length) {
+    let bi = 0, bd = Infinity
+    for (let i = 0; i < remaining.length; i++) {
+      const d = haversineKm(cur, remaining[i].centroid)
+      if (d < bd) { bd = d; bi = i }
+    }
+    const [next] = remaining.splice(bi, 1)
+    ordered.push(next)
+    cur = next.centroid
+  }
+  return ordered
+}
+
+// When there are more neighborhoods than days, merge the nearest chain-adjacent
+// pair repeatedly until they fit — never drop places (UX_PLAN.md WS5 decision).
+function mergeToFit(pieces: Placeable[], maxCount: number, byId: Map<string, SavedPlace>): Placeable[] {
+  const out = [...pieces]
+  while (out.length > maxCount && out.length > 1) {
+    let bi = 0, bd = Infinity
+    for (let i = 0; i < out.length - 1; i++) {
+      const d = haversineKm(out[i].centroid, out[i + 1].centroid)
+      if (d < bd) { bd = d; bi = i }
+    }
+    const placeIds = [...out[bi].placeIds, ...out[bi + 1].placeIds]
+    out.splice(bi, 2, { placeIds, centroid: centroid(placeIds, byId), isExcursion: false })
+  }
+  return out
+}
+
 export function suggestDays({ clusterResult, days, places, lodgings, prefs }: SuggestInput): Suggestion {
   const byId = new Map(places.map(p => [p.id, p]))
   const lodgingById = new Map(lodgings.map(l => [l.id, l]))
@@ -154,42 +189,46 @@ export function suggestDays({ clusterResult, days, places, lodgings, prefs }: Su
     }
   }
 
-  // ── Local neighborhoods: biggest / most-must first, into the nearest-hotel
-  //    day that has room and satisfies open-days. ──────────────────────────────
-  const mustCount = (ids: string[]) => ids.filter(id => byId.get(id)?.priority === 'must').length
-  const queue: Placeable[] = clusterResult.clusters
-    .map(toPlaceable)
-    .sort((a, b) => mustCount(b.placeIds) - mustCount(a.placeIds) || b.placeIds.length - a.placeIds.length)
+  // ── Local neighborhoods: one neighborhood per day, days ordered by a
+  //    proximity chain from the hotel so consecutive days are adjacent
+  //    (UX_PLAN.md WS5). Split what overflows a day; merge nearest to fit. ──────
+  const emptySlots = slots.filter(s => !s.hasExcursion && s.assigned.length === 0)
 
-  for (let q = 0; q < queue.length; q++) {
-    const cluster = queue[q]
+  // 1. Split any cluster too big for a single day into day-sized pieces.
+  let pieces: Placeable[] = []
+  for (const cluster of clusterResult.clusters.map(toPlaceable)) {
     const dwell = summedDwell(cluster.placeIds, byId)
-
-    // Too big for any single day → split geographically and re-queue.
     if (cluster.placeIds.length > prefs.maxStopsPerDay || dwell > singleDayDwellCap) {
       const k = Math.ceil(Math.max(cluster.placeIds.length / prefs.maxStopsPerDay, dwell / singleDayDwellCap))
-      queue.push(...splitCluster(cluster, k, byId))
-      continue
+      pieces.push(...splitCluster(cluster, k, byId))
+    } else {
+      pieces.push(cluster)
     }
-
-    const candidates = slots.filter(
-      s => !s.hasExcursion
-        && s.remainingSlots >= cluster.placeIds.length
-        && s.remainingDwell >= dwell
-        && mustPlacesOpen(cluster.placeIds, s.weekday, byId),
-    )
-    if (candidates.length === 0) { unplaced.push(...cluster.placeIds); continue }
-
-    candidates.sort((a, b) => {
-      const da = a.lodgingCoord ? haversineKm(a.lodgingCoord, cluster.centroid) : Infinity
-      const db = b.lodgingCoord ? haversineKm(b.lodgingCoord, cluster.centroid) : Infinity
-      return da - db || b.remainingDwell - a.remainingDwell
-    })
-    const pick = candidates[0]
-    pick.assigned.push(...cluster.placeIds)
-    pick.remainingSlots -= cluster.placeIds.length
-    pick.remainingDwell -= dwell
   }
+
+  // 2. Order the pieces by a nearest-neighbor sweep from the hotel.
+  const startCoord = emptySlots.find(s => s.lodgingCoord)?.lodgingCoord
+    ?? (pieces.length ? pieces[0].centroid : null)
+  if (startCoord) pieces = chainOrder(pieces, startCoord)
+
+  // 3. If there are more neighborhoods than days, merge nearest to fit.
+  pieces = mergeToFit(pieces, emptySlots.length, byId)
+
+  // 4. Assign pieces to empty days in chain order — piece i prefers day i
+  //    (nearest → Day 1), falling back to the nearest open-days-compatible day.
+  const usedDay = new Set<number>()
+  pieces.forEach((piece, i) => {
+    const fits = (k: number) =>
+      k >= 0 && k < emptySlots.length && !usedDay.has(k)
+      && mustPlacesOpen(piece.placeIds, emptySlots[k].weekday, byId)
+    let target = fits(i) ? i : emptySlots.findIndex((_, k) => fits(k))
+    if (target < 0) { unplaced.push(...piece.placeIds); return }
+    usedDay.add(target)
+    const s = emptySlots[target]
+    s.assigned.push(...piece.placeIds)
+    s.remainingSlots -= piece.placeIds.length
+    s.remainingDwell -= summedDwell(piece.placeIds, byId)
+  })
 
   const assignments: DaySuggestion[] = slots
     .filter(s => s.assigned.length > 0)

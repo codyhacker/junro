@@ -38,6 +38,32 @@ describe('suggestDays', () => {
     expect(all).toContainEqual(['b1', 'b2'])
   })
 
+  it('orders days by a proximity chain from the hotel (Day 1 = nearest)', () => {
+    // Hotel at HOTEL.coord [2.33, 48.85]; three neighborhoods at increasing
+    // distance. Day 1 should be the nearest, then step outward.
+    const near = place('near', [2.335, 48.852])
+    const mid = place('mid', [2.352, 48.861])
+    const far = place('far', [2.372, 48.872])
+    const places = [near, mid, far, place('near2', [2.336, 48.8515]),
+      place('mid2', [2.353, 48.8615]), place('far2', [2.373, 48.8725])]
+    const clusterResult: ClusterResult = {
+      clusters: [
+        cluster('cFar', ['far', 'far2'], [2.3725, 48.8722]),
+        cluster('cNear', ['near', 'near2'], [2.3355, 48.8518]),   // deliberately not first
+        cluster('cMid', ['mid', 'mid2'], [2.3525, 48.8612]),
+      ],
+      excursions: [],
+    }
+    const days = [day('d1', '2026-10-05'), day('d2', '2026-10-06'), day('d3', '2026-10-07')]
+    const { assignments } = suggestDays({ clusterResult, days, places, lodgings: [HOTEL], prefs: PREFS })
+
+    const dayOf = (id: string) => assignments.find(a => a.placeIds.includes(id))?.dayId
+    // near → d1, mid → d2, far → d3 despite the clusters arriving far-first.
+    expect(dayOf('near')).toBe('d1')
+    expect(dayOf('mid')).toBe('d2')
+    expect(dayOf('far')).toBe('d3')
+  })
+
   it('gives an excursion its own driving day', () => {
     const places = [place('v1', [2.12, 48.80]), place('v2', [2.121, 48.801])]
     const clusterResult: ClusterResult = { clusters: [], excursions: [cluster('x0', ['v1', 'v2'], [2.12, 48.80], true)] }
