@@ -65,8 +65,13 @@ export class StyleController {
 
   private applyStandardConfig(mode: UiMode): void {
     this.map.setConfigProperty('basemap', 'lightPreset', lightPresetFor(mode))
-    // Standard's own POI icons must never compete with Junro pins
-    // (PROJECT_PLAN.md §3 basemap decision).
+    // Quiet the basemap so Junro's pins + neighborhood hulls are the figure and
+    // the map is ground (UX_PLAN.md WS1). 'faded' desaturates the whole
+    // basemap; transit + 3D come off (we only pitch during "fly the day");
+    // Standard's own POI icons stay off so they never compete with our pins.
+    this.map.setConfigProperty('basemap', 'theme', 'faded')
+    this.map.setConfigProperty('basemap', 'showTransitLabels', false)
+    this.map.setConfigProperty('basemap', 'show3dObjects', false)
     this.map.setConfigProperty('basemap', 'showPointOfInterestLabels', false)
   }
 

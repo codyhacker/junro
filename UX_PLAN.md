@@ -116,10 +116,12 @@ Ordered by dependency and by win-per-effort:
 
 ---
 
-## Open decisions (worth a call before building)
+## Decisions (resolved 2026-08-11)
 
-1. **Routes-on-demand default (WS4).** Recommendation: routes show only for the *selected* day, with an optional off-by-default "show all routes" toggle. Alternative: always show a faint version of all routes, bright for the selected day. *Recommend selected-only — it's the cleanest expression of the feedback.*
-2. **Day drill-down on desktop (WS3).** Inline accordion (day expands in place) vs. the list swapping to a full day view. *Recommend inline accordion on desktop, full-view on mobile.*
-3. **Search's home (WS3).** Search bar becomes the head of the left column vs. staying a separate floating element above it. *Recommend it heads the column — search is how you feed the plan.*
-4. **Grouping when clusters ≠ days (WS5).** More clusters than days → merge the nearest small ones, or leave the extras unassigned for the user? Fewer clusters than days → leave days empty, or suggest splitting a big neighborhood across two days? *Recommend: merge nearest-neighbors down to fit; never silently drop places (extras stay in the scrapbook with a note).*
-5. **Basemap theme (WS1).** `faded` vs `monochrome`. *Recommend faded (keeps enough color for orientation); revisit if it still reads busy.*
+1. **Routes-on-demand default (WS4).** ✅ **Selected day only** — no routes by default; the selected day's route appears on drill-in; off-by-default "show all routes" toggle.
+2. **Day drill-down on desktop (WS3).** ✅ **Inline accordion** on desktop (day expands in place, others stay as collapsed rows); full-view on mobile.
+3. **Search's home (WS3).** ✅ Search **heads the left column** — it's how you feed the plan.
+4. **Grouping when clusters ≠ days (WS5).** ✅ Merge nearest-neighbors down to fit; **never silently drop places** — extras stay in the scrapbook with a note.
+5. **Basemap theme (WS1).** ✅ **`faded`** (keeps enough color for orientation); revisit `monochrome` only if it still reads busy.
+
+**Approach:** build all five in sequence, each committed + verified.
