@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { enumerateDates, resolveLodgingId, materializeDays } from './days'
+import { enumerateDates, resolveLodgingId, materializeDays, clampLodgings } from './days'
 import tripReducer, { tripHydrated, setTripDates, addLodging, removeLodging, assignStop, moveStop } from './tripSlice'
 import type { Day, Lodging, Trip } from '../../shared/types/trip'
 import { DEFAULT_PREFS } from '../../shared/types/trip'
@@ -60,6 +60,36 @@ describe('resolveLodgingId', () => {
     expect(resolveLodgingId('2026-04-30', lodgings)).toBeNull()
     expect(resolveLodgingId('2026-05-06', lodgings)).toBeNull()
     expect(resolveLodgingId('2026-05-01', [])).toBeNull()
+  })
+})
+
+describe('clampLodgings', () => {
+  const hotel = (checkIn: string, checkOut: string): Lodging =>
+    ({ id: 'L', name: 'Hotel', coord: [2.3, 48.8], checkIn, checkOut })
+
+  it('trims a checkout dangling past a shrunk trip end (to end+1)', () => {
+    // Trip was Oct 5–9 with a full-stay hotel; shrunk to Oct 5–7.
+    const [l] = clampLodgings([hotel('2026-10-05', '2026-10-09')], '2026-10-05', '2026-10-07')
+    expect(l.checkIn).toBe('2026-10-05')
+    expect(l.checkOut).toBe('2026-10-08')   // covers nights 5,6,7 — the whole shrunk trip
+  })
+
+  it('leaves a full-trip hotel (checkout = end+1) untouched', () => {
+    const input = [hotel('2026-10-05', '2026-10-08')]
+    const [l] = clampLodgings(input, '2026-10-05', '2026-10-07')
+    expect(l.checkOut).toBe('2026-10-08')
+    expect(l).toBe(input[0])                // unchanged → same reference
+  })
+
+  it('pulls a check-in before the new start up to the start', () => {
+    const [l] = clampLodgings([hotel('2026-10-03', '2026-10-09')], '2026-10-05', '2026-10-07')
+    expect(l.checkIn).toBe('2026-10-05')
+    expect(l.checkOut).toBe('2026-10-08')
+  })
+
+  it('is a no-op when the trip has no dates', () => {
+    const input = [hotel('2026-10-05', '2026-10-09')]
+    expect(clampLodgings(input, undefined, undefined)).toBe(input)
   })
 })
 

@@ -3,7 +3,7 @@ import type { Trip, TripSummary, SavedPlace, PlaceCategory, Lodging, TravelMode 
 import { DEFAULT_PREFS, DEFAULT_DWELL_MIN } from '../../shared/types/trip'
 import { TRIP_SCHEMA_VERSION } from './storage'
 import { uuidv7 } from '../../shared/lib/uuidv7'
-import { materializeDays } from './days'
+import { materializeDays, clampLodgings } from './days'
 
 interface TripState {
   hydrated: boolean            // storage read finished (even if empty)
@@ -126,6 +126,10 @@ const tripSlice = createSlice({
       if (!state.active) return
       state.active.startDate = action.payload.startDate || undefined
       state.active.endDate = action.payload.endDate || undefined
+      // Trim any lodging that now extends past the new window before the days
+      // reconcile, so a shrunk trip never leaves a checkout dangling.
+      const snap = current(state.active)
+      state.active.lodgings = clampLodgings(snap.lodgings, snap.startDate, snap.endDate)
       reconcileDays(state.active)
       touch(state.active)
     },

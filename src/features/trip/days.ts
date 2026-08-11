@@ -36,6 +36,27 @@ export function resolveLodgingId(date: string, lodgings: Lodging[]): string | nu
   return match ? match.id : null
 }
 
+// Clamp lodging ranges into the trip's window so a hotel can't dangle past a
+// trip whose dates were shrunk. checkIn is a night you sleep in → clamps to
+// [start, end]; checkOut is the morning after → clamps up to end+1 (a hotel
+// covering the whole trip has checkOut = end + 1 day, given the half-open
+// range above). ISO dates compare lexicographically and the clamp is
+// monotonic, so checkIn ≤ checkOut is preserved. No-op unless both dates exist.
+export function clampLodgings(
+  lodgings: Lodging[],
+  startDate: string | undefined,
+  endDate: string | undefined,
+): Lodging[] {
+  if (!startDate || !endDate) return lodgings
+  const dayAfterEnd = toIsoDate(toUtcMs(endDate) + DAY_MS)
+  const clamp = (d: string, lo: string, hi: string) => (d < lo ? lo : d > hi ? hi : d)
+  return lodgings.map(l => {
+    const checkIn = clamp(l.checkIn, startDate, endDate)
+    const checkOut = clamp(l.checkOut, startDate, dayAfterEnd)
+    return checkIn === l.checkIn && checkOut === l.checkOut ? l : { ...l, checkIn, checkOut }
+  })
+}
+
 export interface MaterializeResult {
   days: Day[]
   orphanedStopIds: string[]   // stops whose day disappeared — back to the scrapbook
