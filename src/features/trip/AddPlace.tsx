@@ -3,7 +3,6 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { useSuggest } from '../search/useSuggest'
 import { retrieve, guessCategory, type RetrievedPlace } from '../search/searchBoxApi'
 import { addPlace } from './tripSlice'
-import { setScrapbookOpen } from '../shell/uiSlice'
 import { flyTo } from '../map/cameraSlice'
 import type { PlaceCategory } from '../../shared/types/trip'
 import { CATEGORY_META } from './categoryMeta'
@@ -37,9 +36,6 @@ export function AddPlace() {
 
   function save() {
     if (!pending) return
-    // Reveal the planning rail on the first save — it's where dates, days,
-    // and "Suggest days" live, and it's easy to miss otherwise.
-    if (trip!.places.length === 0) dispatch(setScrapbookOpen(true))
     dispatch(addPlace({
       name: pending.name,
       coord: pending.coord,

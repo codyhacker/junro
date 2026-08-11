@@ -21,8 +21,12 @@ function App() {
       <MapView>
         <ModeToggle />
         <TripGate />
-        <AddPlace />
-        <Scrapbook />
+        {/* Planning lives in one left column — search heads it, the plan
+            follows (UX_PLAN.md WS3, the silkymaps echo). */}
+        <div className="left-panel">
+          <AddPlace />
+          <Scrapbook />
+        </div>
         <PlacePanel />
         <UndoBar />
       </MapView>

@@ -241,12 +241,23 @@ html, body {
 .trip-gate-dest { position: relative; }
 
 /* ─── Add place dock ─────────────────────────────────────────────────────── */
-.add-place {
+/* Left planning column: search at the head, the plan beneath it. */
+.left-panel {
   position: absolute;
   top: 16px;
   left: 16px;
+  bottom: 16px;
   z-index: 20;
-  width: min(320px, calc(100vw - 96px));
+  width: min(360px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;   /* let map gaps stay clickable */
+}
+.left-panel > * { pointer-events: auto; }
+
+.add-place {
+  width: 100%;
 }
 .add-place-confirm {
   display: flex;
@@ -308,12 +319,9 @@ html, body {
   line-height: 18px;
 }
 .scrapbook {
-  position: absolute;
-  top: 120px;
-  right: 16px;
-  bottom: 24px;
-  z-index: 20;
-  width: min(300px, calc(100vw - 32px));
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   border-radius: 16px;
@@ -612,7 +620,7 @@ html, body {
 /* ─── Place panel ────────────────────────────────────────────────────────── */
 .place-panel {
   position: absolute;
-  left: 16px;
+  right: 16px;
   bottom: 24px;
   z-index: 20;
   width: min(320px, calc(100vw - 32px));
@@ -709,11 +717,24 @@ html, body {
 /* ─── Undo bar ───────────────────────────────────────────────────────────── */
 .undo-bar {
   position: absolute;
-  bottom: 24px;
-  left: 16px;
+  top: 68px;
+  right: 16px;
   z-index: 20;
   display: flex;
   gap: 6px;
+}
+
+/* Mobile: the left column becomes a bottom sheet so the map stays usable. */
+@media (max-width: 640px) {
+  .left-panel {
+    top: auto;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: auto;
+    max-height: 60dvh;
+  }
+  .place-panel { bottom: calc(60dvh + 16px); }
 }
 .undo-btn {
   width: 36px;

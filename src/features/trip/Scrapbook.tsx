@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
-import { setScrapbookOpen } from '../shell/uiSlice'
 import { setHoveredPlace, setSelectedPlace } from './tripInteractionSlice'
 import { removePlace, assignStop } from './tripSlice'
 import { flyTo } from '../map/cameraSlice'
@@ -11,14 +10,13 @@ import { DayRail, dayLabel } from './DayRail'
 import { TripActions } from '../viewer/TripActions'
 import { SuggestDays } from './SuggestDays'
 
-// The planning rail (right drawer): trip settings, the day list, and the
-// unassigned scrapbook at the bottom. Hover a row ↔ highlight the pin; click
-// → select + fly. Notes render as the subtitle — the "why did I save this?"
-// line.
+// The planning panel — the body of the left column beneath search. Trip
+// settings, the day list, and the unassigned scrapbook. Hover a row ↔ highlight
+// the pin; click → select + fly. Notes render as the subtitle — the "why did I
+// save this?" line.
 export function Scrapbook() {
   const dispatch = useAppDispatch()
   const trip = useAppSelector(s => s.trip.active)
-  const open = useAppSelector(s => s.ui.scrapbookOpen)
   const selectedId = useAppSelector(s => s.tripInteraction.selectedPlaceId)
   const days = useAppSelector(selectDays)
   const unassigned = useAppSelector(selectUnassignedPlaces)
@@ -28,16 +26,6 @@ export function Scrapbook() {
   const places = trip.places
 
   return (
-    <>
-      <button
-        className="scrapbook-toggle"
-        onClick={() => dispatch(setScrapbookOpen(!open))}
-        aria-label="Toggle scrapbook"
-      >
-        ✂ {places.length > 0 && <span className="scrapbook-count">{places.length}</span>}
-      </button>
-
-      {open && (
         <aside className="scrapbook">
           <div className="scrapbook-head">
             <div className="scrapbook-head-row">
@@ -119,7 +107,5 @@ export function Scrapbook() {
             <TripActions />
           </div>
         </aside>
-      )}
-    </>
   )
 }
