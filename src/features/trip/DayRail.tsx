@@ -1,7 +1,7 @@
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { setSelectedDay, setHoveredPlace, setSelectedPlace, setFlyDay } from './tripInteractionSlice'
 import { assignStop, moveStop, setDayTravelMode } from './tripSlice'
-import { selectDays } from './selectors'
+import { selectDays, representativeName } from './selectors'
 import { selectRequestByDayId, type DayRouteRequest } from '../planner/selectors'
 import type { DayRoute } from '../planner/plannerSlice'
 import { CATEGORY_META } from './categoryMeta'
@@ -84,6 +84,8 @@ export function DayRail() {
         const stops = day.stopIds
           .map(id => placeById.get(id))
           .filter((p): p is SavedPlace => p !== undefined)
+        // Neighborhood label: what area this day is about.
+        const label = representativeName(day.stopIds, trip.places)
 
         return (
           <li key={day.id} className={`day-row${selected ? ' selected' : ''}`}>
@@ -96,7 +98,9 @@ export function DayRail() {
               <span className="day-swatch" style={{ background: dayHexAt(i, uiMode) }} />
               <span className="day-texts">
                 <span className="day-date"><b>Day {i + 1}</b> · {dayLabel(day.date)}</span>
-                <span className="day-lodging">{lodging ? lodging.name : 'No hotel'}</span>
+                <span className="day-lodging">
+                  {label ? `📍 ${label}` : (lodging ? lodging.name : 'No hotel')}
+                </span>
               </span>
               <span className="day-count">{day.stopIds.length}</span>
             </button>

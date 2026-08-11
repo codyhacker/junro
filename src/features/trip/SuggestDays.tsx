@@ -3,7 +3,7 @@ import { useStore } from 'react-redux'
 import { useAppSelector } from '../../app/hooks'
 import type { AppStore } from '../../app/store'
 import { selectClusters } from '../planner/selectors'
-import { selectUnassignedPlaces, selectDays } from './selectors'
+import { selectUnassignedPlaces, selectDays, representativeName } from './selectors'
 import { suggestDays, type Suggestion } from '../planner/suggest'
 import { applySuggestion } from '../planner/applySuggestion'
 import { dayLabel, formatDuration } from './DayRail'
@@ -63,7 +63,7 @@ export function SuggestDays() {
     <div className="suggest-preview">
       <div className="suggest-head">
         <span>Suggested plan</span>
-        <span className="suggest-sub">grouped by neighborhood, ordered by travel time</span>
+        <span className="suggest-sub">one neighborhood per day, from your hotel outward</span>
       </div>
 
       {rows.length === 0 && (
@@ -77,6 +77,9 @@ export function SuggestDays() {
             <li key={a.dayId} className="suggest-row">
               <div className="suggest-row-head">
                 <strong>Day {(dayIndex.get(a.dayId) ?? 0) + 1}</strong> · {dayLabel(day.date)}
+                {representativeName(a.placeIds, trip.places) && (
+                  <span className="suggest-row-hood">📍 {representativeName(a.placeIds, trip.places)}</span>
+                )}
                 <span className="suggest-row-meta">
                   {a.placeIds.length} place{a.placeIds.length === 1 ? '' : 's'} · ~{formatDuration(a.estimatedMinutes * 60)}
                   {a.travelModeOverride === 'driving' && ' · 🚗 drive'}

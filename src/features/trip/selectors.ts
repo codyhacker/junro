@@ -38,6 +38,17 @@ export const selectUnassignedPlaces = createSelector(
   (places, assigned) => places.filter(p => !assigned.has(p.id)),
 )
 
+// A short human label for a group of stops — its must-see, else its first
+// stop. Used as the day/neighborhood name in the rail + suggestion diff
+// (UX_PLAN.md WS5). A real reverse-geocoded name ("Le Marais") can replace
+// this later; the representative place is an honest, API-free stand-in.
+export function representativeName(stopIds: string[], places: SavedPlace[]): string | null {
+  const byId = new Map(places.map(p => [p.id, p]))
+  const stops = stopIds.map(id => byId.get(id)).filter((p): p is SavedPlace => !!p)
+  if (stops.length === 0) return null
+  return (stops.find(p => p.priority === 'must') ?? stops[0]).name
+}
+
 // Ordered coords for a day's route/camera: [lodging, ...stops, lodging].
 // Days without a lodging are just the stops (no loop to close).
 export function dayCoords(day: Day, places: SavedPlace[], lodgings: Lodging[]): [number, number][] {
