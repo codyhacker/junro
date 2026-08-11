@@ -45,9 +45,10 @@ export class MapEngine {
         config: {
           basemap: {
             lightPreset: lightPresetFor(state.mapStyle.uiMode),
-            theme: 'faded',
+            theme: 'monochrome',
             showTransitLabels: false,
             show3dObjects: false,
+            showPedestrianRoads: false,
             showPointOfInterestLabels: false,
           },
         },

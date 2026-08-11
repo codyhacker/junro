@@ -65,13 +65,15 @@ export class StyleController {
 
   private applyStandardConfig(mode: UiMode): void {
     this.map.setConfigProperty('basemap', 'lightPreset', lightPresetFor(mode))
-    // Quiet the basemap so Junro's pins + neighborhood hulls are the figure and
-    // the map is ground (UX_PLAN.md WS1). 'faded' desaturates the whole
-    // basemap; transit + 3D come off (we only pitch during "fly the day");
-    // Standard's own POI icons stay off so they never compete with our pins.
-    this.map.setConfigProperty('basemap', 'theme', 'faded')
+    // Quiet the basemap hard so Junro's pins + neighborhood circles are the
+    // figure and the map is a near-silent ground (UX_PLAN.md WS1). 'monochrome'
+    // desaturates to grayscale; transit + 3D + footpaths come off; Standard's
+    // own POI icons stay off so they never compete with our pins. Road + place
+    // labels stay on (planners need street/area context).
+    this.map.setConfigProperty('basemap', 'theme', 'monochrome')
     this.map.setConfigProperty('basemap', 'showTransitLabels', false)
     this.map.setConfigProperty('basemap', 'show3dObjects', false)
+    this.map.setConfigProperty('basemap', 'showPedestrianRoads', false)
     this.map.setConfigProperty('basemap', 'showPointOfInterestLabels', false)
   }
 

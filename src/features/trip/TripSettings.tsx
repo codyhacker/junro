@@ -5,6 +5,7 @@ import { retrieve } from '../search/searchBoxApi'
 import { setTripDates, addLodging, updateLodging, removeLodging, setTravelMode } from './tripSlice'
 import { setIsochroneVisible } from '../planner/isochroneSlice'
 import { materializeDays, nextIsoDate } from './days'
+import { DateRangePicker } from './DateRangePicker'
 import type { TravelMode } from '../../shared/types/trip'
 
 // Keep a date within [lo, hi] (either bound optional). Typed input can bypass
@@ -85,33 +86,11 @@ export function TripSettings() {
     <div className="trip-settings">
       <div className="trip-settings-group">
         <span className="trip-settings-label">Dates</span>
-        <div className="trip-settings-dates">
-          <input
-            className="junro-input trip-settings-date"
-            type="date"
-            value={start}
-            onChange={e => {
-              const v = e.target.value
-              // A start after the current end would be a negative range — bump
-              // the end to match so the range is always valid.
-              const newEnd = (v && end && v > end) ? v : end
-              setStart(v); setEnd(newEnd)
-              commitDates(v, newEnd)
-            }}
-          />
-          <span className="trip-settings-dash">→</span>
-          <input
-            className="junro-input trip-settings-date"
-            type="date"
-            min={start || undefined}
-            value={end}
-            onChange={e => {
-              const v = clampDate(e.target.value, start)
-              setEnd(v)
-              commitDates(start, v)
-            }}
-          />
-        </div>
+        <DateRangePicker
+          start={start || undefined}
+          end={end || undefined}
+          onChange={(s, e) => { setStart(s); setEnd(e); commitDates(s, e) }}
+        />
         {orphanCount !== null && (
           <>
             <div className="trip-settings-warn">
