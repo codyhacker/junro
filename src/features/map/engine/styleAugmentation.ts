@@ -4,9 +4,9 @@ import type { RootState } from '../../../app/store'
 import { getPalette } from '../../../shared/constants/uiThemes'
 import { dayColorAt } from '../../../shared/constants/dayColors'
 import { selectDays, selectPlaceDayHex, selectPlaces } from '../../trip/selectors'
-import { selectDayRouteRequests, selectClusterHullsGeoJSON } from '../../planner/selectors'
+import { selectDayRouteRequests, selectClusterHullsGeoJSON, selectDayHullsGeoJSON } from '../../planner/selectors'
 import { ISOCHRONE_MINUTES } from '../../planner/isochroneService'
-import { PLACES_SOURCE, DAY_ROUTES_SOURCE, CLUSTERS_SOURCE, ISOCHRONE_SOURCE } from './TripLayerController'
+import { PLACES_SOURCE, DAY_ROUTES_SOURCE, CLUSTERS_SOURCE, DAY_HULLS_SOURCE, ISOCHRONE_SOURCE } from './TripLayerController'
 
 const EMPTY_FC = { type: 'FeatureCollection' as const, features: [] }
 
@@ -46,21 +46,25 @@ const selectPlacesGeoJSON = createSelector(
   }),
 )
 
-// One feature per routed day, carrying the day's colors. A day appears only
-// when the stored route matches what the day currently asks for — a stale or
-// missing route draws nothing rather than a lie (PROJECT_PLAN.md §8 Phase 3).
+// One feature per routed day, carrying the day's colors. Routing is a per-day
+// pull-up (UX_PLAN.md WS4): only the selected day's route draws, unless the
+// user flips "show all routes". A day appears only when its stored route
+// matches what it currently asks for — a stale/missing route draws nothing.
 const selectDayRoutesGeoJSON = createSelector(
   [
     selectDayRouteRequests,
     (s: RootState) => s.planner.dayRoutes,
     selectDays,
     (s: RootState) => s.mapStyle.uiMode,
+    (s: RootState) => s.tripInteraction.selectedDayId,
+    (s: RootState) => s.tripInteraction.showAllRoutes,
   ],
-  (requests, dayRoutes, days, uiMode) => {
+  (requests, dayRoutes, days, uiMode, selectedDayId, showAllRoutes) => {
     const indexByDayId = new Map(days.map((d, i) => [d.id, i]))
     return {
       type: 'FeatureCollection' as const,
       features: requests.flatMap(req => {
+        if (!showAllRoutes && req.dayId !== selectedDayId) return []
         const route = dayRoutes[req.dayId]
         if (!route || route.hash !== req.hash) return []
         const color = dayColorAt(indexByDayId.get(req.dayId) ?? 0)
@@ -83,11 +87,12 @@ export const selectAugmentationSpec = createSelector(
     selectPlacesGeoJSON,
     selectDayRoutesGeoJSON,
     selectClusterHullsGeoJSON,
+    selectDayHullsGeoJSON,
     (s: RootState) => s.isochrone.data,
     (s: RootState) => s.terrain.terrainExaggeration,
     (s: RootState) => s.mapStyle.uiMode,
   ],
-  (placesGeoJSON, dayRoutesGeoJSON, clusterHullsGeoJSON, isochroneData, terrainExaggeration, uiMode): AugmentationSpec => {
+  (placesGeoJSON, dayRoutesGeoJSON, clusterHullsGeoJSON, dayHullsGeoJSON, isochroneData, terrainExaggeration, uiMode): AugmentationSpec => {
     const palette = getPalette(uiMode)
     const sources: Record<string, SourceSpecification> = {
       'mapbox-dem': {
@@ -103,6 +108,10 @@ export const selectAugmentationSpec = createSelector(
       [CLUSTERS_SOURCE]: {
         type: 'geojson',
         data: clusterHullsGeoJSON,
+      } as SourceSpecification,
+      [DAY_HULLS_SOURCE]: {
+        type: 'geojson',
+        data: dayHullsGeoJSON,
       } as SourceSpecification,
       [PLACES_SOURCE]: {
         type: 'geojson',
@@ -155,6 +164,32 @@ export const selectAugmentationSpec = createSelector(
           'line-color': ['get', 'color'],
           'line-width': 1.75,
           'line-opacity': 0.65,
+        },
+      } as LayerSpecification,
+      // Day-group hulls — the always-on grouping visual for the planned state:
+      // a soft day-colored region around each day's stops, so a day reads as a
+      // neighborhood (UX_PLAN.md WS4). The selected day lifts (deeper fill +
+      // stronger outline) to tie the map to the sidebar. Above the cluster
+      // hulls, still slot 'bottom' (beneath pins + routes).
+      {
+        id: 'day-hull-fill',
+        type: 'fill',
+        source: DAY_HULLS_SOURCE,
+        slot: 'bottom',
+        paint: {
+          'fill-color': ['get', 'color'],
+          'fill-opacity': ['case', ['==', ['get', 'selected'], 1], 0.28, 0.14],
+        },
+      } as LayerSpecification,
+      {
+        id: 'day-hull-outline',
+        type: 'line',
+        source: DAY_HULLS_SOURCE,
+        slot: 'bottom',
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': ['case', ['==', ['get', 'selected'], 1], 2.5, 1.5],
+          'line-opacity': ['case', ['==', ['get', 'selected'], 1], 0.9, 0.55],
         },
       } as LayerSpecification,
       // Day routes — slot 'middle' keeps them under the basemap's labels but

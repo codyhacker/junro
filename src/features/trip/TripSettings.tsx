@@ -4,6 +4,7 @@ import { useSuggest } from '../search/useSuggest'
 import { retrieve } from '../search/searchBoxApi'
 import { setTripDates, addLodging, updateLodging, removeLodging, setTravelMode } from './tripSlice'
 import { setIsochroneVisible } from '../planner/isochroneSlice'
+import { setShowAllRoutes } from './tripInteractionSlice'
 import { materializeDays, nextIsoDate } from './days'
 import type { TravelMode } from '../../shared/types/trip'
 
@@ -24,6 +25,7 @@ export function TripSettings() {
   const dispatch = useAppDispatch()
   const trip = useAppSelector(s => s.trip.active)
   const isochroneOn = useAppSelector(s => s.isochrone.visible)
+  const showAllRoutes = useAppSelector(s => s.tripInteraction.showAllRoutes)
 
   const [start, setStart] = useState(trip?.startDate ?? '')
   const [end, setEnd] = useState(trip?.endDate ?? '')
@@ -133,6 +135,14 @@ export function TripSettings() {
             >{m.label}</button>
           ))}
         </div>
+      </div>
+
+      <div className="trip-settings-group">
+        <span className="trip-settings-label">Map</span>
+        <button
+          className={`add-place-cat${showAllRoutes ? ' active' : ''}`}
+          onClick={() => dispatch(setShowAllRoutes(!showAllRoutes))}
+        >🧭 Show all day routes {showAllRoutes ? 'on' : 'off'}</button>
       </div>
 
       {trip.lodgings.length > 0 && (

@@ -5,6 +5,7 @@ import { selectDayBounds } from '../../trip/selectors'
 export const PLACES_SOURCE = 'trip-places'
 export const DAY_ROUTES_SOURCE = 'day-routes'
 export const CLUSTERS_SOURCE = 'trip-clusters'
+export const DAY_HULLS_SOURCE = 'day-hulls'
 export const ISOCHRONE_SOURCE = 'trip-isochrone'
 
 // Feature-state driver for the trip places layer, plus the day camera. The
@@ -41,12 +42,18 @@ export class TripLayerController {
   }
 
   // Frames a day: its stops plus the lodging that anchors it. Bounds come
-  // from a trip selector — the controller stays Mapbox-only.
+  // from a trip selector — the controller stays Mapbox-only. Padding leaves
+  // room for the planning panel so the framed day isn't hidden behind it
+  // (left column on desktop, bottom sheet on mobile).
   focusDay(dayId: string | null): void {
     if (!dayId) return
     const bounds = selectDayBounds(this.store.getState(), dayId)
     if (!bounds) return
-    this.map.fitBounds(bounds, { padding: 80, maxZoom: 15.5, duration: 900 })
+    const wide = window.innerWidth > 640
+    const padding = wide
+      ? { top: 70, right: 70, bottom: 70, left: 400 }
+      : { top: 70, right: 40, bottom: 420, left: 40 }
+    this.map.fitBounds(bounds, { padding, maxZoom: 15.5, duration: 900 })
   }
 
   // Feature-state is wiped when a source is re-added (e.g. HMR/style reset).

@@ -74,7 +74,8 @@ function centroidOf(coords: [number, number][]): [number, number] {
 
 // A soft rounded blob for a cluster: hull the points (convex when ≥3, else the
 // point/segment itself), then buffer outward so the edge sits past the pins.
-function buildHull(coords: [number, number][]): Polygon | MultiPolygon | null {
+// Exported so day-groups (assigned stops) can wear the same treatment.
+export function buildHull(coords: [number, number][]): Polygon | MultiPolygon | null {
   let base: Feature
   if (coords.length >= 3) {
     const hull = convex(featureCollection(coords.map(c => point(c))))
