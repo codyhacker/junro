@@ -930,3 +930,19 @@ html, body {
 .scrapbook-collapse:hover { background: rgba(var(--accent-rgb), 0.12); color: var(--text-primary); }
 .scrapbook.collapsed { flex: 0 0 auto; }
 .scrapbook.collapsed .scrapbook-head { border-bottom: none; }
+
+/* Hotel-row reach toggle (isochrone, demoted from a standalone toggle) */
+.trip-settings-reach {
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1;
+  padding: 3px 7px;
+  border-radius: 7px;
+  cursor: pointer;
+  margin-left: auto;
+  margin-right: 4px;
+}
+.trip-settings-reach.active { background: var(--accent-hex); color: #fff; border-color: var(--accent-hex); }
+.trip-settings-reach:hover:not(.active) { background: rgba(var(--accent-rgb), 0.12); }

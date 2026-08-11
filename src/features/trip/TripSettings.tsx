@@ -4,7 +4,6 @@ import { useSuggest } from '../search/useSuggest'
 import { retrieve } from '../search/searchBoxApi'
 import { setTripDates, addLodging, updateLodging, removeLodging, setTravelMode } from './tripSlice'
 import { setIsochroneVisible } from '../planner/isochroneSlice'
-import { setShowAllRoutes } from './tripInteractionSlice'
 import { materializeDays, nextIsoDate } from './days'
 import type { TravelMode } from '../../shared/types/trip'
 
@@ -25,7 +24,6 @@ export function TripSettings() {
   const dispatch = useAppDispatch()
   const trip = useAppSelector(s => s.trip.active)
   const isochroneOn = useAppSelector(s => s.isochrone.visible)
-  const showAllRoutes = useAppSelector(s => s.tripInteraction.showAllRoutes)
 
   const [start, setStart] = useState(trip?.startDate ?? '')
   const [end, setEnd] = useState(trip?.endDate ?? '')
@@ -48,19 +46,18 @@ export function TripSettings() {
   const tripEnd = trip.endDate
   const checkoutMax = tripEnd ? nextIsoDate(tripEnd) : undefined
 
-  const datesChanged = start !== (trip.startDate ?? '') || end !== (trip.endDate ?? '')
-
-  function applyDates() {
+  // Live-apply dates: commit on any valid change, with no "Apply" button. The
+  // only time we hold is when a change would strand stops — then we ask once
+  // (PROJECT_PLAN.md §4: shrink = orphan back to the scrapbook).
+  function commitDates(s: string, e: string, force = false) {
     if (!trip) return
-    // Shrinking the range strands stops — count them and confirm first
-    // (PROJECT_PLAN.md §4: shrink = orphan back to the scrapbook).
-    const { orphanedStopIds } = materializeDays(trip.days, start || undefined, end || undefined, trip.lodgings)
-    if (orphanedStopIds.length > 0 && orphanCount === null) {
-      setOrphanCount(orphanedStopIds.length)
-      return
-    }
+    const startDate = s || undefined
+    const endDate = e || undefined
+    if (startDate && endDate && endDate < startDate) return   // mid-edit, wait
+    const { orphanedStopIds } = materializeDays(trip.days, startDate, endDate, trip.lodgings)
+    if (orphanedStopIds.length > 0 && !force) { setOrphanCount(orphanedStopIds.length); return }
     setOrphanCount(null)
-    dispatch(setTripDates({ startDate: start || undefined, endDate: end || undefined }))
+    dispatch(setTripDates({ startDate, endDate }))
   }
 
   async function pickHotel(mapboxId: string) {
@@ -95,11 +92,11 @@ export function TripSettings() {
             value={start}
             onChange={e => {
               const v = e.target.value
-              setStart(v)
               // A start after the current end would be a negative range — bump
               // the end to match so the range is always valid.
-              if (v && end && v > end) setEnd(v)
-              setOrphanCount(null)
+              const newEnd = (v && end && v > end) ? v : end
+              setStart(v); setEnd(newEnd)
+              commitDates(v, newEnd)
             }}
           />
           <span className="trip-settings-dash">→</span>
@@ -108,19 +105,23 @@ export function TripSettings() {
             type="date"
             min={start || undefined}
             value={end}
-            onChange={e => { setEnd(clampDate(e.target.value, start)); setOrphanCount(null) }}
+            onChange={e => {
+              const v = clampDate(e.target.value, start)
+              setEnd(v)
+              commitDates(start, v)
+            }}
           />
         </div>
         {orphanCount !== null && (
-          <div className="trip-settings-warn">
-            {orphanCount} assigned {orphanCount === 1 ? 'place goes' : 'places go'} back to the
-            scrapbook. Apply anyway?
-          </div>
-        )}
-        {datesChanged && (
-          <button className="junro-primary trip-settings-apply" onClick={applyDates}>
-            {orphanCount !== null ? 'Yes, apply' : 'Apply dates'}
-          </button>
+          <>
+            <div className="trip-settings-warn">
+              {orphanCount} assigned {orphanCount === 1 ? 'place goes' : 'places go'} back to the
+              scrapbook.
+            </div>
+            <button className="junro-primary trip-settings-apply" onClick={() => commitDates(start, end, true)}>
+              Shorten anyway
+            </button>
+          </>
         )}
       </div>
 
@@ -138,29 +139,17 @@ export function TripSettings() {
       </div>
 
       <div className="trip-settings-group">
-        <span className="trip-settings-label">Map</span>
-        <button
-          className={`add-place-cat${showAllRoutes ? ' active' : ''}`}
-          onClick={() => dispatch(setShowAllRoutes(!showAllRoutes))}
-        >🧭 Show all day routes {showAllRoutes ? 'on' : 'off'}</button>
-      </div>
-
-      {trip.lodgings.length > 0 && (
-        <div className="trip-settings-group">
-          <span className="trip-settings-label">Reachability</span>
-          <button
-            className={`add-place-cat${isochroneOn ? ' active' : ''}`}
-            onClick={() => dispatch(setIsochroneVisible(!isochroneOn))}
-          >🥾 Walk reach from hotel (15 · 30 · 45 min)</button>
-        </div>
-      )}
-
-      <div className="trip-settings-group">
         <span className="trip-settings-label">Lodging</span>
         {trip.lodgings.map(l => (
           <div key={l.id} className="trip-settings-lodging">
             <div className="trip-settings-lodging-head">
               <span className="trip-settings-lodging-name">{l.name}</span>
+              <button
+                className={`trip-settings-reach${isochroneOn ? ' active' : ''}`}
+                aria-label="Toggle walk reach from this hotel"
+                title="Walk reach — 15 · 30 · 45 min"
+                onClick={() => dispatch(setIsochroneVisible(!isochroneOn))}
+              >◎</button>
               <button
                 className="trip-settings-remove"
                 aria-label={`Remove ${l.name}`}

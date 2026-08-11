@@ -77,6 +77,12 @@ Items 1–3 and 6 are an afternoon and remove most of the reported busyness. 4�
 
 ---
 
+## Decisions (resolved 2026-08-11)
+
+- **Isochrone:** ✅ demote from a settings toggle to a hotel-contextual action.
+- **Per-pin day ring:** ✅ **keep** (user preference) — the pin keeps its day ring alongside the circle.
+- **Proceed:** ✅ build the quick wins now (cut show-all-routes, demote isochrone, live-apply dates, differentiate cluster vs day circles).
+
 ## 5. Decisions to make before building
 
 1. **Isochrone:** demote to a hotel-tap action, or cut entirely for v1? (Recommend demote — it's a nice glance, just not a persistent toggle.)

@@ -6,7 +6,6 @@ interface TripInteractionState {
   selectedPlaceId: string | null
   selectedDayId: string | null
   flyDayId: string | null       // day whose route is being camera-walked
-  showAllRoutes: boolean        // off by default — routes are a per-day pull-up
 }
 
 const initialState: TripInteractionState = {
@@ -14,7 +13,6 @@ const initialState: TripInteractionState = {
   selectedPlaceId: null,
   selectedDayId: null,
   flyDayId: null,
-  showAllRoutes: false,
 }
 
 const tripInteractionSlice = createSlice({
@@ -33,11 +31,8 @@ const tripInteractionSlice = createSlice({
     setFlyDay(state, action: PayloadAction<string | null>) {
       state.flyDayId = action.payload
     },
-    setShowAllRoutes(state, action: PayloadAction<boolean>) {
-      state.showAllRoutes = action.payload
-    },
   },
 })
 
-export const { setHoveredPlace, setSelectedPlace, setSelectedDay, setFlyDay, setShowAllRoutes } = tripInteractionSlice.actions
+export const { setHoveredPlace, setSelectedPlace, setSelectedDay, setFlyDay } = tripInteractionSlice.actions
 export default tripInteractionSlice.reducer

@@ -47,9 +47,9 @@ const selectPlacesGeoJSON = createSelector(
 )
 
 // One feature per routed day, carrying the day's colors. Routing is a per-day
-// pull-up (UX_PLAN.md WS4): only the selected day's route draws, unless the
-// user flips "show all routes". A day appears only when its stored route
-// matches what it currently asks for — a stale/missing route draws nothing.
+// pull-up (UX_PLAN.md WS4): only the *selected* day's route draws — routing is
+// available but never the central visual. A day appears only when its stored
+// route matches what it currently asks for — a stale/missing route draws nothing.
 const selectDayRoutesGeoJSON = createSelector(
   [
     selectDayRouteRequests,
@@ -57,14 +57,13 @@ const selectDayRoutesGeoJSON = createSelector(
     selectDays,
     (s: RootState) => s.mapStyle.uiMode,
     (s: RootState) => s.tripInteraction.selectedDayId,
-    (s: RootState) => s.tripInteraction.showAllRoutes,
   ],
-  (requests, dayRoutes, days, uiMode, selectedDayId, showAllRoutes) => {
+  (requests, dayRoutes, days, uiMode, selectedDayId) => {
     const indexByDayId = new Map(days.map((d, i) => [d.id, i]))
     return {
       type: 'FeatureCollection' as const,
       features: requests.flatMap(req => {
-        if (!showAllRoutes && req.dayId !== selectedDayId) return []
+        if (req.dayId !== selectedDayId) return []
         const route = dayRoutes[req.dayId]
         if (!route || route.hash !== req.hash) return []
         const color = dayColorAt(indexByDayId.get(req.dayId) ?? 0)
@@ -152,7 +151,7 @@ export const selectAugmentationSpec = createSelector(
         slot: 'bottom',
         paint: {
           'fill-color': ['get', 'color'],
-          'fill-opacity': 0.16,
+          'fill-opacity': 0.09,      // lighter than a planned day — "to plan"
         },
       } as LayerSpecification,
       {
@@ -162,8 +161,9 @@ export const selectAugmentationSpec = createSelector(
         slot: 'bottom',
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': 1.75,
-          'line-opacity': 0.65,
+          'line-width': 1.5,
+          'line-opacity': 0.55,
+          'line-dasharray': [2, 2],  // dashed = unplanned, vs the solid day circles
         },
       } as LayerSpecification,
       // Day-group hulls — the always-on grouping visual for the planned state:
