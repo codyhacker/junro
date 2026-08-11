@@ -19,6 +19,12 @@ export function toIsoDate(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10)
 }
 
+// The calendar day after `date` — the "checkout is the morning after the last
+// night" boundary, shared by clampLodgings and the date-picker bounds.
+export function nextIsoDate(date: string): string {
+  return toIsoDate(toUtcMs(date) + DAY_MS)
+}
+
 // Inclusive of both ends — a trip from the 1st to the 3rd is three days.
 export function enumerateDates(startDate: string, endDate: string): string[] {
   const start = toUtcMs(startDate)
@@ -48,7 +54,7 @@ export function clampLodgings(
   endDate: string | undefined,
 ): Lodging[] {
   if (!startDate || !endDate) return lodgings
-  const dayAfterEnd = toIsoDate(toUtcMs(endDate) + DAY_MS)
+  const dayAfterEnd = nextIsoDate(endDate)
   const clamp = (d: string, lo: string, hi: string) => (d < lo ? lo : d > hi ? hi : d)
   return lodgings.map(l => {
     const checkIn = clamp(l.checkIn, startDate, endDate)

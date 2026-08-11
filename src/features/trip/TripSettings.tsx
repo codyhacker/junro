@@ -4,8 +4,13 @@ import { useSuggest } from '../search/useSuggest'
 import { retrieve } from '../search/searchBoxApi'
 import { setTripDates, addLodging, updateLodging, removeLodging, setTravelMode } from './tripSlice'
 import { setIsochroneVisible } from '../planner/isochroneSlice'
-import { materializeDays } from './days'
+import { materializeDays, nextIsoDate } from './days'
 import type { TravelMode } from '../../shared/types/trip'
+
+// Keep a date within [lo, hi] (either bound optional). Typed input can bypass
+// an <input min/max>, so we clamp on change too.
+const clampDate = (v: string, lo?: string, hi?: string) =>
+  !v ? v : lo && v < lo ? lo : hi && v > hi ? hi : v
 
 const MODES: { value: TravelMode; label: string }[] = [
   { value: 'walking', label: '🚶 Walk' },
@@ -35,6 +40,12 @@ export function TripSettings() {
 
   if (!trip) return null
 
+  // Hotel stays are bound to the trip window: check-in on any trip night
+  // [start, end]; check-out the morning after, up to end + 1.
+  const tripStart = trip.startDate
+  const tripEnd = trip.endDate
+  const checkoutMax = tripEnd ? nextIsoDate(tripEnd) : undefined
+
   const datesChanged = start !== (trip.startDate ?? '') || end !== (trip.endDate ?? '')
 
   function applyDates() {
@@ -56,8 +67,10 @@ export function TripSettings() {
     clear()
     if (!place) return
     setHotel({ name: place.name, coord: place.coord })
+    // Default to covering the whole trip: check in on the first day, out the
+    // morning after the last night (end + 1) so no night is left unhoused.
     setCheckIn(c => c || trip?.startDate || '')
-    setCheckOut(c => c || trip?.endDate || '')
+    setCheckOut(c => c || (trip?.endDate ? nextIsoDate(trip.endDate) : ''))
   }
 
   function saveHotel() {
@@ -78,14 +91,22 @@ export function TripSettings() {
             className="junro-input trip-settings-date"
             type="date"
             value={start}
-            onChange={e => { setStart(e.target.value); setOrphanCount(null) }}
+            onChange={e => {
+              const v = e.target.value
+              setStart(v)
+              // A start after the current end would be a negative range — bump
+              // the end to match so the range is always valid.
+              if (v && end && v > end) setEnd(v)
+              setOrphanCount(null)
+            }}
           />
           <span className="trip-settings-dash">→</span>
           <input
             className="junro-input trip-settings-date"
             type="date"
+            min={start || undefined}
             value={end}
-            onChange={e => { setEnd(e.target.value); setOrphanCount(null) }}
+            onChange={e => { setEnd(clampDate(e.target.value, start)); setOrphanCount(null) }}
           />
         </div>
         {orphanCount !== null && (
@@ -140,15 +161,17 @@ export function TripSettings() {
               <input
                 className="junro-input trip-settings-date"
                 type="date"
+                min={tripStart} max={tripEnd}
                 value={l.checkIn}
-                onChange={e => dispatch(updateLodging({ id: l.id, patch: { checkIn: e.target.value } }))}
+                onChange={e => dispatch(updateLodging({ id: l.id, patch: { checkIn: clampDate(e.target.value, tripStart, tripEnd) } }))}
               />
               <span className="trip-settings-dash">→</span>
               <input
                 className="junro-input trip-settings-date"
                 type="date"
+                min={l.checkIn || tripStart} max={checkoutMax}
                 value={l.checkOut}
-                onChange={e => dispatch(updateLodging({ id: l.id, patch: { checkOut: e.target.value } }))}
+                onChange={e => dispatch(updateLodging({ id: l.id, patch: { checkOut: clampDate(e.target.value, l.checkIn || tripStart, checkoutMax) } }))}
               />
             </div>
           </div>
@@ -187,15 +210,17 @@ export function TripSettings() {
               <input
                 className="junro-input trip-settings-date"
                 type="date"
+                min={tripStart} max={tripEnd}
                 value={checkIn}
-                onChange={e => setCheckIn(e.target.value)}
+                onChange={e => setCheckIn(clampDate(e.target.value, tripStart, tripEnd))}
               />
               <span className="trip-settings-dash">→</span>
               <input
                 className="junro-input trip-settings-date"
                 type="date"
+                min={checkIn || tripStart} max={checkoutMax}
                 value={checkOut}
-                onChange={e => setCheckOut(e.target.value)}
+                onChange={e => setCheckOut(clampDate(e.target.value, checkIn || tripStart, checkoutMax))}
               />
             </div>
             <button
