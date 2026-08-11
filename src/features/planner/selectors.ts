@@ -3,7 +3,7 @@ import type { RootState } from '../../app/store'
 import type { TravelMode } from '../../shared/types/trip'
 import { DEFAULT_PREFS } from '../../shared/types/trip'
 import { dayCoords, selectDays, selectLodgings, selectPlaces, selectUnassignedPlaces } from '../trip/selectors'
-import { clusterPlaces, buildHull, type ClusterResult } from './clustering'
+import { clusterPlaces, buildAreaCircle, type ClusterResult } from './clustering'
 import { dayColorAt } from '../../shared/constants/dayColors'
 import { routeHash } from './routeHash'
 
@@ -72,7 +72,7 @@ export const selectDayHullsGeoJSON = createSelector(
       features: days.flatMap((day, i) => {
         const coords = day.stopIds.map(id => byId.get(id)?.coord).filter((c): c is [number, number] => !!c)
         if (coords.length < 2) return []      // a single stop isn't a region
-        const hull = buildHull(coords)
+        const hull = buildAreaCircle(coords)
         if (!hull) return []
         const color = dayColorAt(i)
         return [{

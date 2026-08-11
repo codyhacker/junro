@@ -258,6 +258,18 @@ html, body {
 
 .add-place {
   width: 100%;
+  position: relative;
+}
+/* Float the search results over the panel below instead of pushing it down. */
+.add-place .junro-suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin-top: 0;
+  z-index: 25;
+  max-height: 62vh;
+  overflow-y: auto;
 }
 .add-place-confirm {
   display: flex;
@@ -724,17 +736,30 @@ html, body {
   gap: 6px;
 }
 
-/* Mobile: the left column becomes a bottom sheet so the map stays usable. */
+/* Mobile: search floats at the top, the plan is a bottom sheet, the map shows
+   between them. `display: contents` lets the two children position against the
+   map-container independently. */
 @media (max-width: 640px) {
-  .left-panel {
-    top: auto;
-    left: 8px;
-    right: 8px;
-    bottom: 8px;
+  .left-panel { display: contents; }
+  .add-place {
+    position: absolute;
+    top: 8px; left: 8px; right: 8px;
     width: auto;
-    max-height: 60dvh;
+    z-index: 21;
   }
-  .place-panel { bottom: calc(60dvh + 16px); }
+  .scrapbook {
+    position: absolute;
+    left: 8px; right: 8px; bottom: 8px;
+    width: auto;
+    max-height: 52dvh;
+    z-index: 20;
+  }
+  .scrapbook.collapsed { max-height: none; }
+  .place-panel {
+    left: 8px; right: 8px;
+    width: auto;
+    bottom: calc(52dvh + 14px);
+  }
 }
 .undo-btn {
   width: 36px;
@@ -890,3 +915,18 @@ html, body {
 .day-head[aria-expanded="true"] .day-count { display: none; }
 
 .suggest-row-hood { display: block; font-size: 12px; color: var(--accent-hex); font-weight: 600; margin-top: 1px; }
+
+/* ─── Scrapbook collapse ─────────────────────────────────────────────────── */
+.scrapbook-collapse {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.scrapbook-collapse:hover { background: rgba(var(--accent-rgb), 0.12); color: var(--text-primary); }
+.scrapbook.collapsed { flex: 0 0 auto; }
+.scrapbook.collapsed .scrapbook-head { border-bottom: none; }

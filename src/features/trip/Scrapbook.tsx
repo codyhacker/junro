@@ -21,19 +21,26 @@ export function Scrapbook() {
   const days = useAppSelector(selectDays)
   const unassigned = useAppSelector(selectUnassignedPlaces)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
 
   if (!trip) return null
   const places = trip.places
 
   return (
-        <aside className="scrapbook">
+        <aside className={`scrapbook${collapsed ? ' collapsed' : ''}`}>
           <div className="scrapbook-head">
             <div className="scrapbook-head-row">
+              <button
+                className="scrapbook-collapse"
+                aria-label={collapsed ? 'Expand plan' : 'Collapse plan'}
+                aria-expanded={!collapsed}
+                onClick={() => setCollapsed(c => !c)}
+              >{collapsed ? '▸' : '▾'}</button>
               <span className="scrapbook-title">{trip.name}</span>
               <button
                 className={`scrapbook-settings${settingsOpen ? ' active' : ''}`}
                 aria-label="Trip settings"
-                onClick={() => setSettingsOpen(o => !o)}
+                onClick={() => { setSettingsOpen(o => !o); setCollapsed(false) }}
               >⚙</button>
             </div>
             <span className="scrapbook-sub">{places.length === 0
@@ -41,7 +48,7 @@ export function Scrapbook() {
               : `${places.length} place${places.length === 1 ? '' : 's'}`}</span>
           </div>
 
-          <div className="scrapbook-body">
+          {!collapsed && <div className="scrapbook-body">
             {settingsOpen && <TripSettings />}
 
             {/* Discoverability: planning is invisible until dates materialize
@@ -105,7 +112,7 @@ export function Scrapbook() {
             )}
 
             <TripActions />
-          </div>
+          </div>}
         </aside>
   )
 }

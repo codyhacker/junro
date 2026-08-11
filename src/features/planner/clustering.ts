@@ -1,7 +1,6 @@
-import { convex } from '@turf/convex'
 import buffer from '@turf/buffer'
-import { featureCollection, point, lineString } from '@turf/helpers'
-import type { Feature, Polygon, MultiPolygon } from 'geojson'
+import { point } from '@turf/helpers'
+import type { Polygon, MultiPolygon } from 'geojson'
 import { haversineKm } from '../../shared/lib/geo'
 
 // Stage 1 — neighborhood discovery (PROJECT_PLAN.md §7). Pure and synchronous:
@@ -72,21 +71,17 @@ function centroidOf(coords: [number, number][]): [number, number] {
   return [sum[0] / coords.length, sum[1] / coords.length]
 }
 
-// A soft rounded blob for a cluster: hull the points (convex when ≥3, else the
-// point/segment itself), then buffer outward so the edge sits past the pins.
-// Exported so day-groups (assigned stops) can wear the same treatment.
-export function buildHull(coords: [number, number][]): Polygon | MultiPolygon | null {
-  let base: Feature
-  if (coords.length >= 3) {
-    const hull = convex(featureCollection(coords.map(c => point(c))))
-    base = hull ?? lineString(coords)      // collinear points → fall back to a line
-  } else if (coords.length === 2) {
-    base = lineString(coords)
-  } else {
-    base = point(coords[0])
-  }
-  const padded = buffer(base, HULL_PAD_KM, { units: 'kilometers', steps: 12 })
-  return (padded?.geometry as Polygon | MultiPolygon | undefined) ?? null
+// A day-colored circle around a group of pins: centered on the centroid, sized
+// to enclose the group with a little breathing room, floored so a tight cluster
+// still reads. Circles are cleaner than tight polygon hulls for "this is the
+// area for this day". Exported so day-groups wear the same treatment.
+export function buildAreaCircle(coords: [number, number][]): Polygon | MultiPolygon | null {
+  if (coords.length === 0) return null
+  const center = centroidOf(coords)
+  let radiusKm = 0.18                       // floor so single/tight clusters still show
+  for (const c of coords) radiusKm = Math.max(radiusKm, haversineKm(center, c) + HULL_PAD_KM)
+  const circle = buffer(point(center), radiusKm, { units: 'kilometers', steps: 40 })
+  return (circle?.geometry as Polygon | MultiPolygon | undefined) ?? null
 }
 
 function assemble(members: ClusterInput[], idPrefix: string, index: number, isExcursion: boolean): Cluster {
@@ -95,7 +90,7 @@ function assemble(members: ClusterInput[], idPrefix: string, index: number, isEx
     id: `${idPrefix}${index}`,
     placeIds: members.map(m => m.id),
     centroid: centroidOf(coords),
-    hull: buildHull(coords),
+    hull: buildAreaCircle(coords),
     isExcursion,
   }
 }
