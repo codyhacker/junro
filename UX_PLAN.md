@@ -1,5 +1,9 @@
 # Junro — UX Improvement Plan
 
+> **Status: all five workstreams shipped 2026-08-11** and live. WS5's neighborhood
+> names use an API-free place-based label for now; real reverse-geocoded names
+> are an offered follow-up behind the same `representativeName` call.
+
 *Companion to [PROJECT_PLAN.md](PROJECT_PLAN.md). v1 is feature-complete; this plan is a focused pass on how the app **feels** to use. Drafted 2026-08-11 from six pieces of feedback.*
 
 ## The through-line
