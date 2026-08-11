@@ -8,6 +8,7 @@ import { CATEGORY_META } from './categoryMeta'
 import { selectDays, selectUnassignedPlaces } from './selectors'
 import { TripSettings } from './TripSettings'
 import { DayRail, dayLabel } from './DayRail'
+import { TripActions } from '../viewer/TripActions'
 import { SuggestDays } from './SuggestDays'
 
 // The planning rail (right drawer): trip settings, the day list, and the
@@ -114,6 +115,8 @@ export function Scrapbook() {
                 </ul>
               </>
             )}
+
+            <TripActions />
           </div>
         </aside>
       )}

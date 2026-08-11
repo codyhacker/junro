@@ -15,7 +15,6 @@
     "@fontsource-variable/geologica": "^5.2.8",
     "@mapbox/mapbox-gl-style-spec": "^14.22.0",
     "@reduxjs/toolkit": "^2.11.2",
-    "@turf/along": "^7.4.0",
     "@turf/buffer": "^7.4.0",
     "@turf/clusters-kmeans": "^7.4.0",
     "@turf/convex": "^7.4.0",

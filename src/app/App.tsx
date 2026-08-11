@@ -6,8 +6,16 @@ import { AddPlace } from '../features/trip/AddPlace'
 import { Scrapbook } from '../features/trip/Scrapbook'
 import { PlacePanel } from '../features/trip/PlacePanel'
 import { UndoBar } from '../features/trip/UndoBar'
+import { ItineraryView } from '../features/viewer/ItineraryView'
+import { TodayView } from '../features/viewer/TodayView'
 
 function App() {
+  // Viewer mode is a distinct, read-only entry (no map engine — works
+  // token-less and offline; the basis for the future public share page).
+  const view = new URLSearchParams(window.location.search).get('view')
+  if (view === 'itinerary') return <ItineraryView />
+  if (view === 'today') return <TodayView />
+
   return (
     <div className="map-container">
       <MapView>

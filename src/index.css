@@ -782,3 +782,78 @@ html, body {
   color: #fff;
   border-color: var(--accent-hex);
 }
+
+/* ─── Trip actions (rail footer) ─────────────────────────────────────────── */
+.trip-actions { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(var(--accent-rgb), 0.18); }
+.trip-actions-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 8px; }
+.trip-actions-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.trip-action {
+  font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 8px;
+  border: 1px solid rgba(var(--accent-rgb), 0.28); background: rgba(var(--accent-rgb), 0.06);
+  color: var(--text-primary); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+}
+.trip-action:hover { background: rgba(var(--accent-rgb), 0.14); }
+.trip-actions-error { margin-top: 6px; font-size: 12px; color: var(--accent-hex); }
+
+/* ─── Viewer (itinerary + today), read-only document pages ───────────────── */
+.viewer {
+  min-height: 100vh; box-sizing: border-box; background: rgb(var(--bg-deep-rgb));
+  color: var(--text-primary); padding: 24px 20px 60px;
+  font-family: var(--font-body, system-ui, sans-serif);
+}
+.viewer-empty { padding: 40px 20px; text-align: center; color: var(--text-secondary); }
+.viewer-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; max-width: 720px; margin: 0 auto 24px; }
+.viewer-head h1 { font-family: var(--font-display, serif); font-size: 28px; color: var(--accent-hex); margin: 0; }
+.viewer-sub { color: var(--text-secondary); font-size: 14px; margin: 4px 0 0; }
+.viewer-actions { display: flex; gap: 10px; align-items: center; }
+.viewer-actions button, .viewer-actions a {
+  font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer; text-decoration: none;
+  border: 1px solid rgba(var(--accent-rgb), 0.3); background: rgba(var(--accent-rgb), 0.08); color: var(--text-primary);
+}
+
+/* Itinerary */
+.itinerary { }
+.itin-day { max-width: 720px; margin: 0 auto 28px; padding-bottom: 18px; border-bottom: 1px solid rgba(var(--text-muted-rgb, 150,150,150), 0.15); }
+.itin-day h2 { font-size: 17px; margin: 0 0 12px; display: flex; align-items: baseline; gap: 8px; }
+.itin-day-n { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-hex); }
+.itin-day-hotel { color: var(--text-secondary); font-weight: 400; font-size: 14px; }
+.itin-stops { list-style: none; margin: 0; padding: 0; }
+.itin-stop { display: flex; gap: 14px; padding: 8px 0; }
+.itin-time { flex: 0 0 74px; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text-secondary); font-size: 13.5px; padding-top: 1px; }
+.itin-fixed { color: var(--accent-hex); }
+.itin-body { display: flex; flex-direction: column; gap: 2px; }
+.itin-name { font-weight: 600; }
+.itin-addr { font-size: 12.5px; color: var(--text-muted); }
+.itin-note { font-size: 13px; color: var(--text-secondary); font-style: italic; }
+.itin-return { max-width: 720px; margin: 4px auto 0; color: var(--text-muted); font-size: 13px; }
+.itin-empty, .today .viewer-empty { color: var(--text-muted); font-size: 13px; }
+
+/* Today (mobile) */
+.today { max-width: 460px; margin: 0 auto; }
+.today-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.today-back { font-size: 22px; text-decoration: none; color: var(--text-secondary); padding: 4px 8px; }
+.today-daynav { flex: 1; display: flex; align-items: center; justify-content: space-between; }
+.today-daynav button { font-size: 22px; background: none; border: none; color: var(--accent-hex); cursor: pointer; padding: 0 10px; }
+.today-daynav button:disabled { opacity: 0.3; cursor: default; }
+.today-daynav strong { font-size: 17px; margin-right: 8px; }
+.today-date { color: var(--text-secondary); font-size: 14px; }
+.today-hotel { background: rgba(var(--accent-rgb), 0.08); border-radius: 10px; padding: 8px 12px; font-size: 14px; margin-bottom: 14px; }
+.today-stops { list-style: none; margin: 0; padding: 0; }
+.today-stop { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; position: relative; }
+.today-time { flex: 0 0 66px; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--accent-hex); font-size: 14px; }
+.today-stop-body { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.today-stop-name { font-weight: 600; font-size: 15px; }
+.today-stop-addr { font-size: 12.5px; color: var(--text-muted); }
+.today-stop-map { font-size: 20px; text-decoration: none; color: var(--accent-hex); padding: 0 4px; }
+.today-directions {
+  display: block; text-align: center; margin-top: 18px; padding: 12px; border-radius: 12px;
+  background: var(--accent-hex); color: #fff; font-weight: 700; text-decoration: none; font-size: 15px;
+}
+
+/* Print: clean white document */
+@media print {
+  .no-print { display: none !important; }
+  .viewer { background: #fff !important; color: #111 !important; padding: 0; }
+  .viewer-head h1, .itin-day-n, .itin-time { color: #111 !important; }
+  .itin-day { break-inside: avoid; }
+}

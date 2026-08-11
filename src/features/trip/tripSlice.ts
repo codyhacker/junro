@@ -39,6 +39,12 @@ const tripSlice = createSlice({
   name: 'trip',
   initialState,
   reducers: {
+    // Load a full trip document (from JSON import) as the active trip. The
+    // persistence listener saves it; migrateTrip has already validated it.
+    tripLoaded(state, action: PayloadAction<Trip>) {
+      state.active = action.payload
+    },
+
     tripHydrated(state, action: PayloadAction<{ summaries: TripSummary[]; active: Trip | null }>) {
       state.hydrated = true
       state.summaries = action.payload.summaries
@@ -234,7 +240,7 @@ const tripSlice = createSlice({
 })
 
 export const {
-  tripHydrated, createTrip, addPlace, updatePlace, removePlace,
+  tripHydrated, tripLoaded, createTrip, addPlace, updatePlace, removePlace,
   setTripDates, addLodging, updateLodging, removeLodging, assignStop, moveStop,
   setDayStops, applyDaySuggestions, setTravelMode, setDayTravelMode,
 } = tripSlice.actions
