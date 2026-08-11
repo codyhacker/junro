@@ -292,7 +292,7 @@ Copy `app/`, `engine/` (minus Park/Trail controllers), `shell/`, `shared/constan
 
 **Phase 2 — Lodging, dates & days** ✅ *shipped 2026-08-09 (Opus agent build, Fable-reviewed + Opus-QA'd against the Paris fixture)*
 Date range → materialized days; lodging with check-in/out and date-resolution to days; manual stop assignment (rail drag or detail-tab picker); day-color coding on pins; DAY_FOCUS fitBounds; date-change reconcile (orphan → scrapbook).
-✓ *Verify:* 5-day trip, 2 hotels; each day resolves the correct lodging; assigning a place recolors its pin; shrinking the trip returns orphaned stops to the scrapbook with confirmation. — *all passed; known follow-up: lodging checkOut isn't clamped on shrink (cosmetic, tracked).*
+✓ *Verify:* 5-day trip, 2 hotels; each day resolves the correct lodging; assigning a place recolors its pin; shrinking the trip returns orphaned stops to the scrapbook with confirmation. — *all passed; the lodging-checkOut-on-shrink follow-up is now fixed (clampLodgings, 2026-08-11).*
 
 **Phase 3 — Routing** ✅ *shipped 2026-08-09 (Opus agent build; both critical verifies passed under QA)*
 RoutingService (Directions + cache + abort discipline); per-day hotel→stops→hotel route lines with day colors; leg/total times in Day tab; walking/driving toggle (trip default + per-day override); rough transit hints on legs > ~1.5 km; manual reorder re-solves only that day.
