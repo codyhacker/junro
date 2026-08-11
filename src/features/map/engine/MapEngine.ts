@@ -14,6 +14,7 @@ import { getPalette, applyUiTheme, lightPresetFor } from '../../../shared/consta
 import type { MapCommand } from './commands'
 import { StyleController } from './StyleController'
 import { TripLayerController } from './TripLayerController'
+import { RoutePreviewController } from './RoutePreviewController'
 import { registerPointerRouter } from './pointer/registerPointerRouter'
 import { placesLayer } from './pointer/layers/places'
 
@@ -23,6 +24,7 @@ export class MapEngine {
 
   private style: StyleController
   private tripLayer: TripLayerController
+  private routePreview: RoutePreviewController
   private unsubPointer: () => void
 
   constructor(container: HTMLDivElement, store: AppStore) {
@@ -54,6 +56,7 @@ export class MapEngine {
 
     this.style = new StyleController(this.map, store)
     this.tripLayer = new TripLayerController(this.map, store)
+    this.routePreview = new RoutePreviewController(this.map, store)
 
     this.unsubPointer = registerPointerRouter(this.map, store, [placesLayer])
 
@@ -78,6 +81,7 @@ export class MapEngine {
   }
 
   destroy(): void {
+    this.routePreview.destroy()
     this.unsubPointer()
     this.map.remove()
   }
@@ -95,6 +99,8 @@ export class MapEngine {
       case 'PLACE_HOVER':          return this.tripLayer.setHover(cmd.placeId)
       case 'PLACE_SELECT':         return this.tripLayer.setSelected(cmd.placeId)
       case 'DAY_FOCUS':            return this.tripLayer.focusDay(cmd.dayId)
+      case 'START_FLY_DAY':        return this.routePreview.start(cmd.dayId)
+      case 'STOP_FLY_DAY':         return this.routePreview.stop({ restoreCamera: cmd.restoreCamera })
       case 'UPDATE_GEOJSON':       break
       case 'ADD_LAYER':            break
       case 'REMOVE_LAYER':         break

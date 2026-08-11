@@ -16,6 +16,8 @@ export type MapCommand =
   | { type: 'PLACE_HOVER';  placeId: string | null }
   | { type: 'PLACE_SELECT'; placeId: string | null }
   | { type: 'DAY_FOCUS';    dayId: string | null }   // fitBounds to day's stops + lodging
+  | { type: 'START_FLY_DAY'; dayId: string }         // camera-walk the day's route
+  | { type: 'STOP_FLY_DAY';  restoreCamera?: boolean }
 
   // ── Data / layers (future) ────────────────────────────────────────────────
   | { type: 'UPDATE_GEOJSON';       sourceId: string; data: unknown }

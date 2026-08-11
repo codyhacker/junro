@@ -5,12 +5,14 @@ interface TripInteractionState {
   hoveredPlaceId: string | null
   selectedPlaceId: string | null
   selectedDayId: string | null
+  flyDayId: string | null       // day whose route is being camera-walked
 }
 
 const initialState: TripInteractionState = {
   hoveredPlaceId: null,
   selectedPlaceId: null,
   selectedDayId: null,
+  flyDayId: null,
 }
 
 const tripInteractionSlice = createSlice({
@@ -26,8 +28,11 @@ const tripInteractionSlice = createSlice({
     setSelectedDay(state, action: PayloadAction<string | null>) {
       state.selectedDayId = action.payload
     },
+    setFlyDay(state, action: PayloadAction<string | null>) {
+      state.flyDayId = action.payload
+    },
   },
 })
 
-export const { setHoveredPlace, setSelectedPlace, setSelectedDay } = tripInteractionSlice.actions
+export const { setHoveredPlace, setSelectedPlace, setSelectedDay, setFlyDay } = tripInteractionSlice.actions
 export default tripInteractionSlice.reducer

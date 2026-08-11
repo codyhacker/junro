@@ -6,6 +6,17 @@ const EARTH_RADIUS_KM = 6371.0088
 
 const toRad = (deg: number) => (deg * Math.PI) / 180
 
+// Initial great-circle bearing from a → b, in degrees clockwise from north.
+// Used to orient the camera tangent to a route during the "fly the day" walk.
+export function bearingDeg(a: [number, number], b: [number, number]): number {
+  const lat1 = toRad(a[1])
+  const lat2 = toRad(b[1])
+  const dLng = toRad(b[0] - a[0])
+  const y = Math.sin(dLng) * Math.cos(lat2)
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng)
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360
+}
+
 // Great-circle distance between two [lng, lat] pairs, in kilometres.
 export function haversineKm(a: [number, number], b: [number, number]): number {
   const dLat = toRad(b[1] - a[1])

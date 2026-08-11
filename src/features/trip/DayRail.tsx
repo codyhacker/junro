@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
-import { setSelectedDay, setHoveredPlace, setSelectedPlace } from './tripInteractionSlice'
+import { setSelectedDay, setHoveredPlace, setSelectedPlace, setFlyDay } from './tripInteractionSlice'
 import { assignStop, moveStop, setDayTravelMode } from './tripSlice'
 import { selectDays } from './selectors'
 import { selectRequestByDayId, type DayRouteRequest } from '../planner/selectors'
@@ -66,6 +66,7 @@ export function DayRail() {
   const days = useAppSelector(selectDays)
   const uiMode = useAppSelector(s => s.mapStyle.uiMode)
   const selectedDayId = useAppSelector(s => s.tripInteraction.selectedDayId)
+  const flyDayId = useAppSelector(s => s.tripInteraction.flyDayId)
   const requestByDayId = useAppSelector(selectRequestByDayId)
   const dayRoutes = useAppSelector(s => s.planner.dayRoutes)
 
@@ -118,6 +119,14 @@ export function DayRail() {
                   <option value="walking">Walk</option>
                   <option value="driving">Drive</option>
                 </select>
+                {route && (
+                  <button
+                    className={`day-fly${flyDayId === day.id ? ' active' : ''}`}
+                    onClick={() => dispatch(setFlyDay(flyDayId === day.id ? null : day.id))}
+                  >
+                    {flyDayId === day.id ? '◼ Stop' : '▶ Fly the day'}
+                  </button>
+                )}
               </div>
             )}
 

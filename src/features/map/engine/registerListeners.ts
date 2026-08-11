@@ -64,5 +64,17 @@ export function registerMapListeners(engine: MapEngine): () => void {
     },
   }))
 
+  // Fly-the-day: flyDayId → START/STOP the camera walk. A programmatic STOP
+  // restores the camera; gesture-cancel already stopped without restoring.
+  unsubs.push(startAppListening({
+    predicate: (_action, currentState, previousState) =>
+      currentState.tripInteraction.flyDayId !== previousState.tripInteraction.flyDayId,
+    effect: (_action, api) => {
+      const dayId = api.getState().tripInteraction.flyDayId
+      if (dayId) engine.execute({ type: 'START_FLY_DAY', dayId })
+      else engine.execute({ type: 'STOP_FLY_DAY', restoreCamera: true })
+    },
+  }))
+
   return () => unsubs.forEach(u => u())
 }
