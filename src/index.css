@@ -743,10 +743,11 @@ html, body {
   .left-panel { display: contents; }
   .add-place {
     position: absolute;
-    top: 8px; left: 8px; right: 8px;
+    top: 8px; left: 8px; right: 60px;   /* leave room for the mode toggle */
     width: auto;
     z-index: 21;
   }
+  .mode-toggle { top: 8px; right: 8px; }   /* align with the search row, not under it */
   .scrapbook {
     position: absolute;
     left: 8px; right: 8px; bottom: 8px;

@@ -89,12 +89,13 @@ const JUNRO_LIGHT: UiPalette = {
   accentWarmRgb: '73, 121, 107',
 }
 
-// Same hues shifted for warm charcoal — brighter vermilion so the accent
-// keeps contrast, softer pine.
+// Warm charcoal, deliberately NOT near-black — panels read as dark slate-brown
+// so the UI has depth against the map instead of everything blending to black.
+// Brighter vermilion accent keeps contrast; softer pine.
 const JUNRO_DARK: UiPalette = {
-  bgDeepRgb: '23, 21, 19',
-  bgRichRgb: '31, 28, 25',
-  bgWarmRgb: '43, 39, 34',
+  bgDeepRgb: '34, 31, 28',
+  bgRichRgb: '48, 44, 39',
+  bgWarmRgb: '64, 58, 51',
   accentRgb: '235, 120, 88',
   accentHex: '#eb7858',
   activeStart: '#eb7858',
@@ -127,9 +128,11 @@ export function getPalette(mode: UiMode): UiPalette {
   return mode === 'dark' ? JUNRO_DARK : JUNRO_LIGHT
 }
 
-// Maps a UI mode to Mapbox Standard's lightPreset config value.
-export function lightPresetFor(mode: UiMode): 'day' | 'night' {
-  return mode === 'dark' ? 'night' : 'day'
+// Maps a UI mode to Mapbox Standard's lightPreset. Dark mode uses 'dusk' rather
+// than 'night' — monochrome + night reads as near-black; dusk is a softer
+// evening gray that stays dark without swallowing everything.
+export function lightPresetFor(mode: UiMode): 'day' | 'dusk' {
+  return mode === 'dark' ? 'dusk' : 'day'
 }
 
 // ─── Apply theme to DOM ───────────────────────────────────────────────────────
