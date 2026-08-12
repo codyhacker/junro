@@ -1,24 +1,27 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
-// Shell chrome open/closed state. Grows with the planning rail + scrapbook
-// in Phase 1 — keep this slice free of trip data (that lives in `trip`).
+// Shell chrome state. The planning panel is a tabbed surface — Places (the
+// place-collector home), Plan (opt-in day organizing), Trip (dates/hotels/
+// export config). Places is the default so the app starts simple.
+export type PanelTab = 'places' | 'plan' | 'trip'
+
 interface UIState {
-  scrapbookOpen: boolean
+  activeTab: PanelTab
 }
 
 const initialState: UIState = {
-  scrapbookOpen: false,
+  activeTab: 'places',
 }
 
 const uiSlice = createSlice({
   name: 'ui',
   initialState,
   reducers: {
-    setScrapbookOpen(state, action: PayloadAction<boolean>) {
-      state.scrapbookOpen = action.payload
+    setActiveTab(state, action: PayloadAction<PanelTab>) {
+      state.activeTab = action.payload
     },
   },
 })
 
-export const { setScrapbookOpen } = uiSlice.actions
+export const { setActiveTab } = uiSlice.actions
 export default uiSlice.reducer

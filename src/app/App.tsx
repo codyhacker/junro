@@ -3,7 +3,7 @@ import { MapView } from '../features/map/engine/MapView'
 import { ModeToggle } from '../features/shell/ModeToggle'
 import { TripGate } from '../features/trip/TripGate'
 import { AddPlace } from '../features/trip/AddPlace'
-import { Scrapbook } from '../features/trip/Scrapbook'
+import { PlanningPanel } from '../features/trip/PlanningPanel'
 import { PlacePanel } from '../features/trip/PlacePanel'
 import { UndoBar } from '../features/trip/UndoBar'
 import { ItineraryView } from '../features/viewer/ItineraryView'
@@ -21,11 +21,11 @@ function App() {
       <MapView>
         <ModeToggle />
         <TripGate />
-        {/* Planning lives in one left column — search heads it, the plan
-            follows (UX_PLAN.md WS3, the silkymaps echo). */}
+        {/* Left column — search heads it; the tabbed planning panel follows
+            (UX_PLAN round 2: Places · Plan · Trip). */}
         <div className="left-panel">
           <AddPlace />
-          <Scrapbook />
+          <PlanningPanel />
         </div>
         <PlacePanel />
         <UndoBar />
