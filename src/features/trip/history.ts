@@ -55,6 +55,11 @@ export function withHistory<S extends { trip: { active: Trip | null }; history: 
     }
 
     const next = combined(state, action)
+    // Starting over drops the trip — wipe the timeline too so a stray ⌘Z can't
+    // resurrect the deleted trip.
+    if (action.type === 'trip/resetTrip') {
+      return { ...next, history: initialHistory }
+    }
     const prevActive = state?.trip.active ?? null
     const nextActive = next.trip.active
     if (prevActive && nextActive && prevActive !== nextActive && !NON_CHECKPOINT.has(action.type)) {

@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { useSuggest } from '../search/useSuggest'
 import { retrieve, guessCategory, type RetrievedPlace } from '../search/searchBoxApi'
 import { addPlace } from './tripSlice'
-import { flyTo } from '../map/cameraSlice'
+import { fitBounds } from '../map/cameraSlice'
 import type { PlaceCategory } from '../../shared/types/trip'
 import { CATEGORY_META } from './categoryMeta'
 
@@ -24,6 +24,26 @@ export function AddPlace() {
 
   if (!trip) return null
 
+  // Keep the whole collection in view while adding, instead of yanking to each
+  // result. Frames every saved place (plus `extra`, the candidate being picked,
+  // so its spot is on screen before it's a pin). Padding leaves room for the
+  // planning panel — mirrors the day-framing in TripLayerController.focusDay.
+  function frame(extra?: [number, number]) {
+    if (!trip) return
+    const coords = trip.places.map(p => p.coord)
+    if (extra) coords.push(extra)
+    if (coords.length === 0) return
+    const lngs = coords.map(c => c[0])
+    const lats = coords.map(c => c[1])
+    const wide = window.innerWidth > 640
+    dispatch(fitBounds({
+      bounds: [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+      padding: wide ? { top: 70, right: 70, bottom: 70, left: 400 } : { top: 90, right: 40, bottom: 360, left: 40 },
+      maxZoom: 15,
+      duration: 900,
+    }))
+  }
+
   async function pick(mapboxId: string) {
     const place = await retrieve(mapboxId, sessionToken())
     resetSession()
@@ -31,7 +51,7 @@ export function AddPlace() {
     if (!place) return
     setPending(place)
     setCategory(guessCategory(place.categories))
-    dispatch(flyTo({ center: place.coord, zoom: 14.5, duration: 1400 }))
+    frame(place.coord)
   }
 
   function save() {
@@ -43,6 +63,7 @@ export function AddPlace() {
       address: pending.address,
       notes: note.trim() || undefined,
     }))
+    frame(pending.coord)   // trip.places is pre-add here, so include the new coord
     setPending(null)
     setNote('')
     setQuery('')
@@ -75,19 +96,21 @@ export function AddPlace() {
 
       {pending && (
         <div className="add-place-confirm">
-          <div className="add-place-confirm-name">{pending.name}</div>
-          {pending.address && <div className="add-place-confirm-addr">{pending.address}</div>}
-
-          <div className="add-place-cats">
-            {(Object.keys(CATEGORY_META) as PlaceCategory[]).map(cat => (
-              <button
-                key={cat}
-                className={`add-place-cat${cat === category ? ' active' : ''}`}
-                onClick={() => setCategory(cat)}
-              >
-                {CATEGORY_META[cat].emoji} {CATEGORY_META[cat].label}
-              </button>
-            ))}
+          <div className="add-place-confirm-head">
+            <div className="add-place-confirm-titles">
+              <div className="add-place-confirm-name">{pending.name}</div>
+              {pending.address && <div className="add-place-confirm-addr">{pending.address}</div>}
+            </div>
+            <select
+              className="junro-input add-place-cat-select"
+              aria-label="Category"
+              value={category}
+              onChange={e => setCategory(e.target.value as PlaceCategory)}
+            >
+              {(Object.keys(CATEGORY_META) as PlaceCategory[]).map(cat => (
+                <option key={cat} value={cat}>{CATEGORY_META[cat].emoji} {CATEGORY_META[cat].label}</option>
+              ))}
+            </select>
           </div>
 
           <input
@@ -100,7 +123,7 @@ export function AddPlace() {
           />
 
           <div className="add-place-actions">
-            <button className="junro-secondary" onClick={() => setPending(null)}>Cancel</button>
+            <button className="junro-secondary" onClick={() => { setPending(null); frame() }}>Cancel</button>
             <button className="junro-primary" onClick={save}>Save place</button>
           </div>
         </div>

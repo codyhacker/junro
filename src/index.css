@@ -281,23 +281,13 @@ html, body {
   background: rgba(var(--bg-rich-rgb), 0.98);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
 }
+.add-place-confirm-head { display: flex; align-items: flex-start; gap: 8px; }
+.add-place-confirm-titles { flex: 1; min-width: 0; }
 .add-place-confirm-name { color: var(--text-primary); font-weight: 600; font-size: 15px; }
-.add-place-confirm-addr { color: var(--text-muted); font-size: 12px; margin-top: -6px; }
-.add-place-cats { display: flex; flex-wrap: wrap; gap: 6px; }
-.add-place-cat {
-  padding: 5px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--accent-rgb), 0.25);
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 12.5px;
-  font-family: var(--font-body);
-  cursor: pointer;
-}
-.add-place-cat.active {
-  background: linear-gradient(135deg, var(--active-start), var(--active-end));
-  border-color: transparent;
-  color: #fff;
+.add-place-confirm-addr { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+/* Compact category picker tucked beside the name, not a full-width row. */
+.add-place-cat-select {
+  flex: 0 0 auto; width: auto; padding: 4px 8px; font-size: 12.5px;
 }
 .add-place-actions { display: flex; justify-content: flex-end; gap: 8px; }
 
@@ -500,13 +490,19 @@ html, body {
 
 /* ─── Day rail ───────────────────────────────────────────────────────────── */
 .day-rail { list-style: none; padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+/* Each day wears its color across the whole row (--day-rgb set inline in
+   DayRail) — a day is a neighborhood/color. A solid edge stripe anchors it;
+   selecting/expanding deepens the same hue. */
 .day-row {
   border-radius: 12px;
   border: 1px solid transparent;
+  background: rgba(var(--day-rgb), 0.14);
+  box-shadow: inset 3px 0 0 rgb(var(--day-rgb));
+  overflow: hidden;
 }
 .day-row.selected {
-  border-color: rgba(var(--accent-rgb), 0.35);
-  background: rgba(var(--accent-rgb), 0.07);
+  border-color: rgb(var(--day-rgb));
+  background: rgba(var(--day-rgb), 0.24);
 }
 .day-head {
   display: flex;
@@ -519,12 +515,6 @@ html, body {
   text-align: left;
   cursor: pointer;
   font-family: var(--font-body);
-}
-.day-swatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
-  flex-shrink: 0;
 }
 .day-texts { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .day-date { color: var(--text-primary); font-size: 13px; font-weight: 600; }
@@ -739,6 +729,9 @@ html, body {
 /* Mobile: search floats at the top, the plan is a bottom sheet, the map shows
    between them. `display: contents` lets the two children position against the
    map-container independently. */
+/* Drag grip for the mobile bottom sheet — hidden on desktop. */
+.sheet-grip { display: none; }
+
 @media (max-width: 640px) {
   .left-panel { display: contents; }
   .add-place {
@@ -748,18 +741,45 @@ html, body {
     z-index: 21;
   }
   .mode-toggle { top: 8px; right: 8px; }   /* align with the search row, not under it */
+
+  /* Planning panel → draggable bottom sheet. The snap height is an inline px
+     value from PlanningPanel (px→px so the transition actually animates); while
+     dragging, the transition is off so it tracks the finger. */
   .scrapbook {
     position: absolute;
     left: 8px; right: 8px; bottom: 8px;
     width: auto;
-    max-height: 52dvh;
     z-index: 20;
+    transition: height 0.22s ease;
   }
-  .scrapbook.collapsed { max-height: none; }
+  .scrapbook.dragging { transition: none; }
+  .scrapbook.sheet-hidden { display: none; }   /* place sheet is showing instead */
+  .scrapbook-collapse { display: none; }   /* the grip replaces it on mobile */
+
+  .sheet-grip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    padding: 9px 0 5px;
+    cursor: grab;
+    touch-action: none;   /* we own the vertical drag */
+  }
+  .sheet-grip::before {
+    content: '';
+    width: 42px; height: 5px;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.32);
+  }
+
+  /* Selected-place detail → its own bottom sheet, never full-screen. It and the
+     planning drawer are mutually exclusive (PlanningPanel hides while open). */
   .place-panel {
-    left: 8px; right: 8px;
+    left: 8px; right: 8px; bottom: 8px;
     width: auto;
-    bottom: calc(52dvh + 14px);
+    max-height: 72dvh;
+    overflow-y: auto;
+    z-index: 24;
   }
 }
 .undo-btn {
@@ -841,6 +861,31 @@ html, body {
 }
 .trip-action:hover { background: rgba(var(--accent-rgb), 0.14); }
 .trip-actions-error { margin-top: 6px; font-size: 12px; color: var(--accent-hex); }
+
+/* ─── Data tools (reset ladder in the Trip tab) ──────────────────────────── */
+.data-tools { display: flex; flex-direction: column; gap: 6px; }
+.data-tool {
+  display: flex; flex-direction: column; gap: 1px; text-align: left;
+  padding: 8px 11px; border-radius: 10px; cursor: pointer;
+  border: 1px solid rgba(var(--accent-rgb), 0.22); background: rgba(var(--accent-rgb), 0.05);
+  font-family: var(--font-body); color: var(--text-primary);
+}
+.data-tool:hover:not(:disabled) { background: rgba(var(--accent-rgb), 0.12); }
+.data-tool:disabled { opacity: 0.45; cursor: default; }
+.data-tool-title { font-size: 13px; font-weight: 600; }
+.data-tool-sub { font-size: 11.5px; color: var(--text-muted); }
+.data-tool-danger { border-color: rgba(214, 88, 62, 0.4); }
+.data-tool-danger .data-tool-title { color: var(--accent-hex); }
+
+.data-confirm {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px 12px; border-radius: 10px;
+  border: 1px solid rgba(var(--accent-rgb), 0.28); background: rgba(var(--bg-warm-rgb), 0.6);
+  font-size: 12.5px; color: var(--text-secondary);
+}
+.data-confirm-row { display: flex; justify-content: flex-end; gap: 8px; }
+.data-confirm-row button { padding: 5px 12px; font-size: 12.5px; }
+.data-confirm-danger { background: var(--accent-hex); border-color: var(--accent-hex); }
 
 /* ─── Viewer (itinerary + today), read-only document pages ───────────────── */
 .viewer {

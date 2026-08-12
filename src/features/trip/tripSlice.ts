@@ -73,6 +73,14 @@ const tripSlice = createSlice({
       },
     },
 
+    // Drop the active trip so the first-run gate returns ("start over"). The
+    // caller also removes it from storage — the persistence listener only ever
+    // writes a non-null active, so it can't clear the row itself.
+    resetTrip(state) {
+      state.active = null
+      state.summaries = []
+    },
+
     addPlace: {
       prepare(input: {
         name: string
@@ -229,6 +237,19 @@ const tripSlice = createSlice({
       touch(state.active)
     },
 
+    // Empty every day so the plan can be redone from scratch ("replan days").
+    // Places return to the collection; the days/dates and hotels stay. Per-day
+    // mode overrides and locks are cleared so a fresh Suggest fills cleanly.
+    clearDayStops(state) {
+      if (!state.active) return
+      for (const day of state.active.days) {
+        day.stopIds = []
+        day.locked = false
+        delete day.travelMode
+      }
+      touch(state.active)
+    },
+
     moveStop(state, action: PayloadAction<{ dayId: string; placeId: string; delta: -1 | 1 }>) {
       if (!state.active) return
       const day = state.active.days.find(d => d.id === action.payload.dayId)
@@ -244,8 +265,8 @@ const tripSlice = createSlice({
 })
 
 export const {
-  tripHydrated, tripLoaded, createTrip, addPlace, updatePlace, removePlace,
+  tripHydrated, tripLoaded, createTrip, resetTrip, addPlace, updatePlace, removePlace,
   setTripDates, addLodging, updateLodging, removeLodging, assignStop, moveStop,
-  setDayStops, applyDaySuggestions, setTravelMode, setDayTravelMode,
+  clearDayStops, setDayStops, applyDaySuggestions, setTravelMode, setDayTravelMode,
 } = tripSlice.actions
 export default tripSlice.reducer

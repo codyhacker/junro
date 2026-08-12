@@ -4,6 +4,7 @@ import { setTripDates } from './tripSlice'
 import { materializeDays } from './days'
 import { DateRangePicker } from './DateRangePicker'
 import { LodgingEditor } from './LodgingEditor'
+import { DataTools } from './DataTools'
 import { TripActions } from '../viewer/TripActions'
 
 // The Trip tab — configuration, tucked out of the main flow: the date range,
@@ -57,6 +58,8 @@ export function TripTab() {
         <span className="trip-settings-label">Export</span>
         <TripActions />
       </div>
+
+      <DataTools />
     </div>
   )
 }

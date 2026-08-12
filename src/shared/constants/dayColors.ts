@@ -39,3 +39,11 @@ export function dayHexAt(index: number, mode: UiMode): string {
   const c = dayColorAt(index)
   return mode === 'dark' ? c.dark : c.light
 }
+
+// The same color as an "r, g, b" triplet, for `rgb()/rgba()` in CSS — lets a
+// list row tint its whole background in the day color at low alpha while hover
+// / selected layer stronger alphas over it.
+export function dayRgbAt(index: number, mode: UiMode): string {
+  const n = parseInt(dayHexAt(index, mode).slice(1), 16)
+  return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`
+}

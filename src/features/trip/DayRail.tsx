@@ -5,8 +5,9 @@ import { selectDays, representativeName } from './selectors'
 import { selectRequestByDayId, type DayRouteRequest } from '../planner/selectors'
 import type { DayRoute } from '../planner/plannerSlice'
 import { CATEGORY_META } from './categoryMeta'
-import { dayHexAt } from '../../shared/constants/dayColors'
+import { dayRgbAt } from '../../shared/constants/dayColors'
 import { haversineKm, roughTransitMinutes } from '../../shared/lib/geo'
+import type { CSSProperties } from 'react'
 import type { Day, SavedPlace, TravelMode, Trip } from '../../shared/types/trip'
 
 // Day rows in the planning rail. Collapsed by default — day number, date,
@@ -88,14 +89,17 @@ export function DayRail() {
         const label = representativeName(day.stopIds, trip.places)
 
         return (
-          <li key={day.id} className={`day-row${selected ? ' selected' : ''}`}>
+          <li
+            key={day.id}
+            className={`day-row${selected ? ' selected' : ''}`}
+            style={{ '--day-rgb': dayRgbAt(i, uiMode) } as CSSProperties}
+          >
             {/* Header — click toggles selection (select → frame + expand). */}
             <button
               className="day-head"
               onClick={() => dispatch(setSelectedDay(selected ? null : day.id))}
               aria-expanded={selected}
             >
-              <span className="day-swatch" style={{ background: dayHexAt(i, uiMode) }} />
               <span className="day-texts">
                 <span className="day-date"><b>Day {i + 1}</b> · {dayLabel(day.date)}</span>
                 <span className="day-lodging">
