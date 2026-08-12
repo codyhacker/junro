@@ -4,11 +4,10 @@ import { setTripDates } from './tripSlice'
 import { materializeDays } from './days'
 import { DateRangePicker } from './DateRangePicker'
 import { LodgingEditor } from './LodgingEditor'
-import { DataTools } from './DataTools'
-import { TripActions } from '../viewer/TripActions'
 
-// The Trip tab — configuration, tucked out of the main flow: the date range,
-// hotels, and export/import. Dates live here (off the top); planning reads them.
+// The Trip tab — configuration, tucked out of the main flow: the date range and
+// hotels. Dates live here (off the top); planning reads them. Share/export and
+// the reset actions live as icons in the panel header (TripHeaderActions).
 export function TripTab() {
   const dispatch = useAppDispatch()
   const trip = useAppSelector(s => s.trip.active)
@@ -53,13 +52,6 @@ export function TripTab() {
       </div>
 
       <LodgingEditor />
-
-      <div className="trip-settings-group">
-        <span className="trip-settings-label">Export</span>
-        <TripActions />
-      </div>
-
-      <DataTools />
     </div>
   )
 }

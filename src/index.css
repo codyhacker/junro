@@ -333,6 +333,7 @@ html, body {
   overflow: hidden;
 }
 .scrapbook-head {
+  position: relative;   /* anchors the header action popovers */
   padding: 14px 16px 10px;
   border-bottom: 1px solid rgba(var(--accent-rgb), 0.15);
 }
@@ -862,30 +863,39 @@ html, body {
 .trip-action:hover { background: rgba(var(--accent-rgb), 0.14); }
 .trip-actions-error { margin-top: 6px; font-size: 12px; color: var(--accent-hex); }
 
-/* ─── Data tools (reset ladder in the Trip tab) ──────────────────────────── */
-.data-tools { display: flex; flex-direction: column; gap: 6px; }
-.data-tool {
-  display: flex; flex-direction: column; gap: 1px; text-align: left;
-  padding: 8px 11px; border-radius: 10px; cursor: pointer;
-  border: 1px solid rgba(var(--accent-rgb), 0.22); background: rgba(var(--accent-rgb), 0.05);
-  font-family: var(--font-body); color: var(--text-primary);
+/* ─── Trip header actions (share + reset icons by the title) ──────────────── */
+.trip-head-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.trip-head-btn {
+  width: 28px; height: 28px; border-radius: 8px;
+  border: 1px solid transparent; background: transparent;
+  color: var(--text-secondary); font-size: 15px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
 }
-.data-tool:hover:not(:disabled) { background: rgba(var(--accent-rgb), 0.12); }
-.data-tool:disabled { opacity: 0.45; cursor: default; }
-.data-tool-title { font-size: 13px; font-weight: 600; }
-.data-tool-sub { font-size: 11.5px; color: var(--text-muted); }
-.data-tool-danger { border-color: rgba(214, 88, 62, 0.4); }
-.data-tool-danger .data-tool-title { color: var(--accent-hex); }
+.trip-head-btn:hover:not(:disabled) { background: rgba(var(--accent-rgb), 0.12); color: var(--text-primary); }
+.trip-head-btn.active { background: rgba(var(--accent-rgb), 0.16); color: var(--accent-hex); }
+.trip-head-btn:disabled { opacity: 0.35; cursor: default; }
+.trip-head-btn-danger:hover:not(:disabled) { color: var(--accent-hex); }
 
-.data-confirm {
-  display: flex; flex-direction: column; gap: 8px;
-  padding: 10px 12px; border-radius: 10px;
-  border: 1px solid rgba(var(--accent-rgb), 0.28); background: rgba(var(--bg-warm-rgb), 0.6);
-  font-size: 12.5px; color: var(--text-secondary);
+/* Full transparent catcher so any outside click closes the open popover. */
+.trip-head-scrim { position: fixed; inset: 0; z-index: 30; }
+
+.trip-head-pop {
+  position: absolute;
+  top: calc(100% - 2px); right: 12px; left: 12px;
+  z-index: 31;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
+  background: rgba(var(--bg-rich-rgb), 0.99);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
 }
-.data-confirm-row { display: flex; justify-content: flex-end; gap: 8px; }
-.data-confirm-row button { padding: 5px 12px; font-size: 12.5px; }
-.data-confirm-danger { background: var(--accent-hex); border-color: var(--accent-hex); }
+/* The share popover reuses TripActions — drop its rail-footer divider here. */
+.trip-head-pop .trip-actions { margin-top: 0; padding-top: 0; border-top: none; }
+
+.trip-head-confirm { display: flex; flex-direction: column; gap: 10px; font-size: 12.5px; color: var(--text-secondary); }
+.trip-head-confirm-row { display: flex; justify-content: flex-end; gap: 8px; }
+.trip-head-confirm-row button { padding: 5px 12px; font-size: 12.5px; }
+.trip-head-danger { background: var(--accent-hex); border-color: var(--accent-hex); }
 
 /* ─── Viewer (itinerary + today), read-only document pages ───────────────── */
 .viewer {

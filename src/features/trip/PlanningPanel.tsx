@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { setActiveTab, type PanelTab } from '../shell/uiSlice'
 import { useIsMobile, useViewportHeight } from '../../shared/hooks/useIsMobile'
+import { TripHeaderActions } from './TripHeaderActions'
 import { PlacesTab } from './PlacesTab'
 import { PlanTab } from './PlanTab'
 import { TripTab } from './TripTab'
@@ -106,6 +107,7 @@ export function PlanningPanel() {
             onClick={() => setCollapsed(c => !c)}
           >{collapsed ? '▸' : '▾'}</button>
           <span className="scrapbook-title">{trip.name}</span>
+          <TripHeaderActions />
         </div>
       </div>
 

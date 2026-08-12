@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { useSuggest } from '../search/useSuggest'
 import { retrieve, guessCategory, type RetrievedPlace } from '../search/searchBoxApi'
 import { addPlace } from './tripSlice'
+import { setPendingPlace } from './tripInteractionSlice'
 import { fitBounds } from '../map/cameraSlice'
 import type { PlaceCategory } from '../../shared/types/trip'
 import { CATEGORY_META } from './categoryMeta'
@@ -24,24 +25,43 @@ export function AddPlace() {
 
   if (!trip) return null
 
-  // Keep the whole collection in view while adding, instead of yanking to each
-  // result. Frames every saved place (plus `extra`, the candidate being picked,
-  // so its spot is on screen before it's a pin). Padding leaves room for the
-  // planning panel — mirrors the day-framing in TripLayerController.focusDay.
-  function frame(extra?: [number, number]) {
+  // Frame the collection while adding, instead of yanking to each result. With
+  // a `center` (the place being picked/saved) the box is centered on it and
+  // grown until every saved place fits — so the new spot sits in the middle but
+  // nothing drops out of view. Without one (cancel) it's a plain fit of all
+  // places. Generous padding gives breathing room and clears the planning panel.
+  function frame(center?: [number, number]) {
     if (!trip) return
-    const coords = trip.places.map(p => p.coord)
-    if (extra) coords.push(extra)
-    if (coords.length === 0) return
-    const lngs = coords.map(c => c[0])
-    const lats = coords.map(c => c[1])
+    const others = trip.places.map(p => p.coord)
+    let bounds: [[number, number], [number, number]]
+    if (center) {
+      const dLng = Math.max(0, ...others.map(c => Math.abs(c[0] - center[0])))
+      const dLat = Math.max(0, ...others.map(c => Math.abs(c[1] - center[1])))
+      bounds = [[center[0] - dLng, center[1] - dLat], [center[0] + dLng, center[1] + dLat]]
+    } else {
+      if (others.length === 0) return
+      const lngs = others.map(c => c[0])
+      const lats = others.map(c => c[1])
+      bounds = [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]]
+    }
     const wide = window.innerWidth > 640
     dispatch(fitBounds({
-      bounds: [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-      padding: wide ? { top: 70, right: 70, bottom: 70, left: 400 } : { top: 90, right: 40, bottom: 360, left: 40 },
-      maxZoom: 15,
+      bounds,
+      padding: wide ? { top: 140, right: 140, bottom: 140, left: 460 } : { top: 150, right: 90, bottom: 400, left: 90 },
+      maxZoom: 14,
       duration: 900,
     }))
+  }
+
+  // Preview the picked place on the map — the pending marker shows where it'll
+  // land before it's saved. Kept in Redux so the augmentation selector draws it.
+  function preview(coord: [number, number], cat: PlaceCategory) {
+    dispatch(setPendingPlace({ coord, category: cat }))
+  }
+
+  function chooseCategory(cat: PlaceCategory) {
+    setCategory(cat)
+    if (pending) preview(pending.coord, cat)
   }
 
   async function pick(mapboxId: string) {
@@ -49,9 +69,18 @@ export function AddPlace() {
     resetSession()
     clear()
     if (!place) return
+    const cat = guessCategory(place.categories)
     setPending(place)
-    setCategory(guessCategory(place.categories))
+    setCategory(cat)
+    preview(place.coord, cat)
     frame(place.coord)
+  }
+
+  function done() {
+    dispatch(setPendingPlace(null))
+    setPending(null)
+    setNote('')
+    setQuery('')
   }
 
   function save() {
@@ -64,9 +93,7 @@ export function AddPlace() {
       notes: note.trim() || undefined,
     }))
     frame(pending.coord)   // trip.places is pre-add here, so include the new coord
-    setPending(null)
-    setNote('')
-    setQuery('')
+    done()
   }
 
   return (
@@ -105,7 +132,7 @@ export function AddPlace() {
               className="junro-input add-place-cat-select"
               aria-label="Category"
               value={category}
-              onChange={e => setCategory(e.target.value as PlaceCategory)}
+              onChange={e => chooseCategory(e.target.value as PlaceCategory)}
             >
               {(Object.keys(CATEGORY_META) as PlaceCategory[]).map(cat => (
                 <option key={cat} value={cat}>{CATEGORY_META[cat].emoji} {CATEGORY_META[cat].label}</option>
@@ -123,7 +150,7 @@ export function AddPlace() {
           />
 
           <div className="add-place-actions">
-            <button className="junro-secondary" onClick={() => { setPending(null); frame() }}>Cancel</button>
+            <button className="junro-secondary" onClick={() => { done(); frame() }}>Cancel</button>
             <button className="junro-primary" onClick={save}>Save place</button>
           </div>
         </div>

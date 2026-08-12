@@ -6,7 +6,7 @@ import { dayColorAt } from '../../../shared/constants/dayColors'
 import { selectDays, selectPlaceDayHex, selectPlaces } from '../../trip/selectors'
 import { selectDayRouteRequests, selectClusterHullsGeoJSON, selectDayHullsGeoJSON } from '../../planner/selectors'
 import { ISOCHRONE_MINUTES } from '../../planner/isochroneService'
-import { PLACES_SOURCE, DAY_ROUTES_SOURCE, CLUSTERS_SOURCE, DAY_HULLS_SOURCE, ISOCHRONE_SOURCE } from './TripLayerController'
+import { PLACES_SOURCE, DAY_ROUTES_SOURCE, CLUSTERS_SOURCE, DAY_HULLS_SOURCE, ISOCHRONE_SOURCE, PENDING_SOURCE } from './TripLayerController'
 
 const EMPTY_FC = { type: 'FeatureCollection' as const, features: [] }
 
@@ -81,9 +81,26 @@ const selectDayRoutesGeoJSON = createSelector(
   },
 )
 
+// The place being previewed in the add flow (0 or 1 feature). Rendered with an
+// emphasized halo so it reads as "not saved yet, here's where it'll go".
+const selectPendingGeoJSON = createSelector(
+  [(s: RootState) => s.tripInteraction.pendingPlace],
+  (pending) => ({
+    type: 'FeatureCollection' as const,
+    features: pending
+      ? [{
+          type: 'Feature' as const,
+          geometry: { type: 'Point' as const, coordinates: pending.coord },
+          properties: { category: pending.category },
+        }]
+      : [],
+  }),
+)
+
 export const selectAugmentationSpec = createSelector(
   [
     selectPlacesGeoJSON,
+    selectPendingGeoJSON,
     selectDayRoutesGeoJSON,
     selectClusterHullsGeoJSON,
     selectDayHullsGeoJSON,
@@ -91,7 +108,7 @@ export const selectAugmentationSpec = createSelector(
     (s: RootState) => s.terrain.terrainExaggeration,
     (s: RootState) => s.mapStyle.uiMode,
   ],
-  (placesGeoJSON, dayRoutesGeoJSON, clusterHullsGeoJSON, dayHullsGeoJSON, isochroneData, terrainExaggeration, uiMode): AugmentationSpec => {
+  (placesGeoJSON, pendingGeoJSON, dayRoutesGeoJSON, clusterHullsGeoJSON, dayHullsGeoJSON, isochroneData, terrainExaggeration, uiMode): AugmentationSpec => {
     const palette = getPalette(uiMode)
     const sources: Record<string, SourceSpecification> = {
       'mapbox-dem': {
@@ -120,6 +137,10 @@ export const selectAugmentationSpec = createSelector(
       [DAY_ROUTES_SOURCE]: {
         type: 'geojson',
         data: dayRoutesGeoJSON,
+      } as SourceSpecification,
+      [PENDING_SOURCE]: {
+        type: 'geojson',
+        data: pendingGeoJSON,
       } as SourceSpecification,
     }
 
@@ -285,6 +306,41 @@ export const selectAugmentationSpec = createSelector(
           'text-halo-width': 1.3,
         },
         minzoom: 8,
+      } as LayerSpecification,
+      // Pending-place preview (add flow) — an accent halo under the category
+      // pin so the spot is visible before it's saved. Sits above the saved
+      // pins so it's never hidden in a cluster.
+      {
+        id: 'pending-halo',
+        type: 'circle',
+        source: PENDING_SOURCE,
+        slot: 'top',
+        paint: {
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            8, 14, 13, 20, 16, 26,
+          ],
+          'circle-color': palette.accentHex,
+          'circle-opacity': 0.2,
+          'circle-stroke-color': palette.accentHex,
+          'circle-stroke-width': 2,
+          'circle-stroke-opacity': 0.85,
+        },
+      } as LayerSpecification,
+      {
+        id: 'pending-pin',
+        type: 'symbol',
+        source: PENDING_SOURCE,
+        slot: 'top',
+        layout: {
+          'icon-image': ['concat', 'junro-pin-', ['get', 'category']],
+          'icon-anchor': 'bottom',
+          'icon-size': [
+            'interpolate', ['linear'], ['zoom'],
+            8, 0.68, 13, 0.88, 16, 1.1,
+          ],
+          'icon-allow-overlap': true,
+        },
       } as LayerSpecification,
     ]
 
