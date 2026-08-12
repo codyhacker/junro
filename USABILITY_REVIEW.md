@@ -93,3 +93,57 @@ Items 1–3 and 6 are an afternoon and remove most of the reported busyness. 4�
 ---
 
 *The through-line: we streamlined the map's **information** in the last UX pass (grouping over routing); this pass streamlines the **controls**. Fewer switches, one signal per idea, one obvious path.*
+
+---
+
+# Round 2 — the tabbed rebuild (2026-08-11)
+
+A second batch of feedback arrived. Read together, the notes aren't a dozen fixes — they're **one structural change**: the panel should be a **tabbed** surface where **collecting places is the home** and **planning is optional**, not a single long scroll that forces the planning workflow on you.
+
+## The new model
+
+A place-first app. You land, you **add and discover places** (they all stay on the map, listed simply by category with their notes). *Then, if you want*, you switch to **Plan** to organize them into days. Configuration (dates, hotels, export) lives out of the way in a third tab.
+
+**Three tabs:**
+
+1. **Places** *(home, default)* — the collector.
+   - Your saved places as a **simple list grouped by category** (☕ Cafes · 🍴 Restaurants · ⛩ Sights · 🛍 Shops), each with its "why I saved this" note. Drill into one for detail.
+   - **Every place always shows on the map** — you never lose your pins to a day assignment.
+   - Search/add lives here. This is where the app *starts simple*.
+
+2. **Plan** *(opt-in)* — the organizer.
+   - **Auto-grouped** day suggestions (clustering runs on its own; "Suggest" stops being a button you must find). Day cards, per-day routes on selection.
+   - "Getting around" (walk/drive) lives here, **secondary**.
+   - Your place list is still one tab away — planning never hides it.
+
+3. **Trip** *(config)* — the setup, tucked away.
+   - The **date-range calendar** (moved off the top).
+   - **Hotels** as a list with a **＋ to add another** (no static "Add a hotel…" input sitting there).
+   - Export/import (**.ics**, and **JSON/Import hidden here** as advanced) — off the main surface.
+   - Replaces the unclear settings-gear-collapse entirely.
+
+## How each note maps
+
+| Note | Resolved by |
+|---|---|
+| Start simple / collapsed | **Places** tab is the simple default; Plan/Trip are elsewhere |
+| Add/discover → planning optional | Tabs: Places is home, Plan is opt-in |
+| Simple list w/ notes, by category | **Places** list grouped by category |
+| Keep all places in mapview | Places always renders every pin, assignment-independent |
+| Lose place list when you Suggest | Places tab persists regardless of day assignment |
+| Move trip dates to bottom/other tab | Dates → **Trip** tab |
+| Getting around secondary | Demoted inside **Plan** |
+| JSON / import hide | Tucked into **Trip** tab as advanced |
+| Group automatically | Clustering runs ambiently in **Plan**; no hunt-for-the-button |
+| Tabbed panel instead of long list | The whole model |
+| Add second hotel with ＋ icon | **Trip** tab hotels list with ＋ |
+| Trip "configuration" collapse unclear | Replaced by the **Trip** tab |
+
+## Scope
+
+This reworks the panel shell: `Scrapbook` (the one long column) splits into a **tab bar + three tab bodies** (`PlacesTab`, `PlanTab`, `TripTab`), reusing the existing pieces (day rail, suggest, the range calendar, lodging editor, exports) rearranged. State: a small `activeTab` in ui state. The map/engine layer is untouched — this is IA, not new capability.
+
+**Decisions to confirm before building:**
+1. **Three tabs (Places · Plan · Trip)** vs two (Places · Plan, with config in a menu)? *Recommend three — Trip is the natural home for the setup we're demoting.*
+2. **Truly optional planning:** you can use Junro purely as a place-collector and never touch Plan/Trip — agreed?
+3. **Places default grouping:** by category (recommended) vs flat with a category filter?
