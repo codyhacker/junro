@@ -8,6 +8,7 @@ export const CLUSTERS_SOURCE = 'trip-clusters'
 export const DAY_HULLS_SOURCE = 'day-hulls'
 export const ISOCHRONE_SOURCE = 'trip-isochrone'
 export const PENDING_SOURCE = 'trip-pending'
+export const DISCOVERY_SOURCE = 'trip-discovery'
 
 // Feature-state driver for the trip places layer, plus the day camera. The
 // layer/source specs live in styleAugmentation (never here); this controller

@@ -17,6 +17,7 @@ import { TripLayerController } from './TripLayerController'
 import { RoutePreviewController } from './RoutePreviewController'
 import { registerPointerRouter } from './pointer/registerPointerRouter'
 import { placesLayer } from './pointer/layers/places'
+import { discoveryLayer } from './pointer/layers/discovery'
 
 export class MapEngine {
   private map: mapboxgl.Map
@@ -62,7 +63,7 @@ export class MapEngine {
     this.tripLayer = new TripLayerController(this.map, store)
     this.routePreview = new RoutePreviewController(this.map, store)
 
-    this.unsubPointer = registerPointerRouter(this.map, store, [placesLayer])
+    this.unsubPointer = registerPointerRouter(this.map, store, [placesLayer, discoveryLayer])
 
     this.map.on('moveend', () => {
       const { lng, lat } = this.map.getCenter()

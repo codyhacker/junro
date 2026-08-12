@@ -7,7 +7,7 @@ import type { PlaceCategory } from '../../../shared/types/trip'
 // color with a white glyph. Colors are chosen to read on both Standard day
 // and night, so one image set serves both modes.
 
-const PIN_COLORS: Record<PlaceCategory, string> = {
+export const PIN_COLORS: Record<PlaceCategory, string> = {
   restaurant: '#d6583e',   // vermilion
   cafe:       '#a9713a',   // roasted amber
   sight:      '#7161a8',   // temple violet

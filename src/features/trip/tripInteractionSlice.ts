@@ -8,6 +8,16 @@ export interface PendingPlace {
   category: PlaceCategory
 }
 
+// A place handed to the add flow from outside AddPlace (a discovery-layer tap),
+// so a map click opens the same confirm card as a search pick. AddPlace adopts
+// it and clears it.
+export interface AddCandidate {
+  name: string
+  coord: [number, number]
+  address?: string
+  category: PlaceCategory
+}
+
 // Ephemeral map/UI interaction state — never persisted.
 interface TripInteractionState {
   hoveredPlaceId: string | null
@@ -15,6 +25,7 @@ interface TripInteractionState {
   selectedDayId: string | null
   flyDayId: string | null       // day whose route is being camera-walked
   pendingPlace: PendingPlace | null
+  addCandidate: AddCandidate | null
 }
 
 const initialState: TripInteractionState = {
@@ -23,6 +34,7 @@ const initialState: TripInteractionState = {
   selectedDayId: null,
   flyDayId: null,
   pendingPlace: null,
+  addCandidate: null,
 }
 
 const tripInteractionSlice = createSlice({
@@ -44,8 +56,11 @@ const tripInteractionSlice = createSlice({
     setPendingPlace(state, action: PayloadAction<PendingPlace | null>) {
       state.pendingPlace = action.payload
     },
+    setAddCandidate(state, action: PayloadAction<AddCandidate | null>) {
+      state.addCandidate = action.payload
+    },
   },
 })
 
-export const { setHoveredPlace, setSelectedPlace, setSelectedDay, setFlyDay, setPendingPlace } = tripInteractionSlice.actions
+export const { setHoveredPlace, setSelectedPlace, setSelectedDay, setFlyDay, setPendingPlace, setAddCandidate } = tripInteractionSlice.actions
 export default tripInteractionSlice.reducer

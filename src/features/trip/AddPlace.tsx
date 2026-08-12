@@ -1,27 +1,44 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { useSuggest } from '../search/useSuggest'
 import { retrieve, guessCategory, type RetrievedPlace } from '../search/searchBoxApi'
 import { addPlace } from './tripSlice'
-import { setPendingPlace } from './tripInteractionSlice'
+import { setPendingPlace, setAddCandidate } from './tripInteractionSlice'
 import { fitBounds } from '../map/cameraSlice'
 import type { PlaceCategory } from '../../shared/types/trip'
 import { CATEGORY_META } from './categoryMeta'
 
 // Search dock (top-left): find a place → confirm card with category +
-// the "why did I save this?" note → save to the scrapbook.
+// the "why did I save this?" note → save to the scrapbook. A tap on a discovery
+// dot (from the map) feeds the same confirm card via `addCandidate`.
 export function AddPlace() {
   const dispatch = useAppDispatch()
   const trip = useAppSelector(s => s.trip.active)
+  const addCandidate = useAppSelector(s => s.tripInteraction.addCandidate)
 
   const [query, setQuery] = useState('')
   const [pending, setPending] = useState<RetrievedPlace | null>(null)
   const [category, setCategory] = useState<PlaceCategory>('other')
   const [note, setNote] = useState('')
+  // Discovery adds keep the map where it is (you already framed the spot you
+  // tapped) — search picks re-center. This flag distinguishes the two.
+  const [fromDiscovery, setFromDiscovery] = useState(false)
   const { results, sessionToken, resetSession, clear } = useSuggest(
     pending ? '' : query,
     { proximity: trip?.destination.center, types: 'poi,address' },
   )
+
+  // Adopt a discovery-dot tap: open the confirm card prefilled, same as a
+  // search pick — but do NOT move the camera. (`preview` is hoisted.)
+  useEffect(() => {
+    if (!addCandidate) return
+    setPending({ name: addCandidate.name, coord: addCandidate.coord, address: addCandidate.address, categories: [] })
+    setCategory(addCandidate.category)
+    setNote('')
+    setFromDiscovery(true)
+    preview(addCandidate.coord, addCandidate.category)
+    dispatch(setAddCandidate(null))
+  }, [addCandidate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!trip) return null
 
@@ -72,6 +89,7 @@ export function AddPlace() {
     const cat = guessCategory(place.categories)
     setPending(place)
     setCategory(cat)
+    setFromDiscovery(false)
     preview(place.coord, cat)
     frame(place.coord)
   }
@@ -81,6 +99,7 @@ export function AddPlace() {
     setPending(null)
     setNote('')
     setQuery('')
+    setFromDiscovery(false)
   }
 
   function save() {
@@ -92,7 +111,7 @@ export function AddPlace() {
       address: pending.address,
       notes: note.trim() || undefined,
     }))
-    frame(pending.coord)   // trip.places is pre-add here, so include the new coord
+    if (!fromDiscovery) frame(pending.coord)   // search re-centers; discovery stays put
     done()
   }
 
@@ -150,7 +169,7 @@ export function AddPlace() {
           />
 
           <div className="add-place-actions">
-            <button className="junro-secondary" onClick={() => { done(); frame() }}>Cancel</button>
+            <button className="junro-secondary" onClick={() => { if (!fromDiscovery) frame(); done() }}>Cancel</button>
             <button className="junro-primary" onClick={save}>Save place</button>
           </div>
         </div>

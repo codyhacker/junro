@@ -19,6 +19,9 @@ import tripInteractionReducer from '../features/trip/tripInteractionSlice'
 import plannerReducer   from '../features/planner/plannerSlice'
 import isochroneReducer from '../features/planner/isochroneSlice'
 
+// ── discovery/ ──────────────────────────────────────────────────────────────
+import discoveryReducer from '../features/discovery/discoverySlice'
+
 // Root reducer is wrapped with the undo/redo history layer, which snapshots
 // trip.active on each edit (see features/trip/history.ts).
 const combined = combineReducers({
@@ -30,6 +33,7 @@ const combined = combineReducers({
   tripInteraction: tripInteractionReducer,
   planner:         plannerReducer,
   isochrone:       isochroneReducer,
+  discovery:       discoveryReducer,
   history:         historyReducer,
 })
 const rootReducer = withHistory(combined)

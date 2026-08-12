@@ -1,14 +1,31 @@
 import { createSelector } from '@reduxjs/toolkit'
-import type { LayerSpecification, SourceSpecification } from 'mapbox-gl'
+import type { LayerSpecification, SourceSpecification, ExpressionSpecification } from 'mapbox-gl'
 import type { RootState } from '../../../app/store'
 import { getPalette } from '../../../shared/constants/uiThemes'
 import { dayColorAt } from '../../../shared/constants/dayColors'
 import { selectDays, selectPlaceDayHex, selectPlaces } from '../../trip/selectors'
 import { selectDayRouteRequests, selectClusterHullsGeoJSON, selectDayHullsGeoJSON } from '../../planner/selectors'
 import { ISOCHRONE_MINUTES } from '../../planner/isochroneService'
-import { PLACES_SOURCE, DAY_ROUTES_SOURCE, CLUSTERS_SOURCE, DAY_HULLS_SOURCE, ISOCHRONE_SOURCE, PENDING_SOURCE } from './TripLayerController'
+import { PLACES_SOURCE, DAY_ROUTES_SOURCE, CLUSTERS_SOURCE, DAY_HULLS_SOURCE, ISOCHRONE_SOURCE, PENDING_SOURCE, DISCOVERY_SOURCE } from './TripLayerController'
+import { PIN_COLORS } from './icons'
+import { PLACES_PMTILES_URL, DISCOVERY_SOURCE_LAYER, DISCOVERY_MIN_ZOOM } from '../../../shared/constants/discovery'
+import { OVERTURE_PLACE_CATEGORIES } from '../../../shared/constants/overturePlaceCategories'
+import type { PlaceCategory } from '../../../shared/types/trip'
 
 const EMPTY_FC = { type: 'FeatureCollection' as const, features: [] }
+
+// Colour a discovery dot by mapping its raw Overture `category` down to a
+// SavedPlace bucket and reusing that bucket's pin colour — so a discovery dot
+// and the saved pin it can become share one hue. Built once (static).
+const DISCOVERY_COLOR: ExpressionSpecification = (() => {
+  const byPlace: Record<PlaceCategory, string[]> = { restaurant: [], cafe: [], sight: [], shop: [], other: [] }
+  for (const e of OVERTURE_PLACE_CATEGORIES) byPlace[e.toPlaceCategory].push(e.category)
+  const branches: (string | string[])[] = []
+  for (const pc of ['restaurant', 'cafe', 'sight', 'shop'] as const) {
+    if (byPlace[pc].length > 0) branches.push(byPlace[pc], PIN_COLORS[pc])
+  }
+  return ['match', ['get', 'category'], ...branches, PIN_COLORS.other] as unknown as ExpressionSpecification
+})()
 
 export interface AugmentationSpec {
   version: 8
@@ -107,9 +124,11 @@ export const selectAugmentationSpec = createSelector(
     (s: RootState) => s.isochrone.data,
     (s: RootState) => s.terrain.terrainExaggeration,
     (s: RootState) => s.mapStyle.uiMode,
+    (s: RootState) => s.discovery.visible,
   ],
-  (placesGeoJSON, pendingGeoJSON, dayRoutesGeoJSON, clusterHullsGeoJSON, dayHullsGeoJSON, isochroneData, terrainExaggeration, uiMode): AugmentationSpec => {
+  (placesGeoJSON, pendingGeoJSON, dayRoutesGeoJSON, clusterHullsGeoJSON, dayHullsGeoJSON, isochroneData, terrainExaggeration, uiMode, discoveryVisible): AugmentationSpec => {
     const palette = getPalette(uiMode)
+    const showDiscovery = discoveryVisible && PLACES_PMTILES_URL.length > 0
     const sources: Record<string, SourceSpecification> = {
       'mapbox-dem': {
         type: 'raster-dem',
@@ -142,7 +161,64 @@ export const selectAugmentationSpec = createSelector(
         type: 'geojson',
         data: pendingGeoJSON,
       } as SourceSpecification,
+      // Overture discovery POIs — a single .pmtiles archive on R2 served over
+      // range requests (Mapbox v3 native PMTiles; declared only when the layer
+      // is on so it's not fetched otherwise).
+      ...(showDiscovery
+        ? {
+            [DISCOVERY_SOURCE]: {
+              type: 'vector',
+              url: PLACES_PMTILES_URL,
+              promoteId: 'id',
+            } as SourceSpecification,
+          }
+        : {}),
     }
+
+    // Discovery layers, split so saved-place pins + labels always win: the dots
+    // sit under the saved halo/pins; the labels are placed after them.
+    const discoveryDots: LayerSpecification[] = showDiscovery
+      ? [{
+          id: 'discovery-dots',
+          type: 'circle',
+          source: DISCOVERY_SOURCE,
+          'source-layer': DISCOVERY_SOURCE_LAYER,
+          slot: 'top',
+          minzoom: DISCOVERY_MIN_ZOOM,
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3, 16, 5.5, 18, 7],
+            'circle-color': DISCOVERY_COLOR,
+            'circle-opacity': 0.9,
+            'circle-stroke-color': `rgba(${palette.bgRichRgb}, 0.92)`,
+            'circle-stroke-width': 1.4,
+          },
+        } as LayerSpecification]
+      : []
+    const discoveryLabels: LayerSpecification[] = showDiscovery
+      ? [{
+          id: 'discovery-labels',
+          type: 'symbol',
+          source: DISCOVERY_SOURCE,
+          'source-layer': DISCOVERY_SOURCE_LAYER,
+          slot: 'top',
+          minzoom: 15,
+          layout: {
+            'text-field': ['get', 'name'],
+            'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
+            'text-size': 11,
+            'text-anchor': 'top',
+            'text-offset': [0, 0.5],
+            'text-optional': true,
+            'symbol-sort-key': ['-', 1, ['coalesce', ['get', 'confidence'], 0]],
+          },
+          paint: {
+            'text-color': uiMode === 'dark' ? '#cfc8bd' : '#5a5148',
+            'text-halo-color': `rgba(${palette.bgRichRgb}, 0.95)`,
+            'text-halo-width': 1.2,
+            'text-opacity': 0.9,
+          },
+        } as LayerSpecification]
+      : []
 
     const layers: LayerSpecification[] = [
       // Reachability shading — concentric walking-time bands from the hotel,
@@ -237,6 +313,8 @@ export const selectAugmentationSpec = createSelector(
           'line-opacity': uiMode === 'dark' ? 0.95 : 0.8,
         },
       } as LayerSpecification,
+      // Discovery dots — under the saved-place halo/pins so saved wins.
+      ...discoveryDots,
       // Hover/selection halo — a soft disc under the pin, feature-state driven.
       {
         id: 'places-halo',
@@ -307,6 +385,9 @@ export const selectAugmentationSpec = createSelector(
         },
         minzoom: 8,
       } as LayerSpecification,
+      // Discovery labels — after the saved pins so a saved place's name wins
+      // any collision; only from z15 to keep the map quiet.
+      ...discoveryLabels,
       // Pending-place preview (add flow) — an accent halo under the category
       // pin so the spot is visible before it's saved. Sits above the saved
       // pins so it's never hidden in a cluster.

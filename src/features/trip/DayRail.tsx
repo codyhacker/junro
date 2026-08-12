@@ -1,14 +1,27 @@
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { setSelectedDay, setHoveredPlace, setSelectedPlace, setFlyDay } from './tripInteractionSlice'
-import { assignStop, moveStop, setDayTravelMode } from './tripSlice'
+import { assignStop, moveStop, setDayStops, setDayTravelMode } from './tripSlice'
 import { selectDays, representativeName } from './selectors'
+import { computeStopDrop, type DropTarget } from './dndStops'
 import { selectRequestByDayId, type DayRouteRequest } from '../planner/selectors'
 import type { DayRoute } from '../planner/plannerSlice'
 import { CATEGORY_META } from './categoryMeta'
 import { dayRgbAt } from '../../shared/constants/dayColors'
 import { haversineKm, roughTransitMinutes } from '../../shared/lib/geo'
-import type { CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import type { Day, SavedPlace, TravelMode, Trip } from '../../shared/types/trip'
+
+// Drag-and-drop handles passed down to a day's stop rows (Plan tab). Native
+// HTML5 DnD: grab a stop and drop it before another (reorder) or onto a
+// different day (move). Touch keeps the ↑/↓ + place-panel day picker.
+interface StopDnd {
+  dragId: string | null
+  dropTarget: DropTarget | null
+  onDragStart: (placeId: string) => void
+  onDragEnd: () => void
+  onOverStop: (placeId: string) => void
+  onDropStop: (placeId: string) => void
+}
 
 // Day rows in the planning rail. Collapsed by default — day number, date,
 // lodging, and a compact strip of the day's activities (UX_PLAN.md WS3). Click
@@ -72,10 +85,30 @@ export function DayRail() {
   const requestByDayId = useAppSelector(selectRequestByDayId)
   const dayRoutes = useAppSelector(s => s.planner.dayRoutes)
 
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [dropTarget, setDropTarget] = useState<DropTarget | null>(null)
+
   if (!trip || days.length === 0) return null
 
   const placeById = new Map(trip.places.map(p => [p.id, p]))
   const lodgingById = new Map(trip.lodgings.map(l => [l.id, l]))
+
+  // Commit a drop: one setDayStops (it claims the id from its old day, so a
+  // cross-day move and a same-day reorder are both a single undoable step).
+  function handleDrop(target: DropTarget) {
+    if (!dragId) return
+    const drop = computeStopDrop(days, dragId, target)
+    if (drop) dispatch(setDayStops(drop))
+    setDragId(null)
+    setDropTarget(null)
+  }
+  const dnd: StopDnd = {
+    dragId, dropTarget,
+    onDragStart: setDragId,
+    onDragEnd: () => { setDragId(null); setDropTarget(null) },
+    onOverStop: (placeId) => setDropTarget({ kind: 'stop', placeId }),
+    onDropStop: (placeId) => handleDrop({ kind: 'stop', placeId }),
+  }
 
   return (
     <ul className="day-rail">
@@ -91,8 +124,15 @@ export function DayRail() {
         return (
           <li
             key={day.id}
-            className={`day-row${selected ? ' selected' : ''}`}
+            className={`day-row${selected ? ' selected' : ''}${
+              dragId && dropTarget?.kind === 'day' && dropTarget.dayId === day.id ? ' drop-day' : ''
+            }`}
             style={{ '--day-rgb': dayRgbAt(i, uiMode) } as CSSProperties}
+            // Dropping onto the day (not a specific stop) moves the dragged stop
+            // here. Stop-level handlers stopPropagation, so this only fires over
+            // the header / summary / empty area.
+            onDragOver={dragId ? (e => { e.preventDefault(); setDropTarget({ kind: 'day', dayId: day.id }) }) : undefined}
+            onDrop={dragId ? (e => { e.preventDefault(); handleDrop({ kind: 'day', dayId: day.id }) }) : undefined}
           >
             {/* Header — click toggles selection (select → frame + expand). */}
             <button
@@ -131,6 +171,7 @@ export function DayRail() {
               request={requestByDayId.get(day.id)}
               stored={dayRoutes[day.id]}
               flyActive={flyDayId === day.id}
+              dnd={dnd}
             />}
           </li>
         )
@@ -139,7 +180,7 @@ export function DayRail() {
   )
 }
 
-function DayDetail({ day, stops, trip, lodgingName, request, stored, flyActive }: {
+function DayDetail({ day, stops, trip, lodgingName, request, stored, flyActive, dnd }: {
   day: Day
   stops: SavedPlace[]
   trip: Trip
@@ -147,6 +188,7 @@ function DayDetail({ day, stops, trip, lodgingName, request, stored, flyActive }
   request: DayRouteRequest | undefined
   stored: DayRoute | undefined
   flyActive: boolean
+  dnd: StopDnd
 }) {
   const dispatch = useAppDispatch()
   // Only a route matching the day's current content may be shown.
@@ -193,10 +235,19 @@ function DayDetail({ day, stops, trip, lodgingName, request, stored, flyActive }
               <TravelLeg request={request} route={route} legIndex={idx + legOffset} />
             )}
             <div
-              className="day-stop"
+              className={`day-stop${dnd.dragId === place.id ? ' dragging' : ''}${
+                dnd.dragId && dnd.dropTarget?.kind === 'stop' && dnd.dropTarget.placeId === place.id && dnd.dropTarget.placeId !== dnd.dragId
+                  ? ' drop-before' : ''
+              }`}
+              draggable
+              onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', place.id); dnd.onDragStart(place.id) }}
+              onDragEnd={dnd.onDragEnd}
+              onDragOver={e => { e.preventDefault(); e.stopPropagation(); dnd.onOverStop(place.id) }}
+              onDrop={e => { e.preventDefault(); e.stopPropagation(); dnd.onDropStop(place.id) }}
               onMouseEnter={() => dispatch(setHoveredPlace(place.id))}
               onMouseLeave={() => dispatch(setHoveredPlace(null))}
             >
+              <span className="day-stop-grip" aria-hidden title="Drag to reorder or move to another day">⠿</span>
               <button className="day-stop-main" onClick={() => dispatch(setSelectedPlace(place.id))}>
                 <span className="day-stop-index">{idx + 1}</span>
                 <span className="day-stop-emoji">{CATEGORY_META[place.category].emoji}</span>
