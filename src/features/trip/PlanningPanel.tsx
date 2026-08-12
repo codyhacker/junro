@@ -2,9 +2,8 @@ import { useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { setActiveTab, type PanelTab } from '../shell/uiSlice'
 import { PlacesTab } from './PlacesTab'
-import { DayRail } from './DayRail'
-import { SuggestDays } from './SuggestDays'
-import { TripSettings } from './TripSettings'
+import { PlanTab } from './PlanTab'
+import { TripTab } from './TripTab'
 
 // The planning surface — a tabbed panel (UX_PLAN round 2). Places is the home
 // (collect); Plan is opt-in (organize into days); Trip is config (dates,
@@ -20,7 +19,6 @@ export function PlanningPanel() {
   const dispatch = useAppDispatch()
   const trip = useAppSelector(s => s.trip.active)
   const active = useAppSelector(s => s.ui.activeTab)
-  const hasDays = useAppSelector(s => (s.trip.active?.days.length ?? 0) > 0)
   const [collapsed, setCollapsed] = useState(false)
 
   if (!trip) return null
@@ -55,12 +53,8 @@ export function PlanningPanel() {
 
           <div className="scrapbook-body">
             {active === 'places' && <PlacesTab />}
-            {active === 'plan' && (
-              hasDays
-                ? <><SuggestDays /><DayRail /></>
-                : <div className="places-empty">Set your trip dates in the <b>Trip</b> tab to plan days — or just keep collecting places.</div>
-            )}
-            {active === 'trip' && <TripSettings />}
+            {active === 'plan' && <PlanTab />}
+            {active === 'trip' && <TripTab />}
           </div>
         </>
       )}
