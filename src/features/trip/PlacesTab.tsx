@@ -14,16 +14,20 @@ import type { PlaceCategory, SavedPlace } from '../../shared/types/trip'
 // you never lose your places (UX_PLAN round 2). Click → select + fly to it.
 const CATEGORY_ORDER: PlaceCategory[] = ['sight', 'cafe', 'restaurant', 'shop', 'other']
 const plural: Record<PlaceCategory, string> = {
-  sight: 'Sights', cafe: 'Cafes', restaurant: 'Restaurants', shop: 'Shops', other: 'Other',
+  sight: 'Sights',
+  cafe: 'Cafes',
+  restaurant: 'Restaurants',
+  shop: 'Shops',
+  other: 'Other',
 }
 
 export function PlacesTab() {
   const dispatch = useAppDispatch()
-  const trip = useAppSelector(s => s.trip.active)
-  const selectedId = useAppSelector(s => s.tripInteraction.selectedPlaceId)
-  const uiMode = useAppSelector(s => s.mapStyle.uiMode)
+  const trip = useAppSelector((s) => s.trip.active)
+  const selectedId = useAppSelector((s) => s.tripInteraction.selectedPlaceId)
+  const uiMode = useAppSelector((s) => s.mapStyle.uiMode)
   const days = useAppSelector(selectDays)
-  const discoveryOn = useAppSelector(s => s.discovery.visible)
+  const discoveryOn = useAppSelector((s) => s.discovery.visible)
 
   if (!trip) return null
   const places = trip.places
@@ -46,28 +50,38 @@ export function PlacesTab() {
     return (
       <div className="places-tab">
         {discoverBar}
-        <div className="places-empty">Search above to start collecting — or turn on Discover and tap dots on the map.</div>
+        <div className="places-empty">
+          Search above to start collecting — or turn on Discover and tap dots on the map.
+        </div>
       </div>
     )
   }
 
   const dayOf = new Map<string, number>()
-  days.forEach((d, i) => d.stopIds.forEach(id => dayOf.set(id, i)))
+  days.forEach((d, i) => d.stopIds.forEach((id) => dayOf.set(id, i)))
 
-  const byCat: Record<PlaceCategory, SavedPlace[]> = { sight: [], cafe: [], restaurant: [], shop: [], other: [] }
+  const byCat: Record<PlaceCategory, SavedPlace[]> = {
+    sight: [],
+    cafe: [],
+    restaurant: [],
+    shop: [],
+    other: [],
+  }
   for (const p of places) byCat[p.category].push(p)
 
   return (
     <div className="places-tab">
       {discoverBar}
-      {CATEGORY_ORDER.filter(c => byCat[c].length > 0).map(cat => (
+      {CATEGORY_ORDER.filter((c) => byCat[c].length > 0).map((cat) => (
         <section key={cat} className="places-cat">
           <div className="places-cat-head">
-            <span>{CATEGORY_META[cat].emoji} {plural[cat]}</span>
+            <span>
+              {CATEGORY_META[cat].emoji} {plural[cat]}
+            </span>
             <span className="places-cat-count">{byCat[cat].length}</span>
           </div>
           <ul className="places-list">
-            {byCat[cat].map(p => {
+            {byCat[cat].map((p) => {
               const di = dayOf.get(p.id)
               return (
                 <li
@@ -87,13 +101,17 @@ export function PlacesTab() {
                     {p.notes && <span className="places-note">{p.notes}</span>}
                   </button>
                   {di !== undefined && (
-                    <span className="places-daybadge" style={{ background: dayHexAt(di, uiMode) }}>D{di + 1}</span>
+                    <span className="places-daybadge" style={{ background: dayHexAt(di, uiMode) }}>
+                      D{di + 1}
+                    </span>
                   )}
                   <button
                     className="places-remove"
                     aria-label={`Remove ${p.name}`}
                     onClick={() => dispatch(removePlace(p.id))}
-                  >×</button>
+                  >
+                    ×
+                  </button>
                 </li>
               )
             })}

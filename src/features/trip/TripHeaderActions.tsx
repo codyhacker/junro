@@ -14,12 +14,14 @@ type Pop = 'share' | 'replan' | 'reset'
 
 export function TripHeaderActions() {
   const dispatch = useAppDispatch()
-  const trip = useAppSelector(s => s.trip.active)
-  const hasPlan = useAppSelector(s => s.trip.active?.days.some(d => d.stopIds.length > 0) ?? false)
+  const trip = useAppSelector((s) => s.trip.active)
+  const hasPlan = useAppSelector(
+    (s) => s.trip.active?.days.some((d) => d.stopIds.length > 0) ?? false,
+  )
   const [open, setOpen] = useState<Pop | null>(null)
 
   if (!trip) return null
-  const toggle = (p: Pop) => setOpen(o => (o === p ? null : p))
+  const toggle = (p: Pop) => setOpen((o) => (o === p ? null : p))
 
   function replan() {
     dispatch(clearDayStops())
@@ -38,20 +40,29 @@ export function TripHeaderActions() {
     <div className="trip-head-actions">
       <button
         className={`trip-head-btn${open === 'share' ? ' active' : ''}`}
-        title="Share & export" aria-label="Share and export"
+        title="Share & export"
+        aria-label="Share and export"
         onClick={() => toggle('share')}
-      >↗</button>
+      >
+        ↗
+      </button>
       <button
         className={`trip-head-btn${open === 'replan' ? ' active' : ''}`}
-        title="Replan days — clear the day plan" aria-label="Replan days"
+        title="Replan days — clear the day plan"
+        aria-label="Replan days"
         disabled={!hasPlan}
         onClick={() => toggle('replan')}
-      >↻</button>
+      >
+        ↻
+      </button>
       <button
         className={`trip-head-btn trip-head-btn-danger${open === 'reset' ? ' active' : ''}`}
-        title="Start over — delete this trip" aria-label="Start over"
+        title="Start over — delete this trip"
+        aria-label="Start over"
         onClick={() => toggle('reset')}
-      >⌫</button>
+      >
+        ⌫
+      </button>
 
       {open && <div className="trip-head-scrim" onClick={() => setOpen(null)} />}
 
@@ -64,8 +75,12 @@ export function TripHeaderActions() {
         <div className="trip-head-pop trip-head-confirm">
           <span>Clear all day assignments? Your places stay in Places.</span>
           <div className="trip-head-confirm-row">
-            <button className="junro-secondary" onClick={() => setOpen(null)}>Cancel</button>
-            <button className="junro-primary" onClick={replan}>Replan</button>
+            <button className="junro-secondary" onClick={() => setOpen(null)}>
+              Cancel
+            </button>
+            <button className="junro-primary" onClick={replan}>
+              Replan
+            </button>
           </div>
         </div>
       )}
@@ -73,8 +88,12 @@ export function TripHeaderActions() {
         <div className="trip-head-pop trip-head-confirm">
           <span>Delete “{trip.name}” and everything in it? This can’t be undone.</span>
           <div className="trip-head-confirm-row">
-            <button className="junro-secondary" onClick={() => setOpen(null)}>Cancel</button>
-            <button className="junro-primary trip-head-danger" onClick={() => void startOver()}>Delete trip</button>
+            <button className="junro-secondary" onClick={() => setOpen(null)}>
+              Cancel
+            </button>
+            <button className="junro-primary trip-head-danger" onClick={() => void startOver()}>
+              Delete trip
+            </button>
           </div>
         </div>
       )}

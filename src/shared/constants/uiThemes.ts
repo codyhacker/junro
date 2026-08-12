@@ -19,7 +19,7 @@ export interface UiPalette {
   activeStart: string
   activeEnd: string
   activeBorder: string
-  activeRgb: string     // "R, G, B" for glow shadows
+  activeRgb: string // "R, G, B" for glow shadows
 
   // Text hierarchy
   textPrimary: string
@@ -54,7 +54,7 @@ export interface UiPalette {
   // Secondary accent — pine green against the vermilion primary. Used for
   // route lines / secondary affordances so they never compete with pins.
   accentWarmHex: string
-  accentWarmRgb: string    // "R, G, B" for rgba() usage
+  accentWarmRgb: string // "R, G, B" for rgba() usage
 }
 
 // Vermilion (shu — the torii-gate red) on warm paper, with a pine-green

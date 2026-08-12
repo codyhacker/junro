@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { routeHash, canonicalRouteKey } from './routeHash'
 
 const A: [number, number] = [2.3376, 48.8606]
-const B: [number, number] = [2.3499, 48.8530]
+const B: [number, number] = [2.3499, 48.853]
 const C: [number, number] = [2.3212, 48.8467]
 
 describe('routeHash — stability', () => {

@@ -27,9 +27,9 @@ const PEEK_PX = 148
 
 export function PlanningPanel() {
   const dispatch = useAppDispatch()
-  const trip = useAppSelector(s => s.trip.active)
-  const active = useAppSelector(s => s.ui.activeTab)
-  const selectedPlaceId = useAppSelector(s => s.tripInteraction.selectedPlaceId)
+  const trip = useAppSelector((s) => s.trip.active)
+  const active = useAppSelector((s) => s.ui.activeTab)
+  const selectedPlaceId = useAppSelector((s) => s.tripInteraction.selectedPlaceId)
   const isMobile = useIsMobile()
   const vh = useViewportHeight()
   const [collapsed, setCollapsed] = useState(false)
@@ -50,10 +50,14 @@ export function PlanningPanel() {
   // unmount) the drawer so its snap + scroll survive the round-trip.
   const hidden = isMobile && !!selectedPlaceId
 
-  const cycle = () => setSnap(s => SNAP_ORDER[(SNAP_ORDER.indexOf(s) + 1) % SNAP_ORDER.length])
+  const cycle = () => setSnap((s) => SNAP_ORDER[(SNAP_ORDER.indexOf(s) + 1) % SNAP_ORDER.length])
 
   function onGripDown(e: React.PointerEvent) {
-    try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* no active pointer */ }
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      /* no active pointer */
+    }
     drag.current = { startY: e.clientY, moved: false }
   }
   function onGripMove(e: React.PointerEvent) {
@@ -69,11 +73,20 @@ export function PlanningPanel() {
     const d = drag.current
     if (!d) return
     drag.current = null
-    try { e.currentTarget.releasePointerCapture(e.pointerId) } catch { /* already released */ }
-    if (!d.moved) { setDragH(null); cycle(); return }
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      /* already released */
+    }
+    if (!d.moved) {
+      setDragH(null)
+      cycle()
+      return
+    }
     const current = sheetRef.current?.getBoundingClientRect().height ?? snapPx[snap]
     const nearest = SNAP_ORDER.reduce((a, b) =>
-      Math.abs(snapPx[b] - current) < Math.abs(snapPx[a] - current) ? b : a)
+      Math.abs(snapPx[b] - current) < Math.abs(snapPx[a] - current) ? b : a,
+    )
     setSnap(nearest)
     setDragH(null)
   }
@@ -104,8 +117,10 @@ export function PlanningPanel() {
             className="scrapbook-collapse"
             aria-label={collapsed ? 'Expand panel' : 'Collapse panel'}
             aria-expanded={!collapsed}
-            onClick={() => setCollapsed(c => !c)}
-          >{collapsed ? '▸' : '▾'}</button>
+            onClick={() => setCollapsed((c) => !c)}
+          >
+            {collapsed ? '▸' : '▾'}
+          </button>
           <span className="scrapbook-title">{trip.name}</span>
           <TripHeaderActions />
         </div>
@@ -114,14 +129,16 @@ export function PlanningPanel() {
       {!collapsed && (
         <>
           <div className="panel-tabs" role="tablist">
-            {TABS.map(t => (
+            {TABS.map((t) => (
               <button
                 key={t.id}
                 role="tab"
                 aria-selected={active === t.id}
                 className={`panel-tab${active === t.id ? ' active' : ''}`}
                 onClick={() => dispatch(setActiveTab(t.id))}
-              >{t.label}</button>
+              >
+                {t.label}
+              </button>
             ))}
           </div>
 

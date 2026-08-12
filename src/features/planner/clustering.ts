@@ -16,25 +16,25 @@ export interface ClusterInput {
 }
 
 export interface Cluster {
-  id: string                 // synthetic: `c{n}` local, `x{n}` excursion
+  id: string // synthetic: `c{n}` local, `x{n}` excursion
   placeIds: string[]
   centroid: [number, number]
-  hull: Polygon | MultiPolygon | null   // soft blob for the map; null if unbuildable
+  hull: Polygon | MultiPolygon | null // soft blob for the map; null if unbuildable
   isExcursion: boolean
 }
 
 // Tunables — deliberately exported so they can be swept against a real trip
 // (the Paris fixture) rather than guessed once (PROJECT_PLAN.md §8 dogfood).
-export const CLUSTER_EPS_KM = 0.7        // a comfortable walking radius
+export const CLUSTER_EPS_KM = 0.7 // a comfortable walking radius
 export const CLUSTER_MIN_PTS = 2
-export const EXCURSION_KM = 15           // beyond this from the destination = day trip
-export const EXCURSION_EPS_KM = 2        // pins at one far site (Versailles) group loosely
-export const HULL_PAD_KM = 0.12          // soft padding so the blob rounds past the pins
+export const EXCURSION_KM = 15 // beyond this from the destination = day trip
+export const EXCURSION_EPS_KM = 2 // pins at one far site (Versailles) group loosely
+export const HULL_PAD_KM = 0.12 // soft padding so the blob rounds past the pins
 
 // DBSCAN → a label per input point: a cluster index ≥ 0, or -1 for noise.
 function dbscan(coords: [number, number][], epsKm: number, minPts: number): number[] {
   const n = coords.length
-  const labels = new Array<number>(n).fill(-2)   // -2 = unvisited
+  const labels = new Array<number>(n).fill(-2) // -2 = unvisited
   const neighbors = (i: number): number[] => {
     const out: number[] = []
     for (let j = 0; j < n; j++) {
@@ -48,7 +48,7 @@ function dbscan(coords: [number, number][], epsKm: number, minPts: number): numb
     if (labels[i] !== -2) continue
     const seeds = neighbors(i)
     if (seeds.length + 1 < minPts) {
-      labels[i] = -1   // noise (may be claimed by a later cluster's expansion)
+      labels[i] = -1 // noise (may be claimed by a later cluster's expansion)
       continue
     }
     cluster++
@@ -56,7 +56,7 @@ function dbscan(coords: [number, number][], epsKm: number, minPts: number): numb
     const queue = [...seeds]
     for (let k = 0; k < queue.length; k++) {
       const j = queue[k]
-      if (labels[j] === -1) labels[j] = cluster        // border point
+      if (labels[j] === -1) labels[j] = cluster // border point
       if (labels[j] !== -2) continue
       labels[j] = cluster
       const more = neighbors(j)
@@ -78,17 +78,22 @@ function centroidOf(coords: [number, number][]): [number, number] {
 export function buildAreaCircle(coords: [number, number][]): Polygon | MultiPolygon | null {
   if (coords.length === 0) return null
   const center = centroidOf(coords)
-  let radiusKm = 0.18                       // floor so single/tight clusters still show
+  let radiusKm = 0.18 // floor so single/tight clusters still show
   for (const c of coords) radiusKm = Math.max(radiusKm, haversineKm(center, c) + HULL_PAD_KM)
   const circle = buffer(point(center), radiusKm, { units: 'kilometers', steps: 40 })
   return (circle?.geometry as Polygon | MultiPolygon | undefined) ?? null
 }
 
-function assemble(members: ClusterInput[], idPrefix: string, index: number, isExcursion: boolean): Cluster {
-  const coords = members.map(m => m.coord)
+function assemble(
+  members: ClusterInput[],
+  idPrefix: string,
+  index: number,
+  isExcursion: boolean,
+): Cluster {
+  const coords = members.map((m) => m.coord)
   return {
     id: `${idPrefix}${index}`,
-    placeIds: members.map(m => m.id),
+    placeIds: members.map((m) => m.id),
     centroid: centroidOf(coords),
     hull: buildAreaCircle(coords),
     isExcursion,
@@ -103,12 +108,19 @@ function clusterGroup(
   isExcursion: boolean,
 ): Cluster[] {
   if (items.length === 0) return []
-  const labels = dbscan(items.map(i => i.coord), epsKm, minPts)
+  const labels = dbscan(
+    items.map((i) => i.coord),
+    epsKm,
+    minPts,
+  )
   const byLabel = new Map<number, ClusterInput[]>()
   const noise: ClusterInput[] = []
   items.forEach((item, i) => {
     const label = labels[i]
-    if (label < 0) { noise.push(item); return }
+    if (label < 0) {
+      noise.push(item)
+      return
+    }
     const bucket = byLabel.get(label) ?? []
     bucket.push(item)
     byLabel.set(label, bucket)
@@ -116,7 +128,8 @@ function clusterGroup(
 
   const clusters: Cluster[] = []
   let n = 0
-  for (const members of byLabel.values()) clusters.push(assemble(members, idPrefix, n++, isExcursion))
+  for (const members of byLabel.values())
+    clusters.push(assemble(members, idPrefix, n++, isExcursion))
   // A noise point is still a place you want to visit — it becomes a
   // one-place cluster rather than being dropped.
   for (const solo of noise) clusters.push(assemble([solo], idPrefix, n++, isExcursion))
@@ -124,21 +137,18 @@ function clusterGroup(
 }
 
 export interface ClusterResult {
-  clusters: Cluster[]       // walkable neighborhoods near the destination
-  excursions: Cluster[]     // far-flung pins that deserve their own day trip
+  clusters: Cluster[] // walkable neighborhoods near the destination
+  excursions: Cluster[] // far-flung pins that deserve their own day trip
 }
 
 // Splits the pins into local neighborhoods and excursion candidates, then
 // DBSCANs each group. `center` is the trip destination; a pin more than
 // EXCURSION_KM from it is a day trip, not neighborhood noise.
-export function clusterPlaces(
-  places: ClusterInput[],
-  center: [number, number],
-): ClusterResult {
+export function clusterPlaces(places: ClusterInput[], center: [number, number]): ClusterResult {
   const local: ClusterInput[] = []
   const far: ClusterInput[] = []
   for (const p of places) {
-    (haversineKm(p.coord, center) > EXCURSION_KM ? far : local).push(p)
+    ;(haversineKm(p.coord, center) > EXCURSION_KM ? far : local).push(p)
   }
   return {
     clusters: clusterGroup(local, CLUSTER_EPS_KM, CLUSTER_MIN_PTS, 'c', false),

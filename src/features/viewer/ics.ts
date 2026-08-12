@@ -6,7 +6,9 @@ import { computeTripTimeline } from './timeline'
 // "2 PM" means 2 PM where you are). Good enough to drop a trip into any
 // calendar app; the times come from the standalone timeline.
 
-function pad(n: number): string { return String(n).padStart(2, '0') }
+function pad(n: number): string {
+  return String(n).padStart(2, '0')
+}
 
 function dtFloating(isoDate: string, minutes: number): string {
   const [y, m, d] = isoDate.split('-')
@@ -17,7 +19,10 @@ function dtFloating(isoDate: string, minutes: number): string {
 
 // Escape per RFC 5545 §3.3.11 (backslash, semicolon, comma, newline).
 function esc(s: string): string {
-  return s.replace(/\\/g, '\\\\').replace(/([;,])/g, '\\$1').replace(/\r?\n/g, '\\n')
+  return s
+    .replace(/\\/g, '\\\\')
+    .replace(/([;,])/g, '\\$1')
+    .replace(/\r?\n/g, '\\n')
 }
 
 export function tripToIcs(trip: Trip): string {

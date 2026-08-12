@@ -15,34 +15,34 @@ function knot(prefix: string, center: [number, number], n: number): ClusterInput
 describe('clusterPlaces', () => {
   it('recovers four neighborhoods from twenty pins (Phase 4 verify)', () => {
     const places = [
-      ...knot('a', [2.333, 48.854], 5),   // Saint-Germain
-      ...knot('b', [2.362, 48.859], 5),   // Marais
-      ...knot('c', [2.312, 48.872], 5),   // Montmartre-ish
-      ...knot('d', [2.349, 48.844], 5),   // Latin Quarter-ish
+      ...knot('a', [2.333, 48.854], 5), // Saint-Germain
+      ...knot('b', [2.362, 48.859], 5), // Marais
+      ...knot('c', [2.312, 48.872], 5), // Montmartre-ish
+      ...knot('d', [2.349, 48.844], 5), // Latin Quarter-ish
     ]
     const { clusters, excursions } = clusterPlaces(places, PARIS)
     expect(clusters).toHaveLength(4)
     expect(excursions).toHaveLength(0)
-    expect(clusters.every(c => c.placeIds.length === 5)).toBe(true)
+    expect(clusters.every((c) => c.placeIds.length === 5)).toBe(true)
     // Every neighborhood gets a drawable blob.
-    expect(clusters.every(c => c.hull !== null)).toBe(true)
+    expect(clusters.every((c) => c.hull !== null)).toBe(true)
   })
 
   it('keeps a lone pin as its own one-place cluster (noise is not dropped)', () => {
     const places = [
       ...knot('a', [2.333, 48.854], 3),
-      { id: 'lonely', coord: [2.30, 48.88] as [number, number] },   // ~3 km from the knot
+      { id: 'lonely', coord: [2.3, 48.88] as [number, number] }, // ~3 km from the knot
     ]
     const { clusters } = clusterPlaces(places, PARIS)
     expect(clusters).toHaveLength(2)
-    const solo = clusters.find(c => c.placeIds.includes('lonely'))
+    const solo = clusters.find((c) => c.placeIds.includes('lonely'))
     expect(solo?.placeIds).toEqual(['lonely'])
   })
 
   it('pulls a far-flung pin out as an excursion, not a neighborhood', () => {
     const places = [
       ...knot('a', [2.333, 48.854], 3),
-      { id: 'versailles', coord: [2.1204, 48.8049] as [number, number] },  // ~17 km out
+      { id: 'versailles', coord: [2.1204, 48.8049] as [number, number] }, // ~17 km out
     ]
     const { clusters, excursions } = clusterPlaces(places, PARIS)
     expect(clusters).toHaveLength(1)
@@ -55,7 +55,7 @@ describe('clusterPlaces', () => {
   it('groups multiple pins at one far site into a single excursion', () => {
     const places = [
       { id: 'v1', coord: [2.1204, 48.8049] as [number, number] },
-      { id: 'v2', coord: [2.1230, 48.8060] as [number, number] },   // ~250 m away, same site
+      { id: 'v2', coord: [2.123, 48.806] as [number, number] }, // ~250 m away, same site
     ]
     const { excursions } = clusterPlaces(places, PARIS)
     expect(excursions).toHaveLength(1)

@@ -9,17 +9,16 @@ import { flyTo } from '../map/cameraSlice'
 // (PROJECT_PLAN.md §2 principle 5). Dates, hotels, days all come later.
 export function TripGate() {
   const dispatch = useAppDispatch()
-  const hydrated = useAppSelector(s => s.trip.hydrated)
-  const active = useAppSelector(s => s.trip.active)
+  const hydrated = useAppSelector((s) => s.trip.hydrated)
+  const active = useAppSelector((s) => s.trip.active)
 
   const [name, setName] = useState('')
   const [destQuery, setDestQuery] = useState('')
   const [picked, setPicked] = useState<{ mapboxId: string; label: string } | null>(null)
   const [creating, setCreating] = useState(false)
-  const { results, sessionToken, resetSession, clear } = useSuggest(
-    picked ? '' : destQuery,
-    { types: 'place' },
-  )
+  const { results, sessionToken, resetSession, clear } = useSuggest(picked ? '' : destQuery, {
+    types: 'place',
+  })
 
   if (!hydrated || active) return null
 
@@ -30,10 +29,12 @@ export function TripGate() {
       const dest = await retrieve(picked.mapboxId, sessionToken())
       resetSession()
       if (!dest) return
-      dispatch(createTrip({
-        name: name.trim() || `${dest.name} trip`,
-        destination: { name: dest.name, center: dest.coord, bbox: dest.bbox },
-      }))
+      dispatch(
+        createTrip({
+          name: name.trim() || `${dest.name} trip`,
+          destination: { name: dest.name, center: dest.coord, bbox: dest.bbox },
+        }),
+      )
       dispatch(flyTo({ center: dest.coord, zoom: 11.5, duration: 2500, essential: true }))
     } finally {
       setCreating(false)
@@ -51,7 +52,7 @@ export function TripGate() {
           className="junro-input"
           placeholder="Trip name (optional)"
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
         />
 
         <div className="trip-gate-dest">
@@ -59,17 +60,22 @@ export function TripGate() {
             className="junro-input"
             placeholder="Destination city…"
             value={picked ? picked.label : destQuery}
-            onChange={e => { setPicked(null); setDestQuery(e.target.value) }}
+            onChange={(e) => {
+              setPicked(null)
+              setDestQuery(e.target.value)
+            }}
             autoFocus
           />
           {!picked && results.length > 0 && (
             <ul className="junro-suggestions">
-              {results.map(r => (
+              {results.map((r) => (
                 <li key={r.mapboxId}>
-                  <button onClick={() => {
-                    setPicked({ mapboxId: r.mapboxId, label: r.name })
-                    clear()
-                  }}>
+                  <button
+                    onClick={() => {
+                      setPicked({ mapboxId: r.mapboxId, label: r.name })
+                      clear()
+                    }}
+                  >
                     <span className="junro-suggestion-name">{r.name}</span>
                     <span className="junro-suggestion-sub">{r.placeFormatted}</span>
                   </button>

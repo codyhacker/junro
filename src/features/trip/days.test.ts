@@ -1,15 +1,30 @@
 import { describe, it, expect } from 'vitest'
 import { enumerateDates, resolveLodgingId, materializeDays, clampLodgings } from './days'
-import tripReducer, { tripHydrated, setTripDates, addLodging, removeLodging, assignStop, moveStop } from './tripSlice'
+import tripReducer, {
+  tripHydrated,
+  setTripDates,
+  addLodging,
+  removeLodging,
+  assignStop,
+  moveStop,
+} from './tripSlice'
 import type { Day, Lodging, Trip } from '../../shared/types/trip'
 import { DEFAULT_PREFS } from '../../shared/types/trip'
 import { TRIP_SCHEMA_VERSION } from './storage'
 
 const HOTEL_A: Lodging = {
-  id: 'lodge-a', name: 'Hôtel A', coord: [2.35, 48.86], checkIn: '2026-05-01', checkOut: '2026-05-03',
+  id: 'lodge-a',
+  name: 'Hôtel A',
+  coord: [2.35, 48.86],
+  checkIn: '2026-05-01',
+  checkOut: '2026-05-03',
 }
 const HOTEL_B: Lodging = {
-  id: 'lodge-b', name: 'Hôtel B', coord: [2.30, 48.85], checkIn: '2026-05-03', checkOut: '2026-05-06',
+  id: 'lodge-b',
+  name: 'Hôtel B',
+  coord: [2.3, 48.85],
+  checkIn: '2026-05-03',
+  checkOut: '2026-05-06',
 }
 
 function day(date: string, stopIds: string[] = [], lodgingId: string | null = null): Day {
@@ -18,8 +33,11 @@ function day(date: string, stopIds: string[] = [], lodgingId: string | null = nu
 
 describe('enumerateDates', () => {
   it('is inclusive of both ends', () => {
-    expect(enumerateDates('2026-05-01', '2026-05-03'))
-      .toEqual(['2026-05-01', '2026-05-02', '2026-05-03'])
+    expect(enumerateDates('2026-05-01', '2026-05-03')).toEqual([
+      '2026-05-01',
+      '2026-05-02',
+      '2026-05-03',
+    ])
   })
 
   it('returns a single day when start === end', () => {
@@ -27,14 +45,22 @@ describe('enumerateDates', () => {
   })
 
   it('crosses a month boundary', () => {
-    expect(enumerateDates('2026-04-29', '2026-05-02'))
-      .toEqual(['2026-04-29', '2026-04-30', '2026-05-01', '2026-05-02'])
+    expect(enumerateDates('2026-04-29', '2026-05-02')).toEqual([
+      '2026-04-29',
+      '2026-04-30',
+      '2026-05-01',
+      '2026-05-02',
+    ])
   })
 
   it('crosses a DST boundary without dropping or duplicating a day', () => {
     // Europe/Paris springs forward on 2026-03-29 — UTC arithmetic must not care.
-    expect(enumerateDates('2026-03-28', '2026-03-31'))
-      .toEqual(['2026-03-28', '2026-03-29', '2026-03-30', '2026-03-31'])
+    expect(enumerateDates('2026-03-28', '2026-03-31')).toEqual([
+      '2026-03-28',
+      '2026-03-29',
+      '2026-03-30',
+      '2026-03-31',
+    ])
   })
 
   it('returns nothing when the range is inverted or unparseable', () => {
@@ -64,21 +90,26 @@ describe('resolveLodgingId', () => {
 })
 
 describe('clampLodgings', () => {
-  const hotel = (checkIn: string, checkOut: string): Lodging =>
-    ({ id: 'L', name: 'Hotel', coord: [2.3, 48.8], checkIn, checkOut })
+  const hotel = (checkIn: string, checkOut: string): Lodging => ({
+    id: 'L',
+    name: 'Hotel',
+    coord: [2.3, 48.8],
+    checkIn,
+    checkOut,
+  })
 
   it('trims a checkout dangling past a shrunk trip end (to end+1)', () => {
     // Trip was Oct 5–9 with a full-stay hotel; shrunk to Oct 5–7.
     const [l] = clampLodgings([hotel('2026-10-05', '2026-10-09')], '2026-10-05', '2026-10-07')
     expect(l.checkIn).toBe('2026-10-05')
-    expect(l.checkOut).toBe('2026-10-08')   // covers nights 5,6,7 — the whole shrunk trip
+    expect(l.checkOut).toBe('2026-10-08') // covers nights 5,6,7 — the whole shrunk trip
   })
 
   it('leaves a full-trip hotel (checkout = end+1) untouched', () => {
     const input = [hotel('2026-10-05', '2026-10-08')]
     const [l] = clampLodgings(input, '2026-10-05', '2026-10-07')
     expect(l.checkOut).toBe('2026-10-08')
-    expect(l).toBe(input[0])                // unchanged → same reference
+    expect(l).toBe(input[0]) // unchanged → same reference
   })
 
   it('pulls a check-in before the new start up to the start', () => {
@@ -96,8 +127,13 @@ describe('clampLodgings', () => {
 describe('materializeDays', () => {
   it('produces one day per date with lodging resolved', () => {
     const { days } = materializeDays([], '2026-05-01', '2026-05-04', [HOTEL_A, HOTEL_B])
-    expect(days.map(d => d.date)).toEqual(['2026-05-01', '2026-05-02', '2026-05-03', '2026-05-04'])
-    expect(days.map(d => d.lodgingId)).toEqual(['lodge-a', 'lodge-a', 'lodge-b', 'lodge-b'])
+    expect(days.map((d) => d.date)).toEqual([
+      '2026-05-01',
+      '2026-05-02',
+      '2026-05-03',
+      '2026-05-04',
+    ])
+    expect(days.map((d) => d.lodgingId)).toEqual(['lodge-a', 'lodge-a', 'lodge-b', 'lodge-b'])
   })
 
   it('materializes nothing until both dates exist', () => {
@@ -125,7 +161,7 @@ describe('materializeDays', () => {
   it('shrinking orphans the stops of dropped days', () => {
     const existing = [day('2026-05-01', ['p1']), day('2026-05-02', ['p2', 'p3'])]
     const { days, orphanedStopIds } = materializeDays(existing, '2026-05-01', '2026-05-01', [])
-    expect(days.map(d => d.date)).toEqual(['2026-05-01'])
+    expect(days.map((d) => d.date)).toEqual(['2026-05-01'])
     expect(orphanedStopIds).toEqual(['p2', 'p3'])
   })
 
@@ -137,9 +173,13 @@ describe('materializeDays', () => {
   })
 
   it('shifting the range forward orphans only the dates that fell off', () => {
-    const existing = [day('2026-05-01', ['p1']), day('2026-05-02', ['p2']), day('2026-05-03', ['p3'])]
+    const existing = [
+      day('2026-05-01', ['p1']),
+      day('2026-05-02', ['p2']),
+      day('2026-05-03', ['p3']),
+    ]
     const { days, orphanedStopIds } = materializeDays(existing, '2026-05-02', '2026-05-04', [])
-    expect(days.map(d => d.date)).toEqual(['2026-05-02', '2026-05-03', '2026-05-04'])
+    expect(days.map((d) => d.date)).toEqual(['2026-05-02', '2026-05-03', '2026-05-04'])
     expect(days[0].stopIds).toEqual(['p2'])
     expect(orphanedStopIds).toEqual(['p1'])
   })
@@ -178,20 +218,49 @@ function stateWith(trip: Trip) {
 describe('tripSlice — days, lodging, assignment', () => {
   it('setTripDates materializes days and resolves lodging', () => {
     const state = stateWith(tripWith({ lodgings: [HOTEL_A, HOTEL_B] }))
-    const next = tripReducer(state, setTripDates({ startDate: '2026-05-01', endDate: '2026-05-04' }))
-    expect(next.active!.days.map(d => d.date))
-      .toEqual(['2026-05-01', '2026-05-02', '2026-05-03', '2026-05-04'])
-    expect(next.active!.days.map(d => d.lodgingId))
-      .toEqual(['lodge-a', 'lodge-a', 'lodge-b', 'lodge-b'])
+    const next = tripReducer(
+      state,
+      setTripDates({ startDate: '2026-05-01', endDate: '2026-05-04' }),
+    )
+    expect(next.active!.days.map((d) => d.date)).toEqual([
+      '2026-05-01',
+      '2026-05-02',
+      '2026-05-03',
+      '2026-05-04',
+    ])
+    expect(next.active!.days.map((d) => d.lodgingId)).toEqual([
+      'lodge-a',
+      'lodge-a',
+      'lodge-b',
+      'lodge-b',
+    ])
   })
 
   it('shrinking the range drops the stop assignment (back to the scrapbook)', () => {
-    let state = stateWith(tripWith({
-      places: [
-        { id: 'p1', name: 'A', coord: [2.3, 48.8], category: 'cafe', dwellMin: 45, priority: 'nice', source: 'user' },
-        { id: 'p2', name: 'B', coord: [2.4, 48.9], category: 'sight', dwellMin: 120, priority: 'nice', source: 'user' },
-      ],
-    }))
+    let state = stateWith(
+      tripWith({
+        places: [
+          {
+            id: 'p1',
+            name: 'A',
+            coord: [2.3, 48.8],
+            category: 'cafe',
+            dwellMin: 45,
+            priority: 'nice',
+            source: 'user',
+          },
+          {
+            id: 'p2',
+            name: 'B',
+            coord: [2.4, 48.9],
+            category: 'sight',
+            dwellMin: 120,
+            priority: 'nice',
+            source: 'user',
+          },
+        ],
+      }),
+    )
     state = tripReducer(state, setTripDates({ startDate: '2026-05-01', endDate: '2026-05-02' }))
     const [d1, d2] = state.active!.days
     state = tripReducer(state, assignStop({ placeId: 'p1', dayId: d1.id }))
@@ -202,23 +271,29 @@ describe('tripSlice — days, lodging, assignment', () => {
     expect(state.active!.days).toHaveLength(1)
     expect(state.active!.days[0].stopIds).toEqual(['p1'])
     // p2 is still a saved place — it just isn't on any day any more.
-    expect(state.active!.places.map(p => p.id)).toEqual(['p1', 'p2'])
-    expect(state.active!.days.flatMap(d => d.stopIds)).not.toContain('p2')
+    expect(state.active!.places.map((p) => p.id)).toEqual(['p1', 'p2'])
+    expect(state.active!.days.flatMap((d) => d.stopIds)).not.toContain('p2')
   })
 
   it('adding and removing a lodging re-resolves every day', () => {
     let state = stateWith(tripWith())
     state = tripReducer(state, setTripDates({ startDate: '2026-05-01', endDate: '2026-05-02' }))
-    expect(state.active!.days.map(d => d.lodgingId)).toEqual([null, null])
+    expect(state.active!.days.map((d) => d.lodgingId)).toEqual([null, null])
 
-    state = tripReducer(state, addLodging({
-      name: 'Hôtel A', coord: [2.35, 48.86], checkIn: '2026-05-01', checkOut: '2026-05-03',
-    }))
+    state = tripReducer(
+      state,
+      addLodging({
+        name: 'Hôtel A',
+        coord: [2.35, 48.86],
+        checkIn: '2026-05-01',
+        checkOut: '2026-05-03',
+      }),
+    )
     const lodgingId = state.active!.lodgings[0].id
-    expect(state.active!.days.map(d => d.lodgingId)).toEqual([lodgingId, lodgingId])
+    expect(state.active!.days.map((d) => d.lodgingId)).toEqual([lodgingId, lodgingId])
 
     state = tripReducer(state, removeLodging(lodgingId))
-    expect(state.active!.days.map(d => d.lodgingId)).toEqual([null, null])
+    expect(state.active!.days.map((d) => d.lodgingId)).toEqual([null, null])
   })
 
   it('assignStop moves a stop between days rather than duplicating it', () => {
@@ -231,7 +306,7 @@ describe('tripSlice — days, lodging, assignment', () => {
     expect(state.active!.days[1].stopIds).toEqual(['p1'])
 
     state = tripReducer(state, assignStop({ placeId: 'p1', dayId: null }))
-    expect(state.active!.days.flatMap(d => d.stopIds)).toEqual([])
+    expect(state.active!.days.flatMap((d) => d.stopIds)).toEqual([])
   })
 
   it('moveStop reorders within a day and refuses to run off either end', () => {

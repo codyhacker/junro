@@ -1,6 +1,6 @@
 # Junro — Usability Review: "It feels busy"
 
-*Drafted 2026-08-11 in response to feedback that the app feels busy. Lens: fewer toggles, streamlined workflows. Grounded in the current code, not generalities.*
+_Drafted 2026-08-11 in response to feedback that the app feels busy. Lens: fewer toggles, streamlined workflows. Grounded in the current code, not generalities._
 
 ## The diagnosis, in numbers
 
@@ -21,18 +21,18 @@ Root cause: we added capability as **toggles and parallel systems** rather than 
 
 Verdict codes: **CUT** (remove), **AUTO** (make it automatic, no control), **MERGE** (fold into an existing control), **DEMOTE** (keep but move out of the main flow), **KEEP**.
 
-| Control | Where | Verdict | Why |
-|---|---|---|---|
-| **Show all day routes** toggle | Settings → "Map" | **CUT** | A power-user switch for a rare need. "Routes appear for the day you're looking at" is the whole clean idea of WS4 — a toggle to defeat it re-adds the clutter we just removed. Deleting it also deletes the entire "Map" settings group. |
-| **Walk reach from hotel** (isochrone) | Settings → "Reachability" | **DEMOTE** | Genuinely useful but it's a toggle *and* 3 map fills. It's a "check reachability" glance, not a persistent layer. Move it off the settings pile — surface it as a one-tap action on the **hotel** (tap the lodging → shows its reach), auto-clearing when you look away. Removes a toggle + a settings group + 3 resting layers. |
-| **Per-day travel mode** dropdown | Every expanded day | **AUTO + DEMOTE** | Redundant with the trip mode for ~90% of days. Auto-set excursion days to drive (we already detect excursions); for the rest, don't show a dropdown at all — expose an override only behind a small "walking ·" text you can tap. Removes a `<select>` from every open day. |
-| **Trip travel mode** (Walk/Drive) | Settings → "Getting around" | **KEEP** | The single source of truth for mode. One control, sensible. |
-| **Apply dates** button + shrink-confirm | Settings → "Dates" | **MERGE (live-apply)** | The common case (setting/extending dates) shouldn't need an explicit Apply. Apply on a valid change; keep the confirm **only** when a change strands stops. Removes a button and a step. |
-| **Dark/light** mode | Top-right | **KEEP** | One expected control. Fine. |
-| **Collapse plan** chevron | Panel header | **KEEP** | Just added; directly serves "give me the map." |
-| **Suggest days** → diff → Apply | Panel | **KEEP (reframe)** | The preview-before-apply is good (trust). But it reads as a *separate mode*. Reframe it as the primary "plan for me" path, not an extra button competing with manual assignment. |
-| **Per-stop ↑ ↓ ×** | Every stop, expanded | **DEMOTE** | Three buttons per stop is dense. Reorder is better as drag; keep ✕ but reveal ↑↓/drag on hover/long-press, not always-on. |
-| **+day** dropdown | Every unassigned row | **KEEP (lighten)** | Needed, but a `<select>` per row is heavy. A single "＋" that opens a small day menu reads lighter than a native select on every row. |
+| Control                                 | Where                       | Verdict                | Why                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------- | --------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Show all day routes** toggle          | Settings → "Map"            | **CUT**                | A power-user switch for a rare need. "Routes appear for the day you're looking at" is the whole clean idea of WS4 — a toggle to defeat it re-adds the clutter we just removed. Deleting it also deletes the entire "Map" settings group.                                                                                         |
+| **Walk reach from hotel** (isochrone)   | Settings → "Reachability"   | **DEMOTE**             | Genuinely useful but it's a toggle _and_ 3 map fills. It's a "check reachability" glance, not a persistent layer. Move it off the settings pile — surface it as a one-tap action on the **hotel** (tap the lodging → shows its reach), auto-clearing when you look away. Removes a toggle + a settings group + 3 resting layers. |
+| **Per-day travel mode** dropdown        | Every expanded day          | **AUTO + DEMOTE**      | Redundant with the trip mode for ~90% of days. Auto-set excursion days to drive (we already detect excursions); for the rest, don't show a dropdown at all — expose an override only behind a small "walking ·" text you can tap. Removes a `<select>` from every open day.                                                      |
+| **Trip travel mode** (Walk/Drive)       | Settings → "Getting around" | **KEEP**               | The single source of truth for mode. One control, sensible.                                                                                                                                                                                                                                                                      |
+| **Apply dates** button + shrink-confirm | Settings → "Dates"          | **MERGE (live-apply)** | The common case (setting/extending dates) shouldn't need an explicit Apply. Apply on a valid change; keep the confirm **only** when a change strands stops. Removes a button and a step.                                                                                                                                         |
+| **Dark/light** mode                     | Top-right                   | **KEEP**               | One expected control. Fine.                                                                                                                                                                                                                                                                                                      |
+| **Collapse plan** chevron               | Panel header                | **KEEP**               | Just added; directly serves "give me the map."                                                                                                                                                                                                                                                                                   |
+| **Suggest days** → diff → Apply         | Panel                       | **KEEP (reframe)**     | The preview-before-apply is good (trust). But it reads as a _separate mode_. Reframe it as the primary "plan for me" path, not an extra button competing with manual assignment.                                                                                                                                                 |
+| **Per-stop ↑ ↓ ×**                      | Every stop, expanded        | **DEMOTE**             | Three buttons per stop is dense. Reorder is better as drag; keep ✕ but reveal ↑↓/drag on hover/long-press, not always-on.                                                                                                                                                                                                        |
+| **+day** dropdown                       | Every unassigned row        | **KEEP (lighten)**     | Needed, but a `<select>` per row is heavy. A single "＋" that opens a small day menu reads lighter than a native select on every row.                                                                                                                                                                                            |
 
 **If we do just the CUT/AUTO/MERGE rows:** the settings drawer loses two whole groups ("Map", "Reachability") and shrinks to **Dates · Getting around · Lodging**; every expanded day loses its mode dropdown; and the dates step loses its button. That alone is most of the felt busyness gone.
 
@@ -43,7 +43,8 @@ Verdict codes: **CUT** (remove), **AUTO** (make it automatic, no control), **MER
 Right now an assigned place wears a **day-colored pin ring**, sits inside a **day-colored hull circle**, and (when selected) is on a **day-colored route**. Same information, three marks.
 
 Recommendation — one resting signal, one selection signal:
-- **Resting state:** category pin **inside its day-colored circle**. Drop the per-pin day ring (`places-day-ring`) — the circle already colors the group. Pins stay legible as *what* (category); the circle carries *which day*.
+
+- **Resting state:** category pin **inside its day-colored circle**. Drop the per-pin day ring (`places-day-ring`) — the circle already colors the group. Pins stay legible as _what_ (category); the circle carries _which day_.
 - **Selected state:** the route line appears (already WS4). That's the second, earned signal — it only shows for the day you're focused on.
 
 Net: remove one always-on layer (the ring), and the day-color story becomes "circle = day, route = the day you're looking at." Cleaner and still complete.
@@ -56,22 +57,22 @@ Also worth deciding: **cluster hulls (unassigned) vs day hulls (assigned)** are 
 
 The happy path today: **create trip → add places → open gear → set dates → add hotel → close gear → Suggest days → Apply → refine.** The friction points:
 
-1. **Essential setup hides behind the gear.** Dates and a hotel are *required* to plan, but they live behind a settings icon a new user must discover (the empty-state nudge patches this, but it's a patch). Consider promoting "When are you going?" and "Where are you staying?" as inline first-run steps in the panel, not settings.
+1. **Essential setup hides behind the gear.** Dates and a hotel are _required_ to plan, but they live behind a settings icon a new user must discover (the empty-state nudge patches this, but it's a patch). Consider promoting "When are you going?" and "Where are you staying?" as inline first-run steps in the panel, not settings.
 2. **Two ways to plan, side by side.** "Suggest days" and manual "+day" assignment compete for attention with no clear primary. Make **Suggest** the obvious default ("Plan my days ✨"), with manual assignment as the quiet fallback.
 3. **The Apply-dates button** is an avoidable step (see audit).
-4. **Settings is a junk drawer.** Dates, mode, two display toggles, and lodging in one scroll. Splitting *setup* (dates, hotel — done once) from *the day-to-day* would make each lighter; cutting the toggles (§1) does most of this for free.
+4. **Settings is a junk drawer.** Dates, mode, two display toggles, and lodging in one scroll. Splitting _setup_ (dates, hotel — done once) from _the day-to-day_ would make each lighter; cutting the toggles (§1) does most of this for free.
 
 ---
 
 ## 4. Streamlining plan (prioritized by busyness-removed ÷ effort)
 
-1. **Cut the two display toggles** — remove "Show all day routes" and demote isochrone to a hotel-tap action. Deletes 2 settings groups + up to 4 resting layers. *Small.*
-2. **Drop the redundant pin day-ring** — one resting day-signal (the circle). Removes a layer + the ring/hull double-coding. *Small.*
-3. **Live-apply dates** — remove the Apply button; confirm only on shrink. *Small.*
-4. **Auto/hide per-day mode** — excursions default to drive; override behind a subtle affordance, not a dropdown per day. *Medium.*
-5. **Make "Plan my days" the primary action** and quiet the manual per-row assignment. *Medium.*
-6. **Differentiate cluster vs day circles** (dashed vs solid) so the map doesn't read as one circle soup. *Small.*
-7. **Promote dates + hotel to first-run inline steps** (later) — the bigger IA change; do after the quick cuts land. *Large.*
+1. **Cut the two display toggles** — remove "Show all day routes" and demote isochrone to a hotel-tap action. Deletes 2 settings groups + up to 4 resting layers. _Small._
+2. **Drop the redundant pin day-ring** — one resting day-signal (the circle). Removes a layer + the ring/hull double-coding. _Small._
+3. **Live-apply dates** — remove the Apply button; confirm only on shrink. _Small._
+4. **Auto/hide per-day mode** — excursions default to drive; override behind a subtle affordance, not a dropdown per day. _Medium._
+5. **Make "Plan my days" the primary action** and quiet the manual per-row assignment. _Medium._
+6. **Differentiate cluster vs day circles** (dashed vs solid) so the map doesn't read as one circle soup. _Small._
+7. **Promote dates + hotel to first-run inline steps** (later) — the bigger IA change; do after the quick cuts land. _Large._
 
 Items 1–3 and 6 are an afternoon and remove most of the reported busyness. 4–5 streamline the core loop. 7 is the deeper IA rework.
 
@@ -92,7 +93,7 @@ Items 1–3 and 6 are an afternoon and remove most of the reported busyness. 4�
 
 ---
 
-*The through-line: we streamlined the map's **information** in the last UX pass (grouping over routing); this pass streamlines the **controls**. Fewer switches, one signal per idea, one obvious path.*
+_The through-line: we streamlined the map's **information** in the last UX pass (grouping over routing); this pass streamlines the **controls**. Fewer switches, one signal per idea, one obvious path._
 
 ---
 
@@ -102,21 +103,21 @@ A second batch of feedback arrived. Read together, the notes aren't a dozen fixe
 
 ## The new model
 
-A place-first app. You land, you **add and discover places** (they all stay on the map, listed simply by category with their notes). *Then, if you want*, you switch to **Plan** to organize them into days. Configuration (dates, hotels, export) lives out of the way in a third tab.
+A place-first app. You land, you **add and discover places** (they all stay on the map, listed simply by category with their notes). _Then, if you want_, you switch to **Plan** to organize them into days. Configuration (dates, hotels, export) lives out of the way in a third tab.
 
 **Three tabs:**
 
-1. **Places** *(home, default)* — the collector.
+1. **Places** _(home, default)_ — the collector.
    - Your saved places as a **simple list grouped by category** (☕ Cafes · 🍴 Restaurants · ⛩ Sights · 🛍 Shops), each with its "why I saved this" note. Drill into one for detail.
    - **Every place always shows on the map** — you never lose your pins to a day assignment.
-   - Search/add lives here. This is where the app *starts simple*.
+   - Search/add lives here. This is where the app _starts simple_.
 
-2. **Plan** *(opt-in)* — the organizer.
+2. **Plan** _(opt-in)_ — the organizer.
    - **Auto-grouped** day suggestions (clustering runs on its own; "Suggest" stops being a button you must find). Day cards, per-day routes on selection.
    - "Getting around" (walk/drive) lives here, **secondary**.
    - Your place list is still one tab away — planning never hides it.
 
-3. **Trip** *(config)* — the setup, tucked away.
+3. **Trip** _(config)_ — the setup, tucked away.
    - The **date-range calendar** (moved off the top).
    - **Hotels** as a list with a **＋ to add another** (no static "Add a hotel…" input sitting there).
    - Export/import (**.ics**, and **JSON/Import hidden here** as advanced) — off the main surface.
@@ -124,26 +125,27 @@ A place-first app. You land, you **add and discover places** (they all stay on t
 
 ## How each note maps
 
-| Note | Resolved by |
-|---|---|
-| Start simple / collapsed | **Places** tab is the simple default; Plan/Trip are elsewhere |
-| Add/discover → planning optional | Tabs: Places is home, Plan is opt-in |
-| Simple list w/ notes, by category | **Places** list grouped by category |
-| Keep all places in mapview | Places always renders every pin, assignment-independent |
-| Lose place list when you Suggest | Places tab persists regardless of day assignment |
-| Move trip dates to bottom/other tab | Dates → **Trip** tab |
-| Getting around secondary | Demoted inside **Plan** |
-| JSON / import hide | Tucked into **Trip** tab as advanced |
-| Group automatically | Clustering runs ambiently in **Plan**; no hunt-for-the-button |
-| Tabbed panel instead of long list | The whole model |
-| Add second hotel with ＋ icon | **Trip** tab hotels list with ＋ |
-| Trip "configuration" collapse unclear | Replaced by the **Trip** tab |
+| Note                                  | Resolved by                                                   |
+| ------------------------------------- | ------------------------------------------------------------- |
+| Start simple / collapsed              | **Places** tab is the simple default; Plan/Trip are elsewhere |
+| Add/discover → planning optional      | Tabs: Places is home, Plan is opt-in                          |
+| Simple list w/ notes, by category     | **Places** list grouped by category                           |
+| Keep all places in mapview            | Places always renders every pin, assignment-independent       |
+| Lose place list when you Suggest      | Places tab persists regardless of day assignment              |
+| Move trip dates to bottom/other tab   | Dates → **Trip** tab                                          |
+| Getting around secondary              | Demoted inside **Plan**                                       |
+| JSON / import hide                    | Tucked into **Trip** tab as advanced                          |
+| Group automatically                   | Clustering runs ambiently in **Plan**; no hunt-for-the-button |
+| Tabbed panel instead of long list     | The whole model                                               |
+| Add second hotel with ＋ icon         | **Trip** tab hotels list with ＋                              |
+| Trip "configuration" collapse unclear | Replaced by the **Trip** tab                                  |
 
 ## Scope
 
 This reworks the panel shell: `Scrapbook` (the one long column) splits into a **tab bar + three tab bodies** (`PlacesTab`, `PlanTab`, `TripTab`), reusing the existing pieces (day rail, suggest, the range calendar, lodging editor, exports) rearranged. State: a small `activeTab` in ui state. The map/engine layer is untouched — this is IA, not new capability.
 
 **Decisions to confirm before building:**
-1. **Three tabs (Places · Plan · Trip)** vs two (Places · Plan, with config in a menu)? *Recommend three — Trip is the natural home for the setup we're demoting.*
+
+1. **Three tabs (Places · Plan · Trip)** vs two (Places · Plan, with config in a menu)? _Recommend three — Trip is the natural home for the setup we're demoting._
 2. **Truly optional planning:** you can use Junro purely as a place-collector and never touch Plan/Trip — agreed?
 3. **Places default grouping:** by category (recommended) vs flat with a category filter?

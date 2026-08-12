@@ -77,7 +77,7 @@ export class LocalStorageTripStorage implements TripStorage {
 
   async save(trip: Trip): Promise<void> {
     this.ls.setItem(tripKey(trip.id), JSON.stringify(trip))
-    const index = (await this.list()).filter(s => s.id !== trip.id)
+    const index = (await this.list()).filter((s) => s.id !== trip.id)
     index.unshift({
       id: trip.id,
       name: trip.name,
@@ -89,7 +89,7 @@ export class LocalStorageTripStorage implements TripStorage {
 
   async remove(id: string): Promise<void> {
     this.ls.removeItem(tripKey(id))
-    const index = (await this.list()).filter(s => s.id !== id)
+    const index = (await this.list()).filter((s) => s.id !== id)
     this.ls.setItem(INDEX_KEY, JSON.stringify(index))
   }
 }

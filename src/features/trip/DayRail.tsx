@@ -1,5 +1,10 @@
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
-import { setSelectedDay, setHoveredPlace, setSelectedPlace, setFlyDay } from './tripInteractionSlice'
+import {
+  setSelectedDay,
+  setHoveredPlace,
+  setSelectedPlace,
+  setFlyDay,
+} from './tripInteractionSlice'
 import { assignStop, moveStop, setDayStops, setDayTravelMode } from './tripSlice'
 import { selectDays, representativeName } from './selectors'
 import { computeStopDrop, type DropTarget } from './dndStops'
@@ -31,7 +36,10 @@ interface StopDnd {
 // open at a time.
 
 const LABEL_FMT = new Intl.DateTimeFormat(undefined, {
-  weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC',
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
 })
 
 export function dayLabel(date: string): string {
@@ -50,7 +58,11 @@ export function formatDuration(seconds: number): string {
 // The travel line drawn above a stop (and once more for the trip back to the
 // hotel). The rough transit hint rides beside the walking time on long legs —
 // display-only, never part of routing (PROJECT_PLAN.md §7 Stage 3).
-function TravelLeg({ request, route, legIndex }: {
+function TravelLeg({
+  request,
+  route,
+  legIndex,
+}: {
   request: DayRouteRequest
   route: DayRoute
   legIndex: number
@@ -59,9 +71,8 @@ function TravelLeg({ request, route, legIndex }: {
   if (seconds === undefined) return null
   const from = request.coords[legIndex]
   const to = request.coords[legIndex + 1]
-  const transitMin = request.mode === 'walking' && from && to
-    ? roughTransitMinutes(haversineKm(from, to))
-    : null
+  const transitMin =
+    request.mode === 'walking' && from && to ? roughTransitMinutes(haversineKm(from, to)) : null
 
   return (
     <div className="day-leg">
@@ -77,21 +88,21 @@ function TravelLeg({ request, route, legIndex }: {
 
 export function DayRail() {
   const dispatch = useAppDispatch()
-  const trip = useAppSelector(s => s.trip.active)
+  const trip = useAppSelector((s) => s.trip.active)
   const days = useAppSelector(selectDays)
-  const uiMode = useAppSelector(s => s.mapStyle.uiMode)
-  const selectedDayId = useAppSelector(s => s.tripInteraction.selectedDayId)
-  const flyDayId = useAppSelector(s => s.tripInteraction.flyDayId)
+  const uiMode = useAppSelector((s) => s.mapStyle.uiMode)
+  const selectedDayId = useAppSelector((s) => s.tripInteraction.selectedDayId)
+  const flyDayId = useAppSelector((s) => s.tripInteraction.flyDayId)
   const requestByDayId = useAppSelector(selectRequestByDayId)
-  const dayRoutes = useAppSelector(s => s.planner.dayRoutes)
+  const dayRoutes = useAppSelector((s) => s.planner.dayRoutes)
 
   const [dragId, setDragId] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null)
 
   if (!trip || days.length === 0) return null
 
-  const placeById = new Map(trip.places.map(p => [p.id, p]))
-  const lodgingById = new Map(trip.lodgings.map(l => [l.id, l]))
+  const placeById = new Map(trip.places.map((p) => [p.id, p]))
+  const lodgingById = new Map(trip.lodgings.map((l) => [l.id, l]))
 
   // Commit a drop: one setDayStops (it claims the id from its old day, so a
   // cross-day move and a same-day reorder are both a single undoable step).
@@ -103,9 +114,13 @@ export function DayRail() {
     setDropTarget(null)
   }
   const dnd: StopDnd = {
-    dragId, dropTarget,
+    dragId,
+    dropTarget,
     onDragStart: setDragId,
-    onDragEnd: () => { setDragId(null); setDropTarget(null) },
+    onDragEnd: () => {
+      setDragId(null)
+      setDropTarget(null)
+    },
     onOverStop: (placeId) => setDropTarget({ kind: 'stop', placeId }),
     onDropStop: (placeId) => handleDrop({ kind: 'stop', placeId }),
   }
@@ -116,7 +131,7 @@ export function DayRail() {
         const selected = day.id === selectedDayId
         const lodging = day.lodgingId ? lodgingById.get(day.lodgingId) : undefined
         const stops = day.stopIds
-          .map(id => placeById.get(id))
+          .map((id) => placeById.get(id))
           .filter((p): p is SavedPlace => p !== undefined)
         // Neighborhood label: what area this day is about.
         const label = representativeName(day.stopIds, trip.places)
@@ -131,8 +146,22 @@ export function DayRail() {
             // Dropping onto the day (not a specific stop) moves the dragged stop
             // here. Stop-level handlers stopPropagation, so this only fires over
             // the header / summary / empty area.
-            onDragOver={dragId ? (e => { e.preventDefault(); setDropTarget({ kind: 'day', dayId: day.id }) }) : undefined}
-            onDrop={dragId ? (e => { e.preventDefault(); handleDrop({ kind: 'day', dayId: day.id }) }) : undefined}
+            onDragOver={
+              dragId
+                ? (e) => {
+                    e.preventDefault()
+                    setDropTarget({ kind: 'day', dayId: day.id })
+                  }
+                : undefined
+            }
+            onDrop={
+              dragId
+                ? (e) => {
+                    e.preventDefault()
+                    handleDrop({ kind: 'day', dayId: day.id })
+                  }
+                : undefined
+            }
           >
             {/* Header — click toggles selection (select → frame + expand). */}
             <button
@@ -141,9 +170,11 @@ export function DayRail() {
               aria-expanded={selected}
             >
               <span className="day-texts">
-                <span className="day-date"><b>Day {i + 1}</b> · {dayLabel(day.date)}</span>
+                <span className="day-date">
+                  <b>Day {i + 1}</b> · {dayLabel(day.date)}
+                </span>
                 <span className="day-lodging">
-                  {label ? `📍 ${label}` : (lodging ? lodging.name : 'No hotel')}
+                  {label ? `📍 ${label}` : lodging ? lodging.name : 'No hotel'}
                 </span>
               </span>
               <span className="day-count">{day.stopIds.length}</span>
@@ -152,27 +183,31 @@ export function DayRail() {
             {/* Collapsed summary: a glanceable strip of the day's activities. */}
             {!selected && (
               <div className="day-summary">
-                {stops.length === 0
-                  ? <span className="day-summary-empty">Nothing planned yet</span>
-                  : stops.map(p => (
-                      <span key={p.id} className="day-summary-chip" title={p.name}>
-                        {CATEGORY_META[p.category].emoji}
-                      </span>
-                    ))}
+                {stops.length === 0 ? (
+                  <span className="day-summary-empty">Nothing planned yet</span>
+                ) : (
+                  stops.map((p) => (
+                    <span key={p.id} className="day-summary-chip" title={p.name}>
+                      {CATEGORY_META[p.category].emoji}
+                    </span>
+                  ))
+                )}
               </div>
             )}
 
             {/* Expanded detail: the full schedule for the selected day. */}
-            {selected && <DayDetail
-              day={day}
-              stops={stops}
-              trip={trip}
-              lodgingName={lodging?.name ?? null}
-              request={requestByDayId.get(day.id)}
-              stored={dayRoutes[day.id]}
-              flyActive={flyDayId === day.id}
-              dnd={dnd}
-            />}
+            {selected && (
+              <DayDetail
+                day={day}
+                stops={stops}
+                trip={trip}
+                lodgingName={lodging?.name ?? null}
+                request={requestByDayId.get(day.id)}
+                stored={dayRoutes[day.id]}
+                flyActive={flyDayId === day.id}
+                dnd={dnd}
+              />
+            )}
           </li>
         )
       })}
@@ -180,7 +215,16 @@ export function DayRail() {
   )
 }
 
-function DayDetail({ day, stops, trip, lodgingName, request, stored, flyActive, dnd }: {
+function DayDetail({
+  day,
+  stops,
+  trip,
+  lodgingName,
+  request,
+  stored,
+  flyActive,
+  dnd,
+}: {
   day: Day
   stops: SavedPlace[]
   trip: Trip
@@ -208,12 +252,18 @@ function DayDetail({ day, stops, trip, lodgingName, request, stored, flyActive, 
             className="day-mode"
             aria-label={`Travel mode for ${dayLabel(day.date)}`}
             value={day.travelMode ?? ''}
-            onChange={e => dispatch(setDayTravelMode({
-              dayId: day.id,
-              mode: (e.target.value || null) as TravelMode | null,
-            }))}
+            onChange={(e) =>
+              dispatch(
+                setDayTravelMode({
+                  dayId: day.id,
+                  mode: (e.target.value || null) as TravelMode | null,
+                }),
+              )
+            }
           >
-            <option value="">{trip.prefs.travelMode === 'walking' ? 'Walk (trip)' : 'Drive (trip)'}</option>
+            <option value="">
+              {trip.prefs.travelMode === 'walking' ? 'Walk (trip)' : 'Drive (trip)'}
+            </option>
             <option value="walking">Walk</option>
             <option value="driving">Drive</option>
           </select>
@@ -236,19 +286,44 @@ function DayDetail({ day, stops, trip, lodgingName, request, stored, flyActive, 
             )}
             <div
               className={`day-stop${dnd.dragId === place.id ? ' dragging' : ''}${
-                dnd.dragId && dnd.dropTarget?.kind === 'stop' && dnd.dropTarget.placeId === place.id && dnd.dropTarget.placeId !== dnd.dragId
-                  ? ' drop-before' : ''
+                dnd.dragId &&
+                dnd.dropTarget?.kind === 'stop' &&
+                dnd.dropTarget.placeId === place.id &&
+                dnd.dropTarget.placeId !== dnd.dragId
+                  ? ' drop-before'
+                  : ''
               }`}
               draggable
-              onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', place.id); dnd.onDragStart(place.id) }}
+              onDragStart={(e) => {
+                e.dataTransfer.effectAllowed = 'move'
+                e.dataTransfer.setData('text/plain', place.id)
+                dnd.onDragStart(place.id)
+              }}
               onDragEnd={dnd.onDragEnd}
-              onDragOver={e => { e.preventDefault(); e.stopPropagation(); dnd.onOverStop(place.id) }}
-              onDrop={e => { e.preventDefault(); e.stopPropagation(); dnd.onDropStop(place.id) }}
+              onDragOver={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                dnd.onOverStop(place.id)
+              }}
+              onDrop={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                dnd.onDropStop(place.id)
+              }}
               onMouseEnter={() => dispatch(setHoveredPlace(place.id))}
               onMouseLeave={() => dispatch(setHoveredPlace(null))}
             >
-              <span className="day-stop-grip" aria-hidden title="Drag to reorder or move to another day">⠿</span>
-              <button className="day-stop-main" onClick={() => dispatch(setSelectedPlace(place.id))}>
+              <span
+                className="day-stop-grip"
+                aria-hidden
+                title="Drag to reorder or move to another day"
+              >
+                ⠿
+              </span>
+              <button
+                className="day-stop-main"
+                onClick={() => dispatch(setSelectedPlace(place.id))}
+              >
                 <span className="day-stop-index">{idx + 1}</span>
                 <span className="day-stop-emoji">{CATEGORY_META[place.category].emoji}</span>
                 <span className="day-stop-name">{place.name}</span>
@@ -257,17 +332,25 @@ function DayDetail({ day, stops, trip, lodgingName, request, stored, flyActive, 
                 <button
                   aria-label={`Move ${place.name} earlier`}
                   disabled={idx === 0}
-                  onClick={() => dispatch(moveStop({ dayId: day.id, placeId: place.id, delta: -1 }))}
-                >↑</button>
+                  onClick={() =>
+                    dispatch(moveStop({ dayId: day.id, placeId: place.id, delta: -1 }))
+                  }
+                >
+                  ↑
+                </button>
                 <button
                   aria-label={`Move ${place.name} later`}
                   disabled={idx === stops.length - 1}
                   onClick={() => dispatch(moveStop({ dayId: day.id, placeId: place.id, delta: 1 }))}
-                >↓</button>
+                >
+                  ↓
+                </button>
                 <button
                   aria-label={`Remove ${place.name} from this day`}
                   onClick={() => dispatch(assignStop({ placeId: place.id, dayId: null }))}
-                >×</button>
+                >
+                  ×
+                </button>
               </span>
             </div>
           </li>

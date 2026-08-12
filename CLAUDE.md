@@ -13,13 +13,17 @@ npm run dev       # start dev server (Vite, localhost:5173)
 npm run build     # type-check + production build → dist/
 npm run test      # Vitest, single run
 npx tsc --noEmit  # type-check without building
+npm run format    # Prettier, write mode (npm run format:check for CI-style check)
 ```
+
+Style: no semicolons, single quotes, trailing commas, 2-space indent (`.prettierrc.json`). `src/shared/constants/overturePlaceCategories.ts` is Prettier-ignored — it's a hand-aligned reference table; don't run a formatter on it.
 
 **Verify gate** (run before every commit; `/check` and `/commit` use this): `npx tsc --noEmit && npm test -- --run && npm run build`
 
 ## Environment
 
 `.env` in the project root:
+
 ```
 VITE_MAPBOX_ACCESS_TOKEN=...
 ```

@@ -42,7 +42,7 @@ export async function fetchDayRoute(
     })
     const res = await fetch(`${BASE}/${mode}/${path}?${params}`, { signal: ac.signal })
     if (!res.ok) throw new Error(`directions failed: ${res.status}`)
-    const json = await res.json() as {
+    const json = (await res.json()) as {
       routes?: {
         duration: number
         geometry: RouteGeometry
@@ -55,7 +55,7 @@ export async function fetchDayRoute(
     if (!route) return null
     return {
       geometry: route.geometry,
-      legSeconds: (route.legs ?? []).map(l => l.duration),
+      legSeconds: (route.legs ?? []).map((l) => l.duration),
       totalSeconds: route.duration,
     }
   } finally {

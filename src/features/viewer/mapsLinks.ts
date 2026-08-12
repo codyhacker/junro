@@ -5,7 +5,7 @@ import type { TravelMode } from '../../shared/types/trip'
 // job, and these hand off to it. Google's universal URLs open the installed
 // app on both iOS and Android.
 
-const q = (coord: [number, number]) => `${coord[1]},${coord[0]}`   // lat,lng
+const q = (coord: [number, number]) => `${coord[1]},${coord[0]}` // lat,lng
 
 export function mapsSearchUrl(coord: [number, number]): string {
   return `https://www.google.com/maps/search/?api=1&query=${q(coord)}`

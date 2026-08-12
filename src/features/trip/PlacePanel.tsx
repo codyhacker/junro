@@ -10,14 +10,15 @@ import type { PlaceCategory } from '../../shared/types/trip'
 // this?"), recategorize, or remove.
 export function PlacePanel() {
   const dispatch = useAppDispatch()
-  const selectedId = useAppSelector(s => s.tripInteraction.selectedPlaceId)
-  const place = useAppSelector(s =>
-    s.trip.active?.places.find(p => p.id === s.tripInteraction.selectedPlaceId) ?? null)
+  const selectedId = useAppSelector((s) => s.tripInteraction.selectedPlaceId)
+  const place = useAppSelector(
+    (s) => s.trip.active?.places.find((p) => p.id === s.tripInteraction.selectedPlaceId) ?? null,
+  )
   const days = useAppSelector(selectDays)
 
   if (!selectedId || !place) return null
 
-  const assignedDayId = days.find(d => d.stopIds.includes(place.id))?.id ?? ''
+  const assignedDayId = days.find((d) => d.stopIds.includes(place.id))?.id ?? ''
 
   return (
     <div className="place-panel">
@@ -27,19 +28,27 @@ export function PlacePanel() {
           <div className="place-panel-name">{place.name}</div>
           {place.address && <div className="place-panel-addr">{place.address}</div>}
         </div>
-        <button className="place-panel-close" onClick={() => dispatch(setSelectedPlace(null))}>×</button>
+        <button className="place-panel-close" onClick={() => dispatch(setSelectedPlace(null))}>
+          ×
+        </button>
       </div>
 
       <select
         className="junro-input place-panel-cat"
         value={place.category}
-        onChange={e => dispatch(updatePlace({
-          id: place.id,
-          patch: { category: e.target.value as PlaceCategory },
-        }))}
+        onChange={(e) =>
+          dispatch(
+            updatePlace({
+              id: place.id,
+              patch: { category: e.target.value as PlaceCategory },
+            }),
+          )
+        }
       >
-        {(Object.keys(CATEGORY_META) as PlaceCategory[]).map(cat => (
-          <option key={cat} value={cat}>{CATEGORY_META[cat].emoji} {CATEGORY_META[cat].label}</option>
+        {(Object.keys(CATEGORY_META) as PlaceCategory[]).map((cat) => (
+          <option key={cat} value={cat}>
+            {CATEGORY_META[cat].emoji} {CATEGORY_META[cat].label}
+          </option>
         ))}
       </select>
 
@@ -48,11 +57,15 @@ export function PlacePanel() {
           className="junro-input place-panel-day"
           aria-label="Assign to a day"
           value={assignedDayId}
-          onChange={e => dispatch(assignStop({ placeId: place.id, dayId: e.target.value || null }))}
+          onChange={(e) =>
+            dispatch(assignStop({ placeId: place.id, dayId: e.target.value || null }))
+          }
         >
           <option value="">Unassigned</option>
           {days.map((d, i) => (
-            <option key={d.id} value={d.id}>Day {i + 1} · {dayLabel(d.date)}</option>
+            <option key={d.id} value={d.id}>
+              Day {i + 1} · {dayLabel(d.date)}
+            </option>
           ))}
         </select>
       )}
@@ -61,10 +74,14 @@ export function PlacePanel() {
         className="junro-input place-panel-note"
         placeholder="Why did you save this?"
         value={place.notes ?? ''}
-        onChange={e => dispatch(updatePlace({
-          id: place.id,
-          patch: { notes: e.target.value || undefined },
-        }))}
+        onChange={(e) =>
+          dispatch(
+            updatePlace({
+              id: place.id,
+              patch: { notes: e.target.value || undefined },
+            }),
+          )
+        }
         rows={2}
       />
 
@@ -74,7 +91,9 @@ export function PlacePanel() {
           dispatch(removePlace(place.id))
           dispatch(setSelectedPlace(null))
         }}
-      >Remove place</button>
+      >
+        Remove place
+      </button>
     </div>
   )
 }

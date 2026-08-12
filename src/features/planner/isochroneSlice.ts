@@ -5,7 +5,7 @@ import type { FeatureCollection, Polygon } from 'geojson'
 // API cache, and the toggle is ephemeral view state).
 interface IsochroneState {
   visible: boolean
-  key: string | null                         // isochroneKey of the loaded data
+  key: string | null // isochroneKey of the loaded data
   data: FeatureCollection<Polygon> | null
 }
 
@@ -17,9 +17,15 @@ const isochroneSlice = createSlice({
   reducers: {
     setIsochroneVisible(state, action: PayloadAction<boolean>) {
       state.visible = action.payload
-      if (!action.payload) { state.data = null; state.key = null }
+      if (!action.payload) {
+        state.data = null
+        state.key = null
+      }
     },
-    isochroneLoaded(state, action: PayloadAction<{ key: string; data: FeatureCollection<Polygon> }>) {
+    isochroneLoaded(
+      state,
+      action: PayloadAction<{ key: string; data: FeatureCollection<Polygon> }>,
+    ) {
       state.key = action.payload.key
       state.data = action.payload.data
     },

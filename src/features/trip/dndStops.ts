@@ -8,31 +8,29 @@ import type { Day } from '../../shared/types/trip'
 
 // Where a dragged stop was dropped: onto another stop (insert before it) or
 // onto a day as a whole (append to that day).
-export type DropTarget =
-  | { kind: 'stop'; placeId: string }
-  | { kind: 'day'; dayId: string }
+export type DropTarget = { kind: 'stop'; placeId: string } | { kind: 'day'; dayId: string }
 
 export function computeStopDrop(
   days: Day[],
   draggedId: string,
   target: DropTarget,
 ): { dayId: string; placeIds: string[] } | null {
-  const sourceDay = days.find(d => d.stopIds.includes(draggedId))
+  const sourceDay = days.find((d) => d.stopIds.includes(draggedId))
   if (!sourceDay) return null
 
   const destDay =
     target.kind === 'day'
-      ? days.find(d => d.id === target.dayId)
-      : days.find(d => d.stopIds.includes(target.placeId))
+      ? days.find((d) => d.id === target.dayId)
+      : days.find((d) => d.stopIds.includes(target.placeId))
   if (!destDay || destDay.locked) return null
   // Can't drop a stop onto itself.
   if (target.kind === 'stop' && target.placeId === draggedId) return null
 
-  const without = destDay.stopIds.filter(id => id !== draggedId)
+  const without = destDay.stopIds.filter((id) => id !== draggedId)
   const index =
     target.kind === 'day'
-      ? without.length                                   // append to the day
-      : Math.max(0, without.indexOf(target.placeId))     // insert before the target stop
+      ? without.length // append to the day
+      : Math.max(0, without.indexOf(target.placeId)) // insert before the target stop
 
   const placeIds = [...without.slice(0, index), draggedId, ...without.slice(index)]
 

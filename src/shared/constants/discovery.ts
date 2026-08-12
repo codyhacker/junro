@@ -12,8 +12,8 @@ const R2_DEFAULT = 'https://pub-e2d74adde0e44b6dbb3904fb4616f8b5.r2.dev/places.p
 // local port that isn't on the bucket's CORS allowlist still works. Prod is a
 // static build and hits R2 directly (its origin is CORS-whitelisted).
 export const PLACES_PMTILES_URL =
-  import.meta.env.VITE_PLACES_PMTILES_URL
-  || (import.meta.env.DEV ? '/r2/places.pmtiles' : R2_DEFAULT)
+  import.meta.env.VITE_PLACES_PMTILES_URL ||
+  (import.meta.env.DEV ? '/r2/places.pmtiles' : R2_DEFAULT)
 
 // The vector layer id inside places.pmtiles (from the file's own metadata).
 export const DISCOVERY_SOURCE_LAYER = 'places'

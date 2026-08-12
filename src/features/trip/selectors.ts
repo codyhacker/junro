@@ -28,14 +28,15 @@ export const selectPlaceDayHex = createSelector(
   },
 )
 
-export const selectAssignedPlaceIds = createSelector([selectDays], (days) =>
-  new Set(days.flatMap(d => d.stopIds)),
+export const selectAssignedPlaceIds = createSelector(
+  [selectDays],
+  (days) => new Set(days.flatMap((d) => d.stopIds)),
 )
 
 // The scrapbook proper: everything not yet on a day.
 export const selectUnassignedPlaces = createSelector(
   [selectPlaces, selectAssignedPlaceIds],
-  (places, assigned) => places.filter(p => !assigned.has(p.id)),
+  (places, assigned) => places.filter((p) => !assigned.has(p.id)),
 )
 
 // A short human label for a group of stops — its must-see, else its first
@@ -43,19 +44,21 @@ export const selectUnassignedPlaces = createSelector(
 // (UX_PLAN.md WS5). A real reverse-geocoded name ("Le Marais") can replace
 // this later; the representative place is an honest, API-free stand-in.
 export function representativeName(stopIds: string[], places: SavedPlace[]): string | null {
-  const byId = new Map(places.map(p => [p.id, p]))
-  const stops = stopIds.map(id => byId.get(id)).filter((p): p is SavedPlace => !!p)
+  const byId = new Map(places.map((p) => [p.id, p]))
+  const stops = stopIds.map((id) => byId.get(id)).filter((p): p is SavedPlace => !!p)
   if (stops.length === 0) return null
-  return (stops.find(p => p.priority === 'must') ?? stops[0]).name
+  return (stops.find((p) => p.priority === 'must') ?? stops[0]).name
 }
 
 // Ordered coords for a day's route/camera: [lodging, ...stops, lodging].
 // Days without a lodging are just the stops (no loop to close).
 export function dayCoords(day: Day, places: SavedPlace[], lodgings: Lodging[]): [number, number][] {
-  const byId = new Map(places.map(p => [p.id, p]))
-  const stops = day.stopIds.map(id => byId.get(id)).filter((p): p is SavedPlace => p !== undefined)
-  const lodging = lodgings.find(l => l.id === day.lodgingId)
-  const coords = stops.map(p => p.coord)
+  const byId = new Map(places.map((p) => [p.id, p]))
+  const stops = day.stopIds
+    .map((id) => byId.get(id))
+    .filter((p): p is SavedPlace => p !== undefined)
+  const lodging = lodgings.find((l) => l.id === day.lodgingId)
+  const coords = stops.map((p) => p.coord)
   return lodging ? [lodging.coord, ...coords, lodging.coord] : coords
 }
 
@@ -64,12 +67,12 @@ export function selectDayBounds(
   state: RootState,
   dayId: string,
 ): [[number, number], [number, number]] | null {
-  const day = selectDays(state).find(d => d.id === dayId)
+  const day = selectDays(state).find((d) => d.id === dayId)
   if (!day) return null
   const coords = dayCoords(day, selectPlaces(state), selectLodgings(state))
   if (coords.length === 0) return null
-  const lngs = coords.map(c => c[0])
-  const lats = coords.map(c => c[1])
+  const lngs = coords.map((c) => c[0])
+  const lats = coords.map((c) => c[1])
   return [
     [Math.min(...lngs), Math.min(...lats)],
     [Math.max(...lngs), Math.max(...lats)],

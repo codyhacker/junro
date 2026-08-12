@@ -16,16 +16,18 @@ export const discoveryLayer: InteractiveLayer = {
 
   handle({ kind, hit, allHits, dispatch }) {
     if (kind !== 'click' || !hit) return
-    if (allHits['places']) return   // a saved pin was also under the cursor — it wins
+    if (allHits['places']) return // a saved pin was also under the cursor — it wins
     const p = hit.properties ?? {}
     const geom = hit.geometry
     if (geom.type !== 'Point') return
     const [lng, lat] = geom.coordinates as [number, number]
-    dispatch(setAddCandidate({
-      name: (p.name as string) || 'Unnamed place',
-      coord: [lng, lat],
-      address: (p.address as string) || undefined,
-      category: overtureToPlaceCategory((p.category as string) || ''),
-    }))
+    dispatch(
+      setAddCandidate({
+        name: (p.name as string) || 'Unnamed place',
+        coord: [lng, lat],
+        address: (p.address as string) || undefined,
+        category: overtureToPlaceCategory((p.category as string) || ''),
+      }),
+    )
   },
 }

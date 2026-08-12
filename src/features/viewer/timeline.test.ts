@@ -2,11 +2,31 @@ import { describe, it, expect } from 'vitest'
 import { computeDayTimeline, formatClock } from './timeline'
 import type { Day, Lodging, SavedPlace, TripPrefs } from '../../shared/types/trip'
 
-const PREFS: TripPrefs = { travelMode: 'walking', dayStart: '09:00', dayEnd: '21:00', maxStopsPerDay: 6 }
-const HOTEL: Lodging = { id: 'L', name: 'Hotel', coord: [2.33, 48.85], checkIn: '2026-10-05', checkOut: '2026-10-12' }
+const PREFS: TripPrefs = {
+  travelMode: 'walking',
+  dayStart: '09:00',
+  dayEnd: '21:00',
+  maxStopsPerDay: 6,
+}
+const HOTEL: Lodging = {
+  id: 'L',
+  name: 'Hotel',
+  coord: [2.33, 48.85],
+  checkIn: '2026-10-05',
+  checkOut: '2026-10-12',
+}
 
 function place(id: string, coord: [number, number], extra: Partial<SavedPlace> = {}): SavedPlace {
-  return { id, name: id, coord, category: 'sight', dwellMin: 60, priority: 'nice', source: 'user', ...extra }
+  return {
+    id,
+    name: id,
+    coord,
+    category: 'sight',
+    dwellMin: 60,
+    priority: 'nice',
+    source: 'user',
+    ...extra,
+  }
 }
 
 describe('computeDayTimeline', () => {
@@ -15,7 +35,13 @@ describe('computeDayTimeline', () => {
       ['a', place('a', [2.335, 48.852], { dwellMin: 30 })],
       ['b', place('b', [2.34, 48.855], { dwellMin: 45 })],
     ])
-    const day: Day = { id: 'd', date: '2026-10-05', lodgingId: 'L', stopIds: ['a', 'b'], locked: false }
+    const day: Day = {
+      id: 'd',
+      date: '2026-10-05',
+      lodgingId: 'L',
+      stopIds: ['a', 'b'],
+      locked: false,
+    }
     const t = computeDayTimeline(day, places, new Map([['L', HOTEL]]), PREFS)
 
     expect(t.stops).toHaveLength(2)
@@ -35,7 +61,7 @@ describe('computeDayTimeline', () => {
     const t = computeDayTimeline(day, places, new Map([['L', HOTEL]]), PREFS)
 
     expect(t.stops[0].fixed).toBe(true)
-    expect(t.stops[0].arrivalMin).toBe(14 * 60)          // snapped to the booking
+    expect(t.stops[0].arrivalMin).toBe(14 * 60) // snapped to the booking
     expect(t.stops[0].departureMin).toBe(14 * 60 + 90)
   })
 

@@ -20,12 +20,12 @@ export interface DayColor {
 
 export const DAY_COLORS: DayColor[] = [
   { name: 'harbor', light: '#2a7ba8', dark: '#5fa9d2', casing: '#12405c' },
-  { name: 'gold',   light: '#b8901f', dark: '#e0b64d', casing: '#5e4a0d' },
+  { name: 'gold', light: '#b8901f', dark: '#e0b64d', casing: '#5e4a0d' },
   { name: 'orchid', light: '#8b52b8', dark: '#b184d9', casing: '#472561' },
-  { name: 'leaf',   light: '#2f9455', dark: '#5fbd82', casing: '#154a29' },
-  { name: 'rose',   light: '#bf4a76', dark: '#e37ba1', casing: '#63213a' },
+  { name: 'leaf', light: '#2f9455', dark: '#5fbd82', casing: '#154a29' },
+  { name: 'rose', light: '#bf4a76', dark: '#e37ba1', casing: '#63213a' },
   { name: 'lagoon', light: '#1c8c8a', dark: '#4fb6b4', casing: '#0c4746' },
-  { name: 'moss',   light: '#7a9a2e', dark: '#a8c65c', casing: '#3d4d16' },
+  { name: 'moss', light: '#7a9a2e', dark: '#a8c65c', casing: '#3d4d16' },
   { name: 'indigo', light: '#4a5fb5', dark: '#8492dd', casing: '#232f5e' },
 ]
 

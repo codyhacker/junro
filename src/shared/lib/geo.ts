@@ -14,7 +14,7 @@ export function bearingDeg(a: [number, number], b: [number, number]): number {
   const dLng = toRad(b[0] - a[0])
   const y = Math.sin(dLng) * Math.cos(lat2)
   const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng)
-  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360
 }
 
 // Great-circle distance between two [lng, lat] pairs, in kilometres.
@@ -23,9 +23,7 @@ export function haversineKm(a: [number, number], b: [number, number]): number {
   const dLng = toRad(b[0] - a[0])
   const lat1 = toRad(a[1])
   const lat2 = toRad(b[1])
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)))
 }
 

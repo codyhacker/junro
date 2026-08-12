@@ -7,8 +7,8 @@ import { computeTripTimeline, formatClock } from './timeline'
 // 5). No store writes, no map engine — so it works token-less and doubles as
 // the future public share page. Reached via ?view=itinerary.
 export function ItineraryView() {
-  const trip = useAppSelector(s => s.trip.active)
-  const hydrated = useAppSelector(s => s.trip.hydrated)
+  const trip = useAppSelector((s) => s.trip.active)
+  const hydrated = useAppSelector((s) => s.trip.hydrated)
 
   if (!hydrated) return <div className="viewer-empty">Loading…</div>
   if (!trip) return <div className="viewer-empty">No trip to show.</div>
@@ -20,8 +20,11 @@ export function ItineraryView() {
       <header className="viewer-head no-print-border">
         <div>
           <h1>{trip.name || trip.destination.name}</h1>
-          <p className="viewer-sub">{trip.destination.name}
-            {trip.startDate && trip.endDate ? ` · ${dayLabel(trip.startDate)} – ${dayLabel(trip.endDate)}` : ''}
+          <p className="viewer-sub">
+            {trip.destination.name}
+            {trip.startDate && trip.endDate
+              ? ` · ${dayLabel(trip.startDate)} – ${dayLabel(trip.endDate)}`
+              : ''}
           </p>
         </div>
         <div className="viewer-actions no-print">
@@ -43,10 +46,16 @@ export function ItineraryView() {
           {day.stops.length === 0 && <p className="itin-empty">Nothing planned.</p>}
 
           <ol className="itin-stops">
-            {day.stops.map(stop => (
+            {day.stops.map((stop) => (
               <li key={stop.placeId} className="itin-stop">
                 <span className="itin-time">
-                  {formatClock(stop.arrivalMin)}{stop.fixed && <span className="itin-fixed" title="Reservation"> ●</span>}
+                  {formatClock(stop.arrivalMin)}
+                  {stop.fixed && (
+                    <span className="itin-fixed" title="Reservation">
+                      {' '}
+                      ●
+                    </span>
+                  )}
                 </span>
                 <span className="itin-body">
                   <span className="itin-name">
@@ -60,7 +69,9 @@ export function ItineraryView() {
           </ol>
 
           {day.lodgingName && day.stops.length > 0 && (
-            <p className="itin-return">↩ back to {day.lodgingName} · {formatClock(day.endMin)}</p>
+            <p className="itin-return">
+              ↩ back to {day.lodgingName} · {formatClock(day.endMin)}
+            </p>
           )}
         </section>
       ))}

@@ -1,8 +1,8 @@
 # Junro — Project Plan
 
-*A visual trip planner built on the silkymaps core map architecture.*
+_A visual trip planner built on the silkymaps core map architecture._
 
-*Junro (順路): the "recommended route" — the small arrow signs that guide you through a museum or garden in the ideal order. Chosen 2026-08-09 after a collision survey of ~26 names; verified clean in the app space. The arrow motif is the natural seed for the app icon.*
+_Junro (順路): the "recommended route" — the small arrow signs that guide you through a museum or garden in the ideal order. Chosen 2026-08-09 after a collision survey of ~26 names; verified clean in the app space. The arrow motif is the natural seed for the app icon._
 
 Plan out a trip on a beautiful map: pin the restaurants, cafes, and sights you want to hit, drop in your hotel and dates, and let the app cluster your pins into neighborhoods, assign them to days, and order each day into an efficient walking loop from your hotel and back.
 
@@ -24,7 +24,7 @@ Stated up front per the working guidelines. Push back on any of these before Pha
 
 ### Design principles
 
-Drawn from what's wrong with the incumbent trip planners — **too busy, unpleasant to look at, and bad at this one specific use case** — and from what silkymaps is already good at (making a map *feel* like a place):
+Drawn from what's wrong with the incumbent trip planners — **too busy, unpleasant to look at, and bad at this one specific use case** — and from what silkymaps is already good at (making a map _feel_ like a place):
 
 1. **The map is the product.** Visualizing the trip — pins, day colors, routes, neighborhood hulls — is the priority. Every feature must earn its place on the map before it earns a panel; lists support the map, never the reverse.
 2. **Simple, and allowed to be cute — one theme, two modes.** One planning rail, one detail panel, one map, and **one carefully-made theme** with a dark/light toggle. No theme gallery — aesthetic variety is silkymaps' game, not Junro's. The basemap stays quiet and Streets-like so the trip is the loudest thing on screen; charm comes from category iconography, soft hulls, day colors, and motion. Charm is a feature; clutter is a bug.
@@ -39,7 +39,7 @@ The app is one map with a planning rail. The user journey:
 
 1. **Create a trip** — name + destination (geocoded → map flies there). Dates are optional at creation: the scrapbook works dateless, and **Day** rows materialize in the planning rail whenever dates land (principle 5).
 2. **Add lodging** — search for the hotel, pin it. Multi-hotel trips supported by giving each lodging a check-in/check-out range (the day's "anchor" is whichever hotel is active that night).
-3. **Collect places** — search or browse POIs (restaurants, cafes, sights, stores). Saving one pins it to the map in an "unassigned" state. Every pin wears its **category icon** (cafe cup, restaurant fork, sight obelisk, store bag), and saving offers a one-line note — *why did I save this?* — that becomes the place's subtitle in the scrapbook. This is the scrapbook phase; the silkymaps favorites drawer is exactly this pattern.
+3. **Collect places** — search or browse POIs (restaurants, cafes, sights, stores). Saving one pins it to the map in an "unassigned" state. Every pin wears its **category icon** (cafe cup, restaurant fork, sight obelisk, store bag), and saving offers a one-line note — _why did I save this?_ — that becomes the place's subtitle in the scrapbook. This is the scrapbook phase; the silkymaps favorites drawer is exactly this pattern.
 4. **See structure emerge** — the app clusters saved pins into walkable neighborhoods and renders soft hulls around them, each themed from the data palette. An isochrone from the hotel shades what's within a 15/30/45-min walk.
 5. **Plan days** — either drag pins onto days manually, or hit **"Suggest days"**: clusters are assigned to days (respecting hotel changes and place opening days), then each day is ordered hotel → stops → hotel by travel time. Each day gets a color; routes draw on the map.
 6. **Refine** — reorder stops (route re-solves), move a stop between days, mark must-see vs optional. Per-stop dwell time yields a rough timeline per day.
@@ -59,20 +59,20 @@ Redux action → RTK listener → engine.execute(MapCommand) → Controller meth
 
 ### Carry over as-is (copy, minimal renames)
 
-| silkymaps piece | Role in Junro |
-|---|---|
-| `engine/MapEngine.ts` (command dispatcher, worker fix, controller composition) | Same skeleton; swap park/trail controllers for trip controllers |
-| `engine/commands.ts` discriminated-union pattern | Same; new command families (§5.4) |
-| `engine/StyleController.ts` + `styleAugmentation.ts` reconcile-via-`diff()` | Same mechanism; the augmentation selector now derives POI pins, day routes, cluster hulls, isochrones from trip state |
-| `engine/pointer/` (`InteractiveLayer`, `registerPointerRouter`, priority ordering) | Perfect fit: pins > route lines > cluster hulls, exactly the trails-over-parks precedence problem again |
-| `shared/constants/uiThemes.ts` (UiPalette token system, `getEffectivePalette` dark/light modeling, `applyUiTheme`) | Keep the token *architecture* — every UI color stays a CSS var from one palette source; the theme gallery does not come along (see Adapt + Drop) |
-| `shared/constants/dataPalettes.ts` | Becomes the day-color / cluster-color source — one categorical ramp with light/dark variants |
-| `app/store.ts`, `listenerMiddleware.ts`, `hooks.ts`, `persist.ts` | Same shape; persist grows to hold the trip document |
-| `features/map/{styleSlice,terrainSlice,cameraSlice}.ts` | Unchanged |
-| `features/shell/` (uiSlice, MobileToggles, useUrlSync) | Unchanged pattern; URL sync now carries trip id + selected day |
-| `DetailPanel.tsx` tab-container (both children stay mounted) | Becomes POI-detail / Day-detail tabs — same "two simultaneous selections" problem parks/trails already solved |
-| Trail fly-along (`@turf/along` + RAF + gesture-cancel contract) | Repurposed as **"fly the day"** route preview |
-| PMTiles build/host pipeline (tippecanoe → R2, CORS config) | Reused for a self-hosted **places layer** (§6) |
+| silkymaps piece                                                                                                    | Role in Junro                                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `engine/MapEngine.ts` (command dispatcher, worker fix, controller composition)                                     | Same skeleton; swap park/trail controllers for trip controllers                                                                                  |
+| `engine/commands.ts` discriminated-union pattern                                                                   | Same; new command families (§5.4)                                                                                                                |
+| `engine/StyleController.ts` + `styleAugmentation.ts` reconcile-via-`diff()`                                        | Same mechanism; the augmentation selector now derives POI pins, day routes, cluster hulls, isochrones from trip state                            |
+| `engine/pointer/` (`InteractiveLayer`, `registerPointerRouter`, priority ordering)                                 | Perfect fit: pins > route lines > cluster hulls, exactly the trails-over-parks precedence problem again                                          |
+| `shared/constants/uiThemes.ts` (UiPalette token system, `getEffectivePalette` dark/light modeling, `applyUiTheme`) | Keep the token _architecture_ — every UI color stays a CSS var from one palette source; the theme gallery does not come along (see Adapt + Drop) |
+| `shared/constants/dataPalettes.ts`                                                                                 | Becomes the day-color / cluster-color source — one categorical ramp with light/dark variants                                                     |
+| `app/store.ts`, `listenerMiddleware.ts`, `hooks.ts`, `persist.ts`                                                  | Same shape; persist grows to hold the trip document                                                                                              |
+| `features/map/{styleSlice,terrainSlice,cameraSlice}.ts`                                                            | Unchanged                                                                                                                                        |
+| `features/shell/` (uiSlice, MobileToggles, useUrlSync)                                                             | Unchanged pattern; URL sync now carries trip id + selected day                                                                                   |
+| `DetailPanel.tsx` tab-container (both children stay mounted)                                                       | Becomes POI-detail / Day-detail tabs — same "two simultaneous selections" problem parks/trails already solved                                    |
+| Trail fly-along (`@turf/along` + RAF + gesture-cancel contract)                                                    | Repurposed as **"fly the day"** route preview                                                                                                    |
+| PMTiles build/host pipeline (tippecanoe → R2, CORS config)                                                         | Reused for a self-hosted **places layer** (§6)                                                                                                   |
 
 ### Adapt
 
@@ -97,25 +97,29 @@ The **trip document** is the single source of truth and the unit of persistence/
 
 ```ts
 interface Trip {
-  id: string                   // UUIDv7, client-generated — all entity ids are
-                               // (platform-plan prerequisite: server adoption
-                               // without id remapping; see PLATFORM_PLAN.md §7)
+  id: string // UUIDv7, client-generated — all entity ids are
+  // (platform-plan prerequisite: server adoption
+  // without id remapping; see PLATFORM_PLAN.md §7)
   name: string
   destination: { name: string; center: [number, number]; bbox?: BBox }
-  startDate?: string           // ISO date — optional at creation (principle 5);
-  endDate?: string             // days materialize once both dates exist
+  startDate?: string // ISO date — optional at creation (principle 5);
+  endDate?: string // days materialize once both dates exist
   lodgings: Lodging[]
-  places: SavedPlace[]         // the scrapbook — includes unassigned
-  days: Day[]                  // materialized from date range
-  prefs: { travelMode: 'walking' | 'driving'; dayStart: string; dayEnd: string;
-           maxStopsPerDay: number }   // trip defaults — days may override (below)
+  places: SavedPlace[] // the scrapbook — includes unassigned
+  days: Day[] // materialized from date range
+  prefs: {
+    travelMode: 'walking' | 'driving'
+    dayStart: string
+    dayEnd: string
+    maxStopsPerDay: number
+  } // trip defaults — days may override (below)
 }
 
 interface Lodging {
   id: string
   name: string
   coord: [number, number]
-  checkIn: string              // ISO date
+  checkIn: string // ISO date
   checkOut: string
 }
 
@@ -125,30 +129,30 @@ interface SavedPlace {
   coord: [number, number]
   category: 'restaurant' | 'cafe' | 'sight' | 'shop' | 'other'
   address?: string
-  notes?: string               // the "why did I save this?" line — prompted on
-                               // save, shown as the scrapbook subtitle
-  dwellMin: number             // default by category (cafe 45, restaurant 90, sight 120)
+  notes?: string // the "why did I save this?" line — prompted on
+  // save, shown as the scrapbook subtitle
+  dwellMin: number // default by category (cafe 45, restaurant 90, sight 120)
   priority: 'must' | 'nice'
-  fixedTime?: string           // HH:mm — timed reservation (museum slot, dinner
-                               // booking); a hard anchor the optimizer sequences
-                               // around, never past (§7 Stage 3)
-  openDays?: number[]          // 0–6; closed-on-Monday museums
-                               // (openDays + fixedTime are user-entered in v1 —
-                               // no opening-hours data source until Phase 6)
-  source: 'user' | 'places-layer'   // provenance matters for ToS (§6)
-  gersId?: string              // Overture GERS id when source is places-layer —
-                               // canonical place identity; dedupes a Search Box
-                               // re-save of the same spot
+  fixedTime?: string // HH:mm — timed reservation (museum slot, dinner
+  // booking); a hard anchor the optimizer sequences
+  // around, never past (§7 Stage 3)
+  openDays?: number[] // 0–6; closed-on-Monday museums
+  // (openDays + fixedTime are user-entered in v1 —
+  // no opening-hours data source until Phase 6)
+  source: 'user' | 'places-layer' // provenance matters for ToS (§6)
+  gersId?: string // Overture GERS id when source is places-layer —
+  // canonical place identity; dedupes a Search Box
+  // re-save of the same spot
 }
 
 interface Day {
   id: string
   date: string
-  lodgingId: string            // resolved from date ∩ lodging ranges
-  stopIds: string[]            // ordered SavedPlace ids
-  locked: boolean              // user hand-ordered; optimizer must not touch
-  usableHours?: { start: string; end: string }  // arrival/departure half-days
-  travelMode?: 'walking' | 'driving'            // excursion-day override
+  lodgingId: string // resolved from date ∩ lodging ranges
+  stopIds: string[] // ordered SavedPlace ids
+  locked: boolean // user hand-ordered; optimizer must not touch
+  usableHours?: { start: string; end: string } // arrival/departure half-days
+  travelMode?: 'walking' | 'driving' // excursion-day override
 }
 
 // Derived (planner state, not persisted):
@@ -178,21 +182,21 @@ User edit (add place / move stop / change dates)
       → listener: selectAugmentationSpec diff      → engine.execute(STYLE_RECONCILE)
 ```
 
-The silkymaps pattern extends with one new concept: **async derivation services** (routing, geocoding) that sit outside the engine. Rule: the *engine* touches only Mapbox GL; *services* touch only HTTP; both are driven by listeners; both write results back through Redux. The `AbortController` discipline from `satelliteTiles.ts` (abort in-flight work when superseded) applies verbatim to route fetches.
+The silkymaps pattern extends with one new concept: **async derivation services** (routing, geocoding) that sit outside the engine. Rule: the _engine_ touches only Mapbox GL; _services_ touch only HTTP; both are driven by listeners; both write results back through Redux. The `AbortController` discipline from `satelliteTiles.ts` (abort in-flight work when superseded) applies verbatim to route fetches.
 
 ### 5.2 Redux slices
 
-| Slice | Owns | Persisted |
-|---|---|---|
-| `trip` | The trip document (+ trip list for multi-trip) | yes |
-| `planner` | Derived: clusters, dayRoutes, matrix cache, optimizer status, suggestion diffs | no |
-| `placeSearch` | Query, results, search session token | no |
-| `tripInteraction` | Hovered/selected place id, selected day id, flyDayActive | no |
-| `mapStyle` / `terrain` / `camera` / `ui` | As in silkymaps (`mapStyle` trims to little more than `uiMode` — no theme index, no basemap id) | as today |
+| Slice                                    | Owns                                                                                            | Persisted |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------- | --------- |
+| `trip`                                   | The trip document (+ trip list for multi-trip)                                                  | yes       |
+| `planner`                                | Derived: clusters, dayRoutes, matrix cache, optimizer status, suggestion diffs                  | no        |
+| `placeSearch`                            | Query, results, search session token                                                            | no        |
+| `tripInteraction`                        | Hovered/selected place id, selected day id, flyDayActive                                        | no        |
+| `mapStyle` / `terrain` / `camera` / `ui` | As in silkymaps (`mapStyle` trims to little more than `uiMode` — no theme index, no basemap id) | as today  |
 
 ### 5.3 Engine controllers
 
-- **`TripLayerController`** — feature-state for hover/select on pins; fitBounds to a day or cluster. All layer/source *definitions* live in `selectAugmentationSpec` (category-icon pins with day-color coding, dashed unassigned state, route lines with casing, cluster hulls at low opacity, hotel marker, isochrone fill). The **category icon set** is one hand-drawn SVG per `SavedPlace['category']`, tinted for light/dark and registered via `map.addImage` at style load (through StyleController, honoring the no-direct-Mapbox rule); symbol layers reference icons by name — this iconography is a primary carrier of the app's character (principle 2).
+- **`TripLayerController`** — feature-state for hover/select on pins; fitBounds to a day or cluster. All layer/source _definitions_ live in `selectAugmentationSpec` (category-icon pins with day-color coding, dashed unassigned state, route lines with casing, cluster hulls at low opacity, hotel marker, isochrone fill). The **category icon set** is one hand-drawn SVG per `SavedPlace['category']`, tinted for light/dark and registered via `map.addImage` at style load (through StyleController, honoring the no-direct-Mapbox rule); symbol layers reference icons by name — this iconography is a primary carrier of the app's character (principle 2).
 - **`RoutePreviewController`** — "fly the day": `@turf/along` RAF walk over the day's route geometry, same user-gesture cancellation contract as the trail fly-along.
 
 ### 5.4 New commands
@@ -214,9 +218,9 @@ Storage is **localStorage in v1**, with an explicit migration path. Three rules 
 
 ```ts
 interface TripStorage {
-  list(): Promise<TripSummary[]>          // async from day one, even though
-  load(id: string): Promise<Trip | null>  // localStorage is sync — so the DB
-  save(trip: Trip): Promise<void>         // swap changes zero call sites
+  list(): Promise<TripSummary[]> // async from day one, even though
+  load(id: string): Promise<Trip | null> // localStorage is sync — so the DB
+  save(trip: Trip): Promise<void> // swap changes zero call sites
   remove(id: string): Promise<void>
 }
 ```
@@ -236,22 +240,23 @@ interface TripStorage {
 
 The consequential decisions. Recommendation first, rationale after.
 
-| Need | v1 choice | Why / constraints |
-|---|---|---|
-| Destination + hotel + address geocoding | **Mapbox Search Box API** (session-token billing) | Already on Mapbox; interactive autocomplete. **ToS caveat below.** |
-| POI browsing (restaurants/cafes near X) | **Self-hosted Overture Maps places layer as PMTiles** | The silkymaps move: Overture places theme → tippecanoe → `places.pmtiles` on R2. Free, no rate limits, no storage restrictions, renders as a native vector layer themed by the palette. Category filtering is a layer filter expression — identical mechanics to the trails `surface`/`difficulty` filters. |
-| Point-to-point routes | **Mapbox Directions API** (walking, driving) | Per-day: hotel + ≤10 stops fits one request (25-waypoint limit). Responses cached in-memory only — never persisted (same storage posture as geocoding). |
-| Travel-time matrix | **Mapbox Matrix API** | 25 coordinates/request (10 for driving-traffic). A day is hotel + stops ≪ 25; whole-trip clustering over ~40 pins needs tiled requests or the haversine fallback (§7). |
-| Reachability shading | **Mapbox Isochrone API** | Up to 4 contours, ≤60 min. One call per (lodging, mode). |
-| Stop ordering | **Client-side NN + 2-opt** over the matrix | Mapbox Optimization v1 caps at 12 coordinates and adds a dependency; 2-opt on a ≤12-node day is trivial, free, transparent, and works offline on haversine. |
-| Transit | **Rough hints in v1; routing deferred** | No Mapbox transit profile; real routing = OTP/GTFS infrastructure (Phase 6). Google Directions is off the table on ToS alone (results must render on a Google map). v1: legs > ~1.5 km show a heuristic estimate — crow-flies at ~25 km/h + 12 min overhead, labeled rough, computed locally, zero API calls. |
+| Need                                    | v1 choice                                             | Why / constraints                                                                                                                                                                                                                                                                                             |
+| --------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Destination + hotel + address geocoding | **Mapbox Search Box API** (session-token billing)     | Already on Mapbox; interactive autocomplete. **ToS caveat below.**                                                                                                                                                                                                                                            |
+| POI browsing (restaurants/cafes near X) | **Self-hosted Overture Maps places layer as PMTiles** | The silkymaps move: Overture places theme → tippecanoe → `places.pmtiles` on R2. Free, no rate limits, no storage restrictions, renders as a native vector layer themed by the palette. Category filtering is a layer filter expression — identical mechanics to the trails `surface`/`difficulty` filters.   |
+| Point-to-point routes                   | **Mapbox Directions API** (walking, driving)          | Per-day: hotel + ≤10 stops fits one request (25-waypoint limit). Responses cached in-memory only — never persisted (same storage posture as geocoding).                                                                                                                                                       |
+| Travel-time matrix                      | **Mapbox Matrix API**                                 | 25 coordinates/request (10 for driving-traffic). A day is hotel + stops ≪ 25; whole-trip clustering over ~40 pins needs tiled requests or the haversine fallback (§7).                                                                                                                                        |
+| Reachability shading                    | **Mapbox Isochrone API**                              | Up to 4 contours, ≤60 min. One call per (lodging, mode).                                                                                                                                                                                                                                                      |
+| Stop ordering                           | **Client-side NN + 2-opt** over the matrix            | Mapbox Optimization v1 caps at 12 coordinates and adds a dependency; 2-opt on a ≤12-node day is trivial, free, transparent, and works offline on haversine.                                                                                                                                                   |
+| Transit                                 | **Rough hints in v1; routing deferred**               | No Mapbox transit profile; real routing = OTP/GTFS infrastructure (Phase 6). Google Directions is off the table on ToS alone (results must render on a Google map). v1: legs > ~1.5 km show a heuristic estimate — crow-flies at ~25 km/h + 12 min overhead, labeled rough, computed locally, zero API calls. |
 
 **⚠️ Mapbox geocoding storage ToS:** standard (temporary) geocoding results may not be stored persistently — and a saved trip document is persistent by definition. Mitigation, in order of preference:
+
 1. POIs saved from the **Overture places layer** carry no restriction — make that the primary save path (hence `source` on `SavedPlace`).
 2. For hotel/address pins from Search Box, store the **user's confirmed pin position** as user-generated content (user drops/adjusts the pin; we persist their pin, not the API response). Keep provenance honest via `source: 'user'`.
 3. If it ever matters commercially: Mapbox permanent-geocoding endpoint (Enterprise) or a self-hosted geocoder (Pelias/Nominatim) — both out of v1 scope.
 
-**Places-layer coverage strategy:** a *global* Overture places build is tens of GB — ruled out. Coverage is **per-destination extracts**: `scripts/build-places-pmtiles.sh <city-bbox>` (Overture download → category filter → tippecanoe → R2), run manually when you start planning a new city — the same workflow rhythm as silkymaps' trails pipeline. Extracts keep Overture's **GERS ids**, which serve as canonical place identity for deduping (§4).
+**Places-layer coverage strategy:** a _global_ Overture places build is tens of GB — ruled out. Coverage is **per-destination extracts**: `scripts/build-places-pmtiles.sh <city-bbox>` (Overture download → category filter → tippecanoe → R2), run manually when you start planning a new city — the same workflow rhythm as silkymaps' trails pipeline. Extracts keep Overture's **GERS ids**, which serve as canonical place identity for deduping (§4).
 
 **Cost posture:** map loads + search sessions + directions on free tiers comfortably cover a personal project; matrix/isochrone calls are cached in `planner` keyed by content hash, so the steady state after a planning session is ~zero API traffic.
 
@@ -264,10 +269,10 @@ The consequential decisions. Recommendation first, rationale after.
 Three explicit stages — each independently testable, each with an escape hatch to manual control.
 
 **Stage 1 — Neighborhood discovery (pure, synchronous).**
-`turf clustersDbscan` over saved pins, epsilon ≈ 600–800 m (a comfortable walking radius), minPoints 2. Pins beyond an excursion threshold (~15 km from the destination center) are excluded from DBSCAN entirely and grouped separately as **excursion candidates** — a Versailles pin is a day trip, not noise. Remaining noise points become single-place clusters. Output hulls (concave, fallback convex) rendered as soft themed fills. Runs on every scrapbook change — it's cheap and the visual feedback ("your pins form 4 neighborhoods") is the product's aha moment. *No API calls: geographic distance is the right notion for "same neighborhood."*
+`turf clustersDbscan` over saved pins, epsilon ≈ 600–800 m (a comfortable walking radius), minPoints 2. Pins beyond an excursion threshold (~15 km from the destination center) are excluded from DBSCAN entirely and grouped separately as **excursion candidates** — a Versailles pin is a day trip, not noise. Remaining noise points become single-place clusters. Output hulls (concave, fallback convex) rendered as soft themed fills. Runs on every scrapbook change — it's cheap and the visual feedback ("your pins form 4 neighborhoods") is the product's aha moment. _No API calls: geographic distance is the right notion for "same neighborhood."_
 
 **Stage 2 — Cluster → day assignment (greedy, explainable).**
-Inputs: clusters (with summed dwell times), days (active lodging + usable hours from the day's `usableHours` override, else `prefs` — arrival/departure half-days just have less capacity), place `openDays`/`priority`. Greedy bin-packing: sort clusters by must-see weight, then size; assign each to the day that (a) has capacity — both usable hours *and* the `maxStopsPerDay` cap, because a suggestion that stacks three museums back-to-back is optimal and inhumane, (b) whose lodging is nearest the cluster centroid, (c) satisfies open-day constraints for must-see places; split oversized clusters by k-means with k = ⌈dwell/day-capacity⌉. Each excursion candidate from Stage 1 proposes a dedicated day with a suggested `travelMode: 'driving'` override. Skip `locked` days. Output is a **suggestion diff** ("Day 2: Le Marais — 5 places, ~6h") the user applies or ignores — never a silent rewrite.
+Inputs: clusters (with summed dwell times), days (active lodging + usable hours from the day's `usableHours` override, else `prefs` — arrival/departure half-days just have less capacity), place `openDays`/`priority`. Greedy bin-packing: sort clusters by must-see weight, then size; assign each to the day that (a) has capacity — both usable hours _and_ the `maxStopsPerDay` cap, because a suggestion that stacks three museums back-to-back is optimal and inhumane, (b) whose lodging is nearest the cluster centroid, (c) satisfies open-day constraints for must-see places; split oversized clusters by k-means with k = ⌈dwell/day-capacity⌉. Each excursion candidate from Stage 1 proposes a dedicated day with a suggested `travelMode: 'driving'` override. Skip `locked` days. Output is a **suggestion diff** ("Day 2: Le Marais — 5 places, ~6h") the user applies or ignores — never a silent rewrite.
 
 **Stage 3 — Intra-day ordering (matrix + 2-opt).**
 Per day: travel-time matrix for [lodging, …stops] in the day's mode (override, else trip default) → nearest-neighbor tour from the lodging → 2-opt until no improving swap (n ≤ ~12, milliseconds) — with **`fixedTime` stops pinned**: anchors partition the day into segments and NN/2-opt permute only the free stops within each segment, so a booked 11:00 slot is honored, not optimized past. Then one Directions call for the final ordered route geometry + leg times. Haversine-at-5km/h stands in when offline or over matrix limits; timeline = day start + Σ(leg + dwell), snapping forward to each anchor's `fixedTime`, with a gentle overrun warning, not a hard block. Legs > ~1.5 km additionally display the rough transit hint (assumption 4) beside the walking time — display-only; it never enters the matrix or the ordering.
@@ -282,29 +287,29 @@ Each phase ends green: `npx tsc --noEmit` clean + the verification demo.
 
 **Dogfood fixture: Paris** — cafes, the Louvre (a natural `fixedTime` anchor), stores. Entered in Phase 1; every later phase's verify runs against it (with Versailles as the excursion-day test when Phase 4 lands). Synthetic pins can't tell you the DBSCAN epsilon is wrong or a suggested day is inhuman — a trip you'd actually take can.
 
-**Phase 0 — Extraction & scaffold** (the architectural surgery) ✅ *shipped 2026-08-09. Deploy note: the Pages workflow shipped green, was disabled for local-only dev, then **re-enabled 2026-08-10 for testing**. Live at https://codyhacker.github.io/junro/ — the map canvas stays blank until the `VITE_MAPBOX_ACCESS_TOKEN` Actions secret is set (user-only step; token must be URL-restricted to codyhacker.github.io since it ships in the public bundle).*
+**Phase 0 — Extraction & scaffold** (the architectural surgery) ✅ _shipped 2026-08-09. Deploy note: the Pages workflow shipped green, was disabled for local-only dev, then **re-enabled 2026-08-10 for testing**. Live at https://codyhacker.github.io/junro/ — the map canvas stays blank until the `VITE_MAPBOX_ACCESS_TOKEN` Actions secret is set (user-only step; token must be URL-restricted to codyhacker.github.io since it ships in the public bundle)._
 Copy `app/`, `engine/` (minus Park/Trail controllers), `shell/`, `shared/constants`, `shared/types` core; delete parks/trails features; collapse `UI_THEMES` to the single Junro palette (dark/light) and wire Mapbox Standard with day/night presets (basemap decision, §3); empty augmentation spec; wire an empty `trip` slice; copy silkymaps' GH Pages deploy workflow — **deployed from day one** (decided: Phase 5's today view needs a hosted URL anyway, and every phase becomes phone-testable), with the Mapbox token URL-restricted to the Pages domain from the first deploy.
-✓ *Verify:* the Standard basemap renders with Junro chrome in both modes; the dark/light toggle flips map light preset + CSS vars in step, with no style reload; no console errors; no references to WDPA/trails remain (`grep -ri "wdpa\|trail\|park" src/` ≈ empty); push to main → live on the Pages URL.
+✓ _Verify:_ the Standard basemap renders with Junro chrome in both modes; the dark/light toggle flips map light preset + CSS vars in step, with no style reload; no console errors; no references to WDPA/trails remain (`grep -ri "wdpa\|trail\|park" src/` ≈ empty); push to main → live on the Pages URL.
 
-**Phase 1 — Trip document & places** ✅ *shipped 2026-08-09 (all verifies passed against the Paris fixture)*
+**Phase 1 — Trip document & places** ✅ _shipped 2026-08-09 (all verifies passed against the Paris fixture)_
 `trip` slice + `TripStorage` adapter (localStorage impl, `schemaVersion` + migration runner from day one, §5.6) + trip CRUD; destination geocode → flyTo; Search Box place search; save → category-icon pin renders via augmentation, with the "why did I save this?" note prompt; scrapbook drawer; place select/hover with feature-state; Place detail tab; **basemap calibration pass** — Standard is already street-tuned, so this is configuration rather than cartography: `showPointOfInterestLabels: false` so Mapbox's own POI icons never compete with Junro pins, plus a label-density/legibility check at planning zooms (z13–17) in both modes (navigation itself stays out per principle 6).
-✓ *Verify:* search "café", save 3 with notes, reload browser — pins, icons, and scrapbook subtitles intact; hover rail row highlights pin and vice versa; street names readable at z15 in both modes, with no basemap POI icons competing with Junro pins.
+✓ _Verify:_ search "café", save 3 with notes, reload browser — pins, icons, and scrapbook subtitles intact; hover rail row highlights pin and vice versa; street names readable at z15 in both modes, with no basemap POI icons competing with Junro pins.
 
-**Phase 2 — Lodging, dates & days** ✅ *shipped 2026-08-09 (Opus agent build, Fable-reviewed + Opus-QA'd against the Paris fixture)*
+**Phase 2 — Lodging, dates & days** ✅ _shipped 2026-08-09 (Opus agent build, Fable-reviewed + Opus-QA'd against the Paris fixture)_
 Date range → materialized days; lodging with check-in/out and date-resolution to days; manual stop assignment (rail drag or detail-tab picker); day-color coding on pins; DAY_FOCUS fitBounds; date-change reconcile (orphan → scrapbook).
-✓ *Verify:* 5-day trip, 2 hotels; each day resolves the correct lodging; assigning a place recolors its pin; shrinking the trip returns orphaned stops to the scrapbook with confirmation. — *all passed; the lodging-checkOut-on-shrink follow-up is now fixed (clampLodgings, 2026-08-11).*
+✓ _Verify:_ 5-day trip, 2 hotels; each day resolves the correct lodging; assigning a place recolors its pin; shrinking the trip returns orphaned stops to the scrapbook with confirmation. — _all passed; the lodging-checkOut-on-shrink follow-up is now fixed (clampLodgings, 2026-08-11)._
 
-**Phase 3 — Routing** ✅ *shipped 2026-08-09 (Opus agent build; both critical verifies passed under QA)*
+**Phase 3 — Routing** ✅ _shipped 2026-08-09 (Opus agent build; both critical verifies passed under QA)_
 RoutingService (Directions + cache + abort discipline); per-day hotel→stops→hotel route lines with day colors; leg/total times in Day tab; walking/driving toggle (trip default + per-day override); rough transit hints on legs > ~1.5 km; manual reorder re-solves only that day.
-✓ *Verify:* reorder a stop — route redraws for that day only (network tab shows exactly one Directions call); toggle mode — all day routes re-solve; a cross-town leg shows both "78 min walk" and "~22 min transit (rough)"; offline reload degrades gracefully — stops render with dashed haversine connectors and routes re-solve on reconnect (route responses live in-memory only, per §5.6 and the same storage-ToS posture as geocoding). — *implemented as "no line drawn" rather than dashed connectors when a route is missing (per build brief); reorder-isolation confirmed as exactly one Directions call via instrumented fetch.*
+✓ _Verify:_ reorder a stop — route redraws for that day only (network tab shows exactly one Directions call); toggle mode — all day routes re-solve; a cross-town leg shows both "78 min walk" and "~22 min transit (rough)"; offline reload degrades gracefully — stops render with dashed haversine connectors and routes re-solve on reconnect (route responses live in-memory only, per §5.6 and the same storage-ToS posture as geocoding). — _implemented as "no line drawn" rather than dashed connectors when a route is missing (per build brief); reorder-isolation confirmed as exactly one Directions call via instrumented fetch._
 
-**Phase 4 — Clustering & suggestion** ✅ *shipped 2026-08-09 (hands-on Opus build; verified against an injected 3-neighborhood Paris fixture)*
+**Phase 4 — Clustering & suggestion** ✅ _shipped 2026-08-09 (hands-on Opus build; verified against an injected 3-neighborhood Paris fixture)_
 Stage 1 hulls live on the map; Matrix service; Stages 2–3 behind "Suggest days" with the suggestion-diff UI; `locked` days respected; 2-opt ordering on apply.
-✓ *Verify:* 20 pins across 4 real neighborhoods → 4 hulls; suggestion assigns coherent days; total walking time after 2-opt ≤ naive scrapbook order (assert in a unit test with a fixed matrix fixture); locked day untouched. — *all passed: 9 pins/3 neighborhoods → 3 hulls (verified as 3 rendered polys); suggestion kept each neighborhood intact and skipped the locked Tuesday (Day 1→Day 3→Day 4); apply reordered stops via Stage 3 and drew 3 day-routes; 2-opt-≤-naive + anchor-order asserted in ordering.test. Known polish (→ Phase 5): hulls are faint when clusters are tight/zoomed-out (mostly hidden under pins).*
+✓ _Verify:_ 20 pins across 4 real neighborhoods → 4 hulls; suggestion assigns coherent days; total walking time after 2-opt ≤ naive scrapbook order (assert in a unit test with a fixed matrix fixture); locked day untouched. — _all passed: 9 pins/3 neighborhoods → 3 hulls (verified as 3 rendered polys); suggestion kept each neighborhood intact and skipped the locked Tuesday (Day 1→Day 3→Day 4); apply reordered stops via Stage 3 and drew 3 day-routes; 2-opt-≤-naive + anchor-order asserted in ordering.test. Known polish (→ Phase 5): hulls are faint when clusters are tight/zoomed-out (mostly hidden under pins)._
 
-**Phase 5 — Reachability & polish** ✅ *shipped 2026-08-10 (isochrones, dark-mode polish, undo/redo, fly-the-day, viewer + exports; all browser-verified against the fixture)*
+**Phase 5 — Reachability & polish** ✅ _shipped 2026-08-10 (isochrones, dark-mode polish, undo/redo, fly-the-day, viewer + exports; all browser-verified against the fixture)_
 Isochrones from active lodging (15/30/45 walk); "fly the day" preview; printable itinerary view; **dark-mode route/ring contrast pass** (QA flagged the Day-color route lines + pin rings as legible-but-muted against the night basemap — the gold hues especially read as olive; bump line opacity/width or brighten casings for dark mode); mobile **"today" view** — a phone-sized read-only render of the current day (ordered stops, leg times, per-stop deep links into Google/Apple Maps for live navigation), built on the same viewer-mode discipline as the printable view — this is v1's answer to "the plan dies the moment the trip starts"; `.ics` calendar export (one event per stop); JSON export/import; undo/redo on the trip document (RTK + a bounded past-states stack — the document design makes this nearly free).
-✓ *Verify:* isochrone matches hotel + mode; fly-day cancels on gesture like the silkymaps fly-along; today view shows the correct day in a mobile viewport and each stop deep-links into the native maps app; export → new browser → import → identical trip; ⌘Z reverses a "Suggest days" apply.
+✓ _Verify:_ isochrone matches hotel + mode; fly-day cancels on gesture like the silkymaps fly-along; today view shows the correct day in a mobile viewport and each stop deep-links into the native maps app; export → new browser → import → identical trip; ⌘Z reverses a "Suggest days" apply.
 
 **Phase 6 — Later (explicitly out of v1)**
 Transit (OTP/GTFS), multi-city, meal-time snapping, opening-hours data (until then `openDays`/`fixedTime` stay user-entered), POI photos, mobile app shell, the full day-of companion (live re-planning, offline tiles — v1's answer is Phase 5's today view + exports), and **social-media location capture** — save to a trip straight from a tagged location. Realistic shape: a PWA share-target / paste-a-link flow that extracts the place name and geocodes it into the scrapbook; there is no official Instagram/TikTok location API to build on, so this stays a capture affordance, not an integration. Backend sync, accounts, sharing, and collaboration have graduated from this bucket into their own plan: **[PLATFORM_PLAN.md](PLATFORM_PLAN.md)** (Phases 7–10, starting after Phase 5 ships). Two of its prerequisites land early here: UUIDv7 entity ids from Phase 1, and Phase 5's undo/redo keeping its serialized-action history (it becomes the sync rebase source).
@@ -315,22 +320,23 @@ Rough sizing: P0 small; P1–P3 medium each; P4 the interesting one; P5 medium. 
 
 ## 9. Risks & open questions
 
-| Risk | Exposure | Mitigation |
-|---|---|---|
-| Mapbox geocoding storage ToS | Persisted trip docs contain place coords | Overture layer as primary save path; user-pin provenance for the rest (§6) |
-| Overture places quality varies by city | Sparse cafes in smaller destinations | Search Box fallback is always present; places layer is additive |
-| Matrix 25-coord cap on big scrapbooks | Whole-trip optimization over 40+ pins | Cluster first (Stage 1 is API-free), matrix per day only — by design never near the cap |
-| Suggestion feels wrong → trust loss | Users abandon auto-plan | Suggestion-diff + locked days keep the user in charge; heuristics are explainable ("grouped by neighborhood, ordered by walking time") |
-| Route-cache staleness after edits | Ghost routes on map | Content-hash keys; hash mismatch = redraw as dashed "stale" until re-solve lands |
-| Planning happens here, the trip happens in Google Maps | App abandoned the moment the trip starts | Phase 5 today view + native-maps deep links + `.ics` export make the plan usable on foot; full companion deferred to Phase 6 |
-| No test runner in silkymaps heritage | Optimizer correctness is untestable by eye | Add Vitest in Phase 0; pure functions (DBSCAN params, bin-packing, 2-opt) are the test surface; engine/UI stay demo-verified |
+| Risk                                                   | Exposure                                   | Mitigation                                                                                                                             |
+| ------------------------------------------------------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Mapbox geocoding storage ToS                           | Persisted trip docs contain place coords   | Overture layer as primary save path; user-pin provenance for the rest (§6)                                                             |
+| Overture places quality varies by city                 | Sparse cafes in smaller destinations       | Search Box fallback is always present; places layer is additive                                                                        |
+| Matrix 25-coord cap on big scrapbooks                  | Whole-trip optimization over 40+ pins      | Cluster first (Stage 1 is API-free), matrix per day only — by design never near the cap                                                |
+| Suggestion feels wrong → trust loss                    | Users abandon auto-plan                    | Suggestion-diff + locked days keep the user in charge; heuristics are explainable ("grouped by neighborhood, ordered by walking time") |
+| Route-cache staleness after edits                      | Ghost routes on map                        | Content-hash keys; hash mismatch = redraw as dashed "stale" until re-solve lands                                                       |
+| Planning happens here, the trip happens in Google Maps | App abandoned the moment the trip starts   | Phase 5 today view + native-maps deep links + `.ics` export make the plan usable on foot; full companion deferred to Phase 6           |
+| No test runner in silkymaps heritage                   | Optimizer correctness is untestable by eye | Add Vitest in Phase 0; pure functions (DBSCAN params, bin-packing, 2-opt) are the test surface; engine/UI stay demo-verified           |
 
 **Open questions (answer before their phase, not before starting):**
+
 1. ~~Trip document in localStorage vs IndexedDB?~~ **Resolved:** localStorage v1 behind the async `TripStorage` adapter, lightweight DB later (§5.6).
 2. ~~Day colors: per-theme ramp or one ramp across themes?~~ **Resolved (and simplified by the single-theme decision):** one categorical day ramp in `dataPalettes.ts`, with light/dark variants.
 3. ~~Does terrain/exaggeration survive into this app?~~ **Resolved:** keep — free via `terrainSlice`, and city maps at pitch with subtle terrain are on-brand.
 
-*(All pre-implementation decisions are now closed — name: Junro; theming: one theme on Mapbox Standard, dark/light toggle only, no theme gallery; transit: rough hints; deploy: GH Pages from Phase 0; storage: localStorage → DB per PLATFORM_PLAN.md.)*
+_(All pre-implementation decisions are now closed — name: Junro; theming: one theme on Mapbox Standard, dark/light toggle only, no theme gallery; transit: rough hints; deploy: GH Pages from Phase 0; storage: localStorage → DB per PLATFORM_PLAN.md.)_
 
 ---
 

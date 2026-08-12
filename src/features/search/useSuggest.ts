@@ -43,7 +43,9 @@ export function useSuggest(query: string, opts: { proximity?: [number, number]; 
     results,
     loading,
     sessionToken: () => sessionRef.current,
-    resetSession: () => { sessionRef.current = newSessionToken() },
+    resetSession: () => {
+      sessionRef.current = newSessionToken()
+    },
     clear: () => setResults([]),
   }
 }

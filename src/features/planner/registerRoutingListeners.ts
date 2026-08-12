@@ -15,12 +15,13 @@ export function registerRoutingListeners(): () => void {
 
     effect: async (_action, api) => {
       const requests = selectDayRouteRequests(api.getState())
-      const wanted = new Set(requests.map(r => r.dayId))
+      const wanted = new Set(requests.map((r) => r.dayId))
 
       // Days that vanished or fell below two coordinates keep no route.
       const { dayRoutes, routeStatus } = api.getState().planner
-      const dropped = [...new Set([...Object.keys(dayRoutes), ...Object.keys(routeStatus)])]
-        .filter(dayId => !wanted.has(dayId))
+      const dropped = [...new Set([...Object.keys(dayRoutes), ...Object.keys(routeStatus)])].filter(
+        (dayId) => !wanted.has(dayId),
+      )
       if (dropped.length > 0) api.dispatch(routesDropped(dropped))
 
       for (const request of requests) {
@@ -45,12 +46,14 @@ async function solve(dispatch: Dispatch, request: DayRouteRequest): Promise<void
       dispatch(routeFailed({ dayId: request.dayId, hash: request.hash }))
       return
     }
-    dispatch(routeReady({
-      dayId: request.dayId,
-      hash: request.hash,
-      mode: request.mode,
-      ...result,
-    }))
+    dispatch(
+      routeReady({
+        dayId: request.dayId,
+        hash: request.hash,
+        mode: request.mode,
+        ...result,
+      }),
+    )
   } catch (err) {
     // A superseded request already has a newer one in flight — leaving its
     // status alone is the whole point of the abort.

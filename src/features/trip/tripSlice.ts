@@ -1,12 +1,19 @@
 import { createSlice, current, type PayloadAction } from '@reduxjs/toolkit'
-import type { Trip, TripSummary, SavedPlace, PlaceCategory, Lodging, TravelMode } from '../../shared/types/trip'
+import type {
+  Trip,
+  TripSummary,
+  SavedPlace,
+  PlaceCategory,
+  Lodging,
+  TravelMode,
+} from '../../shared/types/trip'
 import { DEFAULT_PREFS, DEFAULT_DWELL_MIN } from '../../shared/types/trip'
 import { TRIP_SCHEMA_VERSION } from './storage'
 import { uuidv7 } from '../../shared/lib/uuidv7'
 import { materializeDays, clampLodgings } from './days'
 
 interface TripState {
-  hydrated: boolean            // storage read finished (even if empty)
+  hydrated: boolean // storage read finished (even if empty)
   summaries: TripSummary[]
   active: Trip | null
 }
@@ -109,9 +116,12 @@ const tripSlice = createSlice({
       },
     },
 
-    updatePlace(state, action: PayloadAction<{ id: string; patch: Partial<Omit<SavedPlace, 'id'>> }>) {
+    updatePlace(
+      state,
+      action: PayloadAction<{ id: string; patch: Partial<Omit<SavedPlace, 'id'>> }>,
+    ) {
       if (!state.active) return
-      const place = state.active.places.find(p => p.id === action.payload.id)
+      const place = state.active.places.find((p) => p.id === action.payload.id)
       if (!place) return
       Object.assign(place, action.payload.patch)
       touch(state.active)
@@ -119,9 +129,9 @@ const tripSlice = createSlice({
 
     removePlace(state, action: PayloadAction<string>) {
       if (!state.active) return
-      state.active.places = state.active.places.filter(p => p.id !== action.payload)
+      state.active.places = state.active.places.filter((p) => p.id !== action.payload)
       for (const day of state.active.days) {
-        day.stopIds = day.stopIds.filter(id => id !== action.payload)
+        day.stopIds = day.stopIds.filter((id) => id !== action.payload)
       }
       touch(state.active)
     },
@@ -155,9 +165,12 @@ const tripSlice = createSlice({
       },
     },
 
-    updateLodging(state, action: PayloadAction<{ id: string; patch: Partial<Omit<Lodging, 'id'>> }>) {
+    updateLodging(
+      state,
+      action: PayloadAction<{ id: string; patch: Partial<Omit<Lodging, 'id'>> }>,
+    ) {
       if (!state.active) return
-      const lodging = state.active.lodgings.find(l => l.id === action.payload.id)
+      const lodging = state.active.lodgings.find((l) => l.id === action.payload.id)
       if (!lodging) return
       Object.assign(lodging, action.payload.patch)
       reconcileDays(state.active)
@@ -166,7 +179,7 @@ const tripSlice = createSlice({
 
     removeLodging(state, action: PayloadAction<string>) {
       if (!state.active) return
-      state.active.lodgings = state.active.lodgings.filter(l => l.id !== action.payload)
+      state.active.lodgings = state.active.lodgings.filter((l) => l.id !== action.payload)
       reconcileDays(state.active)
       touch(state.active)
     },
@@ -178,9 +191,9 @@ const tripSlice = createSlice({
       if (!state.active) return
       const { placeId, dayId } = action.payload
       for (const day of state.active.days) {
-        day.stopIds = day.stopIds.filter(id => id !== placeId)
+        day.stopIds = day.stopIds.filter((id) => id !== placeId)
       }
-      if (dayId) state.active.days.find(d => d.id === dayId)?.stopIds.push(placeId)
+      if (dayId) state.active.days.find((d) => d.id === dayId)?.stopIds.push(placeId)
       touch(state.active)
     },
 
@@ -194,7 +207,7 @@ const tripSlice = createSlice({
 
     setDayTravelMode(state, action: PayloadAction<{ dayId: string; mode: TravelMode | null }>) {
       if (!state.active) return
-      const day = state.active.days.find(d => d.id === action.payload.dayId)
+      const day = state.active.days.find((d) => d.id === action.payload.dayId)
       if (!day) return
       if (action.payload.mode) day.travelMode = action.payload.mode
       else delete day.travelMode
@@ -207,11 +220,12 @@ const tripSlice = createSlice({
     // Locked days are never touched.
     setDayStops(state, action: PayloadAction<{ dayId: string; placeIds: string[] }>) {
       if (!state.active) return
-      const target = state.active.days.find(d => d.id === action.payload.dayId)
+      const target = state.active.days.find((d) => d.id === action.payload.dayId)
       if (!target || target.locked) return
       const claimed = new Set(action.payload.placeIds)
       for (const day of state.active.days) {
-        if (day.id !== action.payload.dayId) day.stopIds = day.stopIds.filter(id => !claimed.has(id))
+        if (day.id !== action.payload.dayId)
+          day.stopIds = day.stopIds.filter((id) => !claimed.has(id))
       }
       target.stopIds = [...action.payload.placeIds]
       touch(state.active)
@@ -225,11 +239,11 @@ const tripSlice = createSlice({
     ) {
       if (!state.active) return
       for (const a of action.payload) {
-        const target = state.active.days.find(d => d.id === a.dayId)
+        const target = state.active.days.find((d) => d.id === a.dayId)
         if (!target || target.locked) continue
         const claimed = new Set(a.placeIds)
         for (const day of state.active.days) {
-          if (day.id !== a.dayId) day.stopIds = day.stopIds.filter(id => !claimed.has(id))
+          if (day.id !== a.dayId) day.stopIds = day.stopIds.filter((id) => !claimed.has(id))
         }
         target.stopIds = [...a.placeIds]
         if (a.travelMode) target.travelMode = a.travelMode
@@ -252,7 +266,7 @@ const tripSlice = createSlice({
 
     moveStop(state, action: PayloadAction<{ dayId: string; placeId: string; delta: -1 | 1 }>) {
       if (!state.active) return
-      const day = state.active.days.find(d => d.id === action.payload.dayId)
+      const day = state.active.days.find((d) => d.id === action.payload.dayId)
       if (!day) return
       const from = day.stopIds.indexOf(action.payload.placeId)
       const to = from + action.payload.delta
@@ -265,8 +279,23 @@ const tripSlice = createSlice({
 })
 
 export const {
-  tripHydrated, tripLoaded, createTrip, resetTrip, addPlace, updatePlace, removePlace,
-  setTripDates, addLodging, updateLodging, removeLodging, assignStop, moveStop,
-  clearDayStops, setDayStops, applyDaySuggestions, setTravelMode, setDayTravelMode,
+  tripHydrated,
+  tripLoaded,
+  createTrip,
+  resetTrip,
+  addPlace,
+  updatePlace,
+  removePlace,
+  setTripDates,
+  addLodging,
+  updateLodging,
+  removeLodging,
+  assignStop,
+  moveStop,
+  clearDayStops,
+  setDayStops,
+  applyDaySuggestions,
+  setTravelMode,
+  setDayTravelMode,
 } = tripSlice.actions
 export default tripSlice.reducer

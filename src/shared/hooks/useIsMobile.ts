@@ -7,7 +7,7 @@ const QUERY = '(max-width: 640px)'
 
 export function useIsMobile() {
   return useSyncExternalStore(
-    cb => {
+    (cb) => {
       const m = window.matchMedia(QUERY)
       m.addEventListener('change', cb)
       return () => m.removeEventListener('change', cb)
@@ -22,7 +22,7 @@ export function useIsMobile() {
 // height to re-derive on rotation / resize.
 export function useViewportHeight() {
   return useSyncExternalStore(
-    cb => {
+    (cb) => {
       window.addEventListener('resize', cb)
       return () => window.removeEventListener('resize', cb)
     },

@@ -40,7 +40,10 @@ export function withHistory<S extends { trip: { active: Trip | null }; history: 
         return {
           ...state,
           trip: { ...state.trip, active: past[past.length - 1] },
-          history: { past: past.slice(0, -1), future: state.trip.active ? [state.trip.active, ...future] : future },
+          history: {
+            past: past.slice(0, -1),
+            future: state.trip.active ? [state.trip.active, ...future] : future,
+          },
         }
       }
       if (action.type === REDO) {
@@ -49,7 +52,10 @@ export function withHistory<S extends { trip: { active: Trip | null }; history: 
         return {
           ...state,
           trip: { ...state.trip, active: future[0] },
-          history: { past: state.trip.active ? [...past, state.trip.active] : past, future: future.slice(1) },
+          history: {
+            past: state.trip.active ? [...past, state.trip.active] : past,
+            future: future.slice(1),
+          },
         }
       }
     }

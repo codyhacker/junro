@@ -10,7 +10,7 @@ import { LodgingEditor } from './LodgingEditor'
 // the reset actions live as icons in the panel header (TripHeaderActions).
 export function TripTab() {
   const dispatch = useAppDispatch()
-  const trip = useAppSelector(s => s.trip.active)
+  const trip = useAppSelector((s) => s.trip.active)
   const [start, setStart] = useState(trip?.startDate ?? '')
   const [end, setEnd] = useState(trip?.endDate ?? '')
   const [orphanCount, setOrphanCount] = useState<number | null>(null)
@@ -25,7 +25,10 @@ export function TripTab() {
     const endDate = e || undefined
     if (startDate && endDate && endDate < startDate) return
     const { orphanedStopIds } = materializeDays(trip.days, startDate, endDate, trip.lodgings)
-    if (orphanedStopIds.length > 0 && !force) { setOrphanCount(orphanedStopIds.length); return }
+    if (orphanedStopIds.length > 0 && !force) {
+      setOrphanCount(orphanedStopIds.length)
+      return
+    }
     setOrphanCount(null)
     dispatch(setTripDates({ startDate, endDate }))
   }
@@ -37,14 +40,21 @@ export function TripTab() {
         <DateRangePicker
           start={start || undefined}
           end={end || undefined}
-          onChange={(s, e) => { setStart(s); setEnd(e); commitDates(s, e) }}
+          onChange={(s, e) => {
+            setStart(s)
+            setEnd(e)
+            commitDates(s, e)
+          }}
         />
         {orphanCount !== null && (
           <>
             <div className="trip-settings-warn">
               {orphanCount} planned {orphanCount === 1 ? 'place goes' : 'places go'} back to Places.
             </div>
-            <button className="junro-primary trip-settings-apply" onClick={() => commitDates(start, end, true)}>
+            <button
+              className="junro-primary trip-settings-apply"
+              onClick={() => commitDates(start, end, true)}
+            >
               Shorten anyway
             </button>
           </>

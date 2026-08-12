@@ -14,14 +14,15 @@ const MODES: { value: TravelMode; label: string }[] = [
 // lives here as a quiet secondary control, not a prominent group.
 export function PlanTab() {
   const dispatch = useAppDispatch()
-  const trip = useAppSelector(s => s.trip.active)
-  const hasDays = useAppSelector(s => (s.trip.active?.days.length ?? 0) > 0)
+  const trip = useAppSelector((s) => s.trip.active)
+  const hasDays = useAppSelector((s) => (s.trip.active?.days.length ?? 0) > 0)
 
   if (!trip) return null
   if (!hasDays) {
     return (
       <div className="places-empty">
-        Set your trip dates in the <b>Trip</b> tab to plan days — or just keep collecting places in <b>Places</b>.
+        Set your trip dates in the <b>Trip</b> tab to plan days — or just keep collecting places in{' '}
+        <b>Places</b>.
       </div>
     )
   }
@@ -33,12 +34,14 @@ export function PlanTab() {
       <div className="plan-mode">
         <span className="plan-mode-label">Getting around</span>
         <div className="plan-mode-toggle">
-          {MODES.map(m => (
+          {MODES.map((m) => (
             <button
               key={m.value}
               className={`plan-mode-btn${trip.prefs.travelMode === m.value ? ' active' : ''}`}
               onClick={() => dispatch(setTravelMode(m.value))}
-            >{m.label}</button>
+            >
+              {m.label}
+            </button>
           ))}
         </div>
       </div>

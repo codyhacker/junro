@@ -40,9 +40,12 @@ describe('LocalStorageTripStorage', () => {
     await s.save(makeTrip('a', 'First', '2026-08-01T00:00:00Z'))
     await s.save(makeTrip('b', 'Second', '2026-08-02T00:00:00Z'))
     const list = await s.list()
-    expect(list.map(t => t.id)).toEqual(['b', 'a'])
+    expect(list.map((t) => t.id)).toEqual(['b', 'a'])
     expect(list[0]).toEqual({
-      id: 'b', name: 'Second', destinationName: 'Paris', updatedAt: '2026-08-02T00:00:00Z',
+      id: 'b',
+      name: 'Second',
+      destinationName: 'Paris',
+      updatedAt: '2026-08-02T00:00:00Z',
     })
   })
 
@@ -51,7 +54,7 @@ describe('LocalStorageTripStorage', () => {
     await s.save(makeTrip('a', 'A', '2026-08-01T00:00:00Z'))
     await s.save(makeTrip('b', 'B', '2026-08-02T00:00:00Z'))
     await s.save(makeTrip('a', 'A', '2026-08-03T00:00:00Z'))
-    expect((await s.list()).map(t => t.id)).toEqual(['a', 'b'])
+    expect((await s.list()).map((t) => t.id)).toEqual(['a', 'b'])
   })
 
   it('remove() deletes the doc and its index entry', async () => {
@@ -79,7 +82,10 @@ describe('migrateTrip', () => {
   })
 
   it('refuses docs written by a newer schema', () => {
-    const trip = { ...makeTrip('a', 'A', '2026-08-01T00:00:00Z'), schemaVersion: TRIP_SCHEMA_VERSION + 1 }
+    const trip = {
+      ...makeTrip('a', 'A', '2026-08-01T00:00:00Z'),
+      schemaVersion: TRIP_SCHEMA_VERSION + 1,
+    }
     expect(migrateTrip(trip)).toBeNull()
   })
 

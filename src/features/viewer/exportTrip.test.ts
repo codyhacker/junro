@@ -4,10 +4,16 @@ import { TRIP_SCHEMA_VERSION } from '../trip/storage'
 import { DEFAULT_PREFS, type Trip } from '../../shared/types/trip'
 
 const trip: Trip = {
-  id: 'abc', schemaVersion: TRIP_SCHEMA_VERSION, name: 'Test',
+  id: 'abc',
+  schemaVersion: TRIP_SCHEMA_VERSION,
+  name: 'Test',
   destination: { name: 'Paris', center: [2.35, 48.85] },
-  lodgings: [], places: [], days: [], prefs: DEFAULT_PREFS,
-  createdAt: '2026-01-01', updatedAt: '2026-01-01',
+  lodgings: [],
+  places: [],
+  days: [],
+  prefs: DEFAULT_PREFS,
+  createdAt: '2026-01-01',
+  updatedAt: '2026-01-01',
 }
 
 describe('parseTripJson', () => {

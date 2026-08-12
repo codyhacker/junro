@@ -34,7 +34,7 @@ export async function fetchIsochrone(
   })
   const res = await fetch(`${BASE}/${profile}/${coord[0]},${coord[1]}?${params}`, { signal })
   if (!res.ok) throw new Error(`isochrone failed: ${res.status}`)
-  const json = await res.json() as FeatureCollection<Polygon>
+  const json = (await res.json()) as FeatureCollection<Polygon>
   cache.set(key, json)
   return json
 }

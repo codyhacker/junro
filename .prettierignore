@@ -1,0 +1,7 @@
+dist
+node_modules
+package-lock.json
+
+# Hand-aligned reference table (Overture category schema) — Prettier
+# explodes the aligned columns into one property per line.
+src/shared/constants/overturePlaceCategories.ts

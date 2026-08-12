@@ -7,7 +7,8 @@ import mapboxgl from 'mapbox-gl'
 // https://github.com/mapbox/mapbox-gl-js/issues/12656.
 import MapboxWorker from 'mapbox-gl/dist/mapbox-gl-csp-worker?worker'
 
-;(mapboxgl as unknown as { workerClass: typeof Worker }).workerClass = MapboxWorker as unknown as typeof Worker
+;(mapboxgl as unknown as { workerClass: typeof Worker }).workerClass =
+  MapboxWorker as unknown as typeof Worker
 import type { AppStore } from '../../../app/store'
 import { cameraObserved } from '../cameraSlice'
 import { getPalette, applyUiTheme, lightPresetFor } from '../../../shared/constants/uiThemes'
@@ -67,12 +68,14 @@ export class MapEngine {
 
     this.map.on('moveend', () => {
       const { lng, lat } = this.map.getCenter()
-      this.store.dispatch(cameraObserved({
-        center: [lng, lat],
-        zoom: this.map.getZoom(),
-        bearing: this.map.getBearing(),
-        pitch: this.map.getPitch(),
-      }))
+      this.store.dispatch(
+        cameraObserved({
+          center: [lng, lat],
+          zoom: this.map.getZoom(),
+          bearing: this.map.getBearing(),
+          pitch: this.map.getPitch(),
+        }),
+      )
     })
 
     if (import.meta.env.DEV) {
@@ -98,18 +101,30 @@ export class MapEngine {
       case 'STYLE_RECONCILE':
       case 'UI_THEME_CHANGE':
         return this.style.execute(cmd)
-      case 'FLY_TO':               return void this.map.flyTo(cmd.options as mapboxgl.EasingOptions)
-      case 'FIT_BOUNDS':           return void this.map.fitBounds(cmd.bounds, cmd.options)
-      case 'EASE_TO':              return void this.map.easeTo(cmd.options as mapboxgl.EasingOptions & { duration?: number })
-      case 'PLACE_HOVER':          return this.tripLayer.setHover(cmd.placeId)
-      case 'PLACE_SELECT':         return this.tripLayer.setSelected(cmd.placeId)
-      case 'DAY_FOCUS':            return this.tripLayer.focusDay(cmd.dayId)
-      case 'START_FLY_DAY':        return this.routePreview.start(cmd.dayId)
-      case 'STOP_FLY_DAY':         return this.routePreview.stop({ restoreCamera: cmd.restoreCamera })
-      case 'UPDATE_GEOJSON':       break
-      case 'ADD_LAYER':            break
-      case 'REMOVE_LAYER':         break
-      case 'SET_LAYER_VISIBILITY': break
+      case 'FLY_TO':
+        return void this.map.flyTo(cmd.options as mapboxgl.EasingOptions)
+      case 'FIT_BOUNDS':
+        return void this.map.fitBounds(cmd.bounds, cmd.options)
+      case 'EASE_TO':
+        return void this.map.easeTo(cmd.options as mapboxgl.EasingOptions & { duration?: number })
+      case 'PLACE_HOVER':
+        return this.tripLayer.setHover(cmd.placeId)
+      case 'PLACE_SELECT':
+        return this.tripLayer.setSelected(cmd.placeId)
+      case 'DAY_FOCUS':
+        return this.tripLayer.focusDay(cmd.dayId)
+      case 'START_FLY_DAY':
+        return this.routePreview.start(cmd.dayId)
+      case 'STOP_FLY_DAY':
+        return this.routePreview.stop({ restoreCamera: cmd.restoreCamera })
+      case 'UPDATE_GEOJSON':
+        break
+      case 'ADD_LAYER':
+        break
+      case 'REMOVE_LAYER':
+        break
+      case 'SET_LAYER_VISIBILITY':
+        break
       default: {
         const _exhaustive: never = cmd
         console.warn('Unhandled MapCommand', _exhaustive)

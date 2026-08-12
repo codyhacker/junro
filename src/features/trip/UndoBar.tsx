@@ -6,9 +6,9 @@ import { undo, redo } from './history'
 // ⇧⌘Z / Ctrl+Y redoes. The bar only appears once there's something to undo.
 export function UndoBar() {
   const dispatch = useAppDispatch()
-  const canUndo = useAppSelector(s => s.history.past.length > 0)
-  const canRedo = useAppSelector(s => s.history.future.length > 0)
-  const hasTrip = useAppSelector(s => s.trip.active !== null)
+  const canUndo = useAppSelector((s) => s.history.past.length > 0)
+  const canRedo = useAppSelector((s) => s.history.future.length > 0)
+  const hasTrip = useAppSelector((s) => s.trip.active !== null)
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -17,9 +17,15 @@ export function UndoBar() {
       const key = e.key.toLowerCase()
       // Don't hijack typing in inputs.
       const el = e.target as HTMLElement
-      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return
-      if (key === 'z' && !e.shiftKey) { e.preventDefault(); dispatch(undo()) }
-      else if ((key === 'z' && e.shiftKey) || key === 'y') { e.preventDefault(); dispatch(redo()) }
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable))
+        return
+      if (key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        dispatch(undo())
+      } else if ((key === 'z' && e.shiftKey) || key === 'y') {
+        e.preventDefault()
+        dispatch(redo())
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -35,14 +41,18 @@ export function UndoBar() {
         disabled={!canUndo}
         aria-label="Undo"
         title="Undo (⌘Z)"
-      >↶</button>
+      >
+        ↶
+      </button>
       <button
         className="undo-btn"
         onClick={() => dispatch(redo())}
         disabled={!canRedo}
         aria-label="Redo"
         title="Redo (⇧⌘Z)"
-      >↷</button>
+      >
+        ↷
+      </button>
     </div>
   )
 }

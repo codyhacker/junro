@@ -9,14 +9,14 @@ import { canonicalRouteKey } from './routeHash'
 
 const TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || ''
 const BASE = 'https://api.mapbox.com/directions-matrix/v1/mapbox'
-const MATRIX_COORD_LIMIT = 25          // Mapbox cap for walking/driving
+const MATRIX_COORD_LIMIT = 25 // Mapbox cap for walking/driving
 
 // City-speed assumptions for the offline fallback. Deliberately rough — the
 // fallback only has to order stops sanely, not report real ETAs.
 const FALLBACK_KMH: Record<TravelMode, number> = { walking: 4.8, driving: 28 }
 
 export interface TravelMatrix {
-  seconds: number[][]                  // seconds[i][j] = i → j travel time
+  seconds: number[][] // seconds[i][j] = i → j travel time
   source: 'mapbox' | 'haversine'
 }
 
@@ -52,7 +52,7 @@ export async function getTravelMatrix(
     const params = new URLSearchParams({ annotations: 'duration', access_token: TOKEN })
     const res = await fetch(`${BASE}/${mode}/${path}?${params}`, { signal })
     if (!res.ok) throw new Error(`matrix failed: ${res.status}`)
-    const json = await res.json() as { durations?: (number | null)[][]; code?: string }
+    const json = (await res.json()) as { durations?: (number | null)[][]; code?: string }
     if (!json.durations) throw new Error('matrix: no durations')
 
     // Mapbox returns null for an unreachable pair — patch those with the

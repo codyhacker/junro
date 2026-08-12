@@ -12,7 +12,7 @@ export interface RouteGeometry {
 }
 
 export interface DayRoute {
-  hash: string                 // content hash of (ordered coords + mode)
+  hash: string // content hash of (ordered coords + mode)
   geometry: RouteGeometry
   legSeconds: number[]
   totalSeconds: number

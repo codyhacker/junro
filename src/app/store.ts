@@ -4,19 +4,19 @@ import { savePersisted } from './persist'
 import { withHistory, historyReducer } from '../features/trip/history'
 
 // ── map/ ────────────────────────────────────────────────────────────────────
-import mapStyleReducer    from '../features/map/styleSlice'
-import terrainReducer     from '../features/map/terrainSlice'
-import cameraReducer      from '../features/map/cameraSlice'
+import mapStyleReducer from '../features/map/styleSlice'
+import terrainReducer from '../features/map/terrainSlice'
+import cameraReducer from '../features/map/cameraSlice'
 
 // ── shell/ ──────────────────────────────────────────────────────────────────
 import uiReducer from '../features/shell/uiSlice'
 
 // ── trip/ ───────────────────────────────────────────────────────────────────
-import tripReducer            from '../features/trip/tripSlice'
+import tripReducer from '../features/trip/tripSlice'
 import tripInteractionReducer from '../features/trip/tripInteractionSlice'
 
 // ── planner/ ────────────────────────────────────────────────────────────────
-import plannerReducer   from '../features/planner/plannerSlice'
+import plannerReducer from '../features/planner/plannerSlice'
 import isochroneReducer from '../features/planner/isochroneSlice'
 
 // ── discovery/ ──────────────────────────────────────────────────────────────
@@ -25,16 +25,16 @@ import discoveryReducer from '../features/discovery/discoverySlice'
 // Root reducer is wrapped with the undo/redo history layer, which snapshots
 // trip.active on each edit (see features/trip/history.ts).
 const combined = combineReducers({
-  mapStyle:        mapStyleReducer,
-  terrain:         terrainReducer,
-  camera:          cameraReducer,
-  ui:              uiReducer,
-  trip:            tripReducer,
+  mapStyle: mapStyleReducer,
+  terrain: terrainReducer,
+  camera: cameraReducer,
+  ui: uiReducer,
+  trip: tripReducer,
   tripInteraction: tripInteractionReducer,
-  planner:         plannerReducer,
-  isochrone:       isochroneReducer,
-  discovery:       discoveryReducer,
-  history:         historyReducer,
+  planner: plannerReducer,
+  isochrone: isochroneReducer,
+  discovery: discoveryReducer,
+  history: historyReducer,
 })
 const rootReducer = withHistory(combined)
 

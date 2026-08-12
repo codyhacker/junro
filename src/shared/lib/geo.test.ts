@@ -19,13 +19,13 @@ describe('haversineKm', () => {
   })
 
   it('measures a short intra-city hop (Louvre → Notre-Dame, ~1.3 km)', () => {
-    const km = haversineKm([2.3376, 48.8606], [2.3499, 48.8530])
+    const km = haversineKm([2.3376, 48.8606], [2.3499, 48.853])
     expect(km).toBeCloseTo(1.28, 1)
   })
 
   it('is symmetric', () => {
     const a: [number, number] = [2.3376, 48.8606]
-    const b: [number, number] = [2.3499, 48.8530]
+    const b: [number, number] = [2.3499, 48.853]
     expect(haversineKm(a, b)).toBeCloseTo(haversineKm(b, a), 10)
   })
 
@@ -53,13 +53,14 @@ describe('roughTransitMinutes', () => {
 
   it('matches the formula for an arbitrary distance', () => {
     const km = 7.3
-    expect(roughTransitMinutes(km))
-      .toBe(Math.round((km / TRANSIT_SPEED_KMH) * 60 + TRANSIT_OVERHEAD_MIN))
+    expect(roughTransitMinutes(km)).toBe(
+      Math.round((km / TRANSIT_SPEED_KMH) * 60 + TRANSIT_OVERHEAD_MIN),
+    )
   })
 
-  it('turns the plan\'s cross-town example into a sane number', () => {
+  it("turns the plan's cross-town example into a sane number", () => {
     // A leg long enough to read as an 80-minute walk should hint ~20-30 min.
-    const hint = roughTransitMinutes(haversineKm([2.2945, 48.8584], [2.4021, 48.8730]))
+    const hint = roughTransitMinutes(haversineKm([2.2945, 48.8584], [2.4021, 48.873]))
     expect(hint).toBeGreaterThan(15)
     expect(hint).toBeLessThan(40)
   })

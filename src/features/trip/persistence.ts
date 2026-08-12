@@ -26,7 +26,7 @@ export function registerTripPersistence(): () => void {
     predicate: (_action, currentState, previousState) =>
       currentState.trip.active !== null &&
       currentState.trip.active !== previousState.trip.active &&
-      previousState.trip.hydrated,   // don't re-save what hydration just loaded
+      previousState.trip.hydrated, // don't re-save what hydration just loaded
     effect: async (_action, api) => {
       api.cancelActiveListeners()
       await api.delay(400)

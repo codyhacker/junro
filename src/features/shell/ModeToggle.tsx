@@ -5,7 +5,7 @@ import { toggleUiMode } from '../map/styleSlice'
 // (one theme, two modes; PROJECT_PLAN.md §2 principle 2).
 export function ModeToggle() {
   const dispatch = useAppDispatch()
-  const mode = useAppSelector(s => s.mapStyle.uiMode)
+  const mode = useAppSelector((s) => s.mapStyle.uiMode)
 
   return (
     <button

@@ -18,6 +18,6 @@ export default defineConfig({
     },
   },
   test: {
-    dir: 'src',   // don't scan .claude/worktrees (agent checkouts live there)
+    dir: 'src', // don't scan .claude/worktrees (agent checkouts live there)
   },
 })

@@ -3,7 +3,7 @@ import { orderStops, tourCost } from './ordering'
 
 // Full Euclidean matrix over [depot, ...points]; index 0 is the depot.
 function euclidMatrix(points: [number, number][]): number[][] {
-  return points.map(a => points.map(b => Math.hypot(a[0] - b[0], a[1] - b[1])))
+  return points.map((a) => points.map((b) => Math.hypot(a[0] - b[0], a[1] - b[1])))
 }
 
 describe('orderStops', () => {
@@ -11,10 +11,10 @@ describe('orderStops', () => {
     // depot at origin; stops deliberately labeled out of travel order so the
     // identity tour 1→2→3 zig-zags.
     const matrix = euclidMatrix([
-      [0, 0],    // 0 depot
-      [10, 0],   // 1 far
-      [1, 0],    // 2 near
-      [2, 0],    // 3 mid
+      [0, 0], // 0 depot
+      [10, 0], // 1 far
+      [1, 0], // 2 near
+      [2, 0], // 3 mid
     ])
     const naive = [1, 2, 3]
     const order = orderStops({ matrix })
@@ -27,10 +27,10 @@ describe('orderStops', () => {
     // Geometry wants near→mid→far (2,3,1); but stop 1 is a 09:00 booking and
     // stop 3 a 17:00 booking, so 1 must precede 3 in the visit order.
     const matrix = euclidMatrix([
-      [0, 0],    // depot
-      [10, 0],   // 1  09:00
-      [1, 0],    // 2  free
-      [2, 0],    // 3  17:00
+      [0, 0], // depot
+      [10, 0], // 1  09:00
+      [1, 0], // 2  free
+      [2, 0], // 3  17:00
     ])
     const order = orderStops({ matrix, anchorMinutes: { 1: 9 * 60, 3: 17 * 60 } })
     const posOf = (v: number) => order.indexOf(v)
@@ -41,6 +41,13 @@ describe('orderStops', () => {
 
   it('handles trivial sizes', () => {
     expect(orderStops({ matrix: [[0]] })).toEqual([])
-    expect(orderStops({ matrix: [[0, 5], [5, 0]] })).toEqual([1])
+    expect(
+      orderStops({
+        matrix: [
+          [0, 5],
+          [5, 0],
+        ],
+      }),
+    ).toEqual([1])
   })
 })

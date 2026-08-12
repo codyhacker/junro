@@ -8,11 +8,11 @@ import type { PlaceCategory } from '../../../shared/types/trip'
 // and night, so one image set serves both modes.
 
 export const PIN_COLORS: Record<PlaceCategory, string> = {
-  restaurant: '#d6583e',   // vermilion
-  cafe:       '#a9713a',   // roasted amber
-  sight:      '#7161a8',   // temple violet
-  shop:       '#49796b',   // pine
-  other:      '#6d6f76',   // stone
+  restaurant: '#d6583e', // vermilion
+  cafe: '#a9713a', // roasted amber
+  sight: '#7161a8', // temple violet
+  shop: '#49796b', // pine
+  other: '#6d6f76', // stone
 }
 
 // 24×24 glyphs, white, drawn inside the badge.

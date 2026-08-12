@@ -38,7 +38,7 @@ export function enumerateDates(startDate: string, endDate: string): string[] {
 // A lodging covers [checkIn, checkOut) — you sleep there on check-in night,
 // not on the night you check out. First match wins if ranges overlap.
 export function resolveLodgingId(date: string, lodgings: Lodging[]): string | null {
-  const match = lodgings.find(l => date >= l.checkIn && date < l.checkOut)
+  const match = lodgings.find((l) => date >= l.checkIn && date < l.checkOut)
   return match ? match.id : null
 }
 
@@ -56,7 +56,7 @@ export function clampLodgings(
   if (!startDate || !endDate) return lodgings
   const dayAfterEnd = nextIsoDate(endDate)
   const clamp = (d: string, lo: string, hi: string) => (d < lo ? lo : d > hi ? hi : d)
-  return lodgings.map(l => {
+  return lodgings.map((l) => {
     const checkIn = clamp(l.checkIn, startDate, endDate)
     const checkOut = clamp(l.checkOut, startDate, dayAfterEnd)
     return checkIn === l.checkIn && checkOut === l.checkOut ? l : { ...l, checkIn, checkOut }
@@ -65,7 +65,7 @@ export function clampLodgings(
 
 export interface MaterializeResult {
   days: Day[]
-  orphanedStopIds: string[]   // stops whose day disappeared — back to the scrapbook
+  orphanedStopIds: string[] // stops whose day disappeared — back to the scrapbook
 }
 
 // Reconciles the day list against a date range. Existing Day objects are
@@ -79,9 +79,9 @@ export function materializeDays(
   lodgings: Lodging[],
 ): MaterializeResult {
   const dates = startDate && endDate ? enumerateDates(startDate, endDate) : []
-  const byDate = new Map(existing.map(d => [d.date, d]))
+  const byDate = new Map(existing.map((d) => [d.date, d]))
 
-  const days = dates.map(date => {
+  const days = dates.map((date) => {
     const prior = byDate.get(date)
     const lodgingId = resolveLodgingId(date, lodgings)
     if (prior) return prior.lodgingId === lodgingId ? prior : { ...prior, lodgingId }
@@ -95,9 +95,7 @@ export function materializeDays(
   })
 
   const kept = new Set(dates)
-  const orphanedStopIds = existing
-    .filter(d => !kept.has(d.date))
-    .flatMap(d => d.stopIds)
+  const orphanedStopIds = existing.filter((d) => !kept.has(d.date)).flatMap((d) => d.stopIds)
 
   return { days, orphanedStopIds }
 }

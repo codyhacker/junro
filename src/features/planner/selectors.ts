@@ -2,7 +2,13 @@ import { createSelector } from '@reduxjs/toolkit'
 import type { RootState } from '../../app/store'
 import type { TravelMode } from '../../shared/types/trip'
 import { DEFAULT_PREFS } from '../../shared/types/trip'
-import { dayCoords, selectDays, selectLodgings, selectPlaces, selectUnassignedPlaces } from '../trip/selectors'
+import {
+  dayCoords,
+  selectDays,
+  selectLodgings,
+  selectPlaces,
+  selectUnassignedPlaces,
+} from '../trip/selectors'
 import { clusterPlaces, buildAreaCircle, type ClusterResult } from './clustering'
 import { dayColorAt } from '../../shared/constants/dayColors'
 import { routeHash } from './routeHash'
@@ -28,18 +34,19 @@ export const selectDayRouteRequests = createSelector(
     days
       // A day with no stops has nothing to route — [lodging, lodging] would
       // otherwise produce a nonsense 1-minute self-route (found in review).
-      .filter(day => day.stopIds.length > 0)
-      .map(day => {
+      .filter((day) => day.stopIds.length > 0)
+      .map((day) => {
         const coords = dayCoords(day, places, lodgings)
         const mode = day.travelMode ?? tripMode
         return { dayId: day.id, coords, mode, hash: routeHash(coords, mode) }
       })
       // …and at least an origin and a destination overall.
-      .filter(req => req.coords.length >= 2),
+      .filter((req) => req.coords.length >= 2),
 )
 
-export const selectRequestByDayId = createSelector([selectDayRouteRequests], (requests) =>
-  new Map(requests.map(r => [r.dayId, r])),
+export const selectRequestByDayId = createSelector(
+  [selectDayRouteRequests],
+  (requests) => new Map(requests.map((r) => [r.dayId, r])),
 )
 
 // ── Stage 1: neighborhood clustering (pure, no I/O) ─────────────────────────
@@ -51,7 +58,12 @@ const NO_CLUSTERS: ClusterResult = { clusters: [], excursions: [] }
 export const selectClusters = createSelector(
   [selectUnassignedPlaces, (s: RootState) => s.trip.active?.destination.center],
   (places, center): ClusterResult =>
-    center ? clusterPlaces(places.map(p => ({ id: p.id, coord: p.coord })), center) : NO_CLUSTERS,
+    center
+      ? clusterPlaces(
+          places.map((p) => ({ id: p.id, coord: p.coord })),
+          center,
+        )
+      : NO_CLUSTERS,
 )
 
 // Day-group hulls — a soft day-colored region around each planned day's stops,
@@ -66,24 +78,28 @@ export const selectDayHullsGeoJSON = createSelector(
     (s: RootState) => s.tripInteraction.selectedDayId,
   ],
   (days, places, uiMode, selectedDayId) => {
-    const byId = new Map(places.map(p => [p.id, p]))
+    const byId = new Map(places.map((p) => [p.id, p]))
     return {
       type: 'FeatureCollection' as const,
       features: days.flatMap((day, i) => {
-        const coords = day.stopIds.map(id => byId.get(id)?.coord).filter((c): c is [number, number] => !!c)
-        if (coords.length < 2) return []      // a single stop isn't a region
+        const coords = day.stopIds
+          .map((id) => byId.get(id)?.coord)
+          .filter((c): c is [number, number] => !!c)
+        if (coords.length < 2) return [] // a single stop isn't a region
         const hull = buildAreaCircle(coords)
         if (!hull) return []
         const color = dayColorAt(i)
-        return [{
-          type: 'Feature' as const,
-          geometry: hull,
-          properties: {
-            dayId: day.id,
-            color: uiMode === 'dark' ? color.dark : color.light,
-            selected: day.id === selectedDayId ? 1 : 0,
+        return [
+          {
+            type: 'Feature' as const,
+            geometry: hull,
+            properties: {
+              dayId: day.id,
+              color: uiMode === 'dark' ? color.dark : color.light,
+              selected: day.id === selectedDayId ? 1 : 0,
+            },
           },
-        }]
+        ]
       }),
     }
   },

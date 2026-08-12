@@ -13,8 +13,8 @@ import { CATEGORY_META } from './categoryMeta'
 // dot (from the map) feeds the same confirm card via `addCandidate`.
 export function AddPlace() {
   const dispatch = useAppDispatch()
-  const trip = useAppSelector(s => s.trip.active)
-  const addCandidate = useAppSelector(s => s.tripInteraction.addCandidate)
+  const trip = useAppSelector((s) => s.trip.active)
+  const addCandidate = useAppSelector((s) => s.tripInteraction.addCandidate)
 
   const [query, setQuery] = useState('')
   const [pending, setPending] = useState<RetrievedPlace | null>(null)
@@ -23,16 +23,21 @@ export function AddPlace() {
   // Discovery adds keep the map where it is (you already framed the spot you
   // tapped) — search picks re-center. This flag distinguishes the two.
   const [fromDiscovery, setFromDiscovery] = useState(false)
-  const { results, sessionToken, resetSession, clear } = useSuggest(
-    pending ? '' : query,
-    { proximity: trip?.destination.center, types: 'poi,address' },
-  )
+  const { results, sessionToken, resetSession, clear } = useSuggest(pending ? '' : query, {
+    proximity: trip?.destination.center,
+    types: 'poi,address',
+  })
 
   // Adopt a discovery-dot tap: open the confirm card prefilled, same as a
   // search pick — but do NOT move the camera. (`preview` is hoisted.)
   useEffect(() => {
     if (!addCandidate) return
-    setPending({ name: addCandidate.name, coord: addCandidate.coord, address: addCandidate.address, categories: [] })
+    setPending({
+      name: addCandidate.name,
+      coord: addCandidate.coord,
+      address: addCandidate.address,
+      categories: [],
+    })
     setCategory(addCandidate.category)
     setNote('')
     setFromDiscovery(true)
@@ -49,25 +54,35 @@ export function AddPlace() {
   // places. Generous padding gives breathing room and clears the planning panel.
   function frame(center?: [number, number]) {
     if (!trip) return
-    const others = trip.places.map(p => p.coord)
+    const others = trip.places.map((p) => p.coord)
     let bounds: [[number, number], [number, number]]
     if (center) {
-      const dLng = Math.max(0, ...others.map(c => Math.abs(c[0] - center[0])))
-      const dLat = Math.max(0, ...others.map(c => Math.abs(c[1] - center[1])))
-      bounds = [[center[0] - dLng, center[1] - dLat], [center[0] + dLng, center[1] + dLat]]
+      const dLng = Math.max(0, ...others.map((c) => Math.abs(c[0] - center[0])))
+      const dLat = Math.max(0, ...others.map((c) => Math.abs(c[1] - center[1])))
+      bounds = [
+        [center[0] - dLng, center[1] - dLat],
+        [center[0] + dLng, center[1] + dLat],
+      ]
     } else {
       if (others.length === 0) return
-      const lngs = others.map(c => c[0])
-      const lats = others.map(c => c[1])
-      bounds = [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]]
+      const lngs = others.map((c) => c[0])
+      const lats = others.map((c) => c[1])
+      bounds = [
+        [Math.min(...lngs), Math.min(...lats)],
+        [Math.max(...lngs), Math.max(...lats)],
+      ]
     }
     const wide = window.innerWidth > 640
-    dispatch(fitBounds({
-      bounds,
-      padding: wide ? { top: 140, right: 140, bottom: 140, left: 460 } : { top: 150, right: 90, bottom: 400, left: 90 },
-      maxZoom: 14,
-      duration: 900,
-    }))
+    dispatch(
+      fitBounds({
+        bounds,
+        padding: wide
+          ? { top: 140, right: 140, bottom: 140, left: 460 }
+          : { top: 150, right: 90, bottom: 400, left: 90 },
+        maxZoom: 14,
+        duration: 900,
+      }),
+    )
   }
 
   // Preview the picked place on the map — the pending marker shows where it'll
@@ -104,14 +119,16 @@ export function AddPlace() {
 
   function save() {
     if (!pending) return
-    dispatch(addPlace({
-      name: pending.name,
-      coord: pending.coord,
-      category,
-      address: pending.address,
-      notes: note.trim() || undefined,
-    }))
-    if (!fromDiscovery) frame(pending.coord)   // search re-centers; discovery stays put
+    dispatch(
+      addPlace({
+        name: pending.name,
+        coord: pending.coord,
+        category,
+        address: pending.address,
+        notes: note.trim() || undefined,
+      }),
+    )
+    if (!fromDiscovery) frame(pending.coord) // search re-centers; discovery stays put
     done()
   }
 
@@ -123,11 +140,11 @@ export function AddPlace() {
             className="junro-input add-place-input"
             placeholder={`Search places in ${trip.destination.name}…`}
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={(e) => setQuery(e.target.value)}
           />
           {results.length > 0 && (
             <ul className="junro-suggestions">
-              {results.map(r => (
+              {results.map((r) => (
                 <li key={r.mapboxId}>
                   <button onClick={() => void pick(r.mapboxId)}>
                     <span className="junro-suggestion-name">{r.name}</span>
@@ -151,10 +168,12 @@ export function AddPlace() {
               className="junro-input add-place-cat-select"
               aria-label="Category"
               value={category}
-              onChange={e => chooseCategory(e.target.value as PlaceCategory)}
+              onChange={(e) => chooseCategory(e.target.value as PlaceCategory)}
             >
-              {(Object.keys(CATEGORY_META) as PlaceCategory[]).map(cat => (
-                <option key={cat} value={cat}>{CATEGORY_META[cat].emoji} {CATEGORY_META[cat].label}</option>
+              {(Object.keys(CATEGORY_META) as PlaceCategory[]).map((cat) => (
+                <option key={cat} value={cat}>
+                  {CATEGORY_META[cat].emoji} {CATEGORY_META[cat].label}
+                </option>
               ))}
             </select>
           </div>
@@ -163,14 +182,26 @@ export function AddPlace() {
             className="junro-input"
             placeholder="Why did you save this?"
             value={note}
-            onChange={e => setNote(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') save() }}
+            onChange={(e) => setNote(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') save()
+            }}
             autoFocus
           />
 
           <div className="add-place-actions">
-            <button className="junro-secondary" onClick={() => { if (!fromDiscovery) frame(); done() }}>Cancel</button>
-            <button className="junro-primary" onClick={save}>Save place</button>
+            <button
+              className="junro-secondary"
+              onClick={() => {
+                if (!fromDiscovery) frame()
+                done()
+              }}
+            >
+              Cancel
+            </button>
+            <button className="junro-primary" onClick={save}>
+              Save place
+            </button>
           </div>
         </div>
       )}

@@ -11,7 +11,7 @@ const BASE = 'https://api.mapbox.com/search/searchbox/v1'
 export interface Suggestion {
   mapboxId: string
   name: string
-  placeFormatted: string       // secondary line (address / region)
+  placeFormatted: string // secondary line (address / region)
   categories: string[]
 }
 
@@ -46,7 +46,7 @@ export async function suggest(
 
   const res = await fetch(`${BASE}/suggest?${params}`, { signal })
   if (!res.ok) throw new Error(`suggest failed: ${res.status}`)
-  const json = await res.json() as {
+  const json = (await res.json()) as {
     suggestions?: {
       mapbox_id: string
       name: string
@@ -55,7 +55,7 @@ export async function suggest(
       poi_category?: string[]
     }[]
   }
-  return (json.suggestions ?? []).map(s => ({
+  return (json.suggestions ?? []).map((s) => ({
     mapboxId: s.mapbox_id,
     name: s.name,
     placeFormatted: s.place_formatted ?? s.full_address ?? '',
@@ -71,7 +71,7 @@ export async function retrieve(
   const params = new URLSearchParams({ access_token: TOKEN, session_token: sessionToken })
   const res = await fetch(`${BASE}/retrieve/${encodeURIComponent(mapboxId)}?${params}`, { signal })
   if (!res.ok) throw new Error(`retrieve failed: ${res.status}`)
-  const json = await res.json() as {
+  const json = (await res.json()) as {
     features?: {
       geometry: { coordinates: [number, number] }
       properties: {
@@ -97,8 +97,14 @@ export async function retrieve(
 export function guessCategory(categories: string[]): PlaceCategory {
   const joined = categories.join(' ').toLowerCase()
   if (/(coffee|café|cafe|tea house|bakery)/.test(joined)) return 'cafe'
-  if (/(restaurant|food|bistro|brunch|pizza|sushi|burger|noodle|bar\b)/.test(joined)) return 'restaurant'
-  if (/(museum|monument|attraction|historic|landmark|gallery|temple|shrine|church|castle|park|garden|viewpoint)/.test(joined)) return 'sight'
+  if (/(restaurant|food|bistro|brunch|pizza|sushi|burger|noodle|bar\b)/.test(joined))
+    return 'restaurant'
+  if (
+    /(museum|monument|attraction|historic|landmark|gallery|temple|shrine|church|castle|park|garden|viewpoint)/.test(
+      joined,
+    )
+  )
+    return 'sight'
   if (/(shop|store|boutique|market|mall|bookstore)/.test(joined)) return 'shop'
   return 'other'
 }

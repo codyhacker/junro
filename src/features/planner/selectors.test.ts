@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import tripReducer, {
-  tripHydrated, setTripDates, addLodging, assignStop, moveStop, setTravelMode, setDayTravelMode,
+  tripHydrated,
+  setTripDates,
+  addLodging,
+  assignStop,
+  moveStop,
+  setTravelMode,
+  setDayTravelMode,
 } from '../trip/tripSlice'
 import type { RootState } from '../../app/store'
 import type { SavedPlace, Trip } from '../../shared/types/trip'
@@ -17,7 +23,7 @@ function place(id: string, coord: [number, number]): SavedPlace {
 
 const PLACES = [
   place('p1', [2.3376, 48.8606]),
-  place('p2', [2.3499, 48.8530]),
+  place('p2', [2.3499, 48.853]),
   place('p3', [2.3212, 48.8467]),
   place('p4', [2.2945, 48.8584]),
 ]
@@ -40,14 +46,20 @@ function baseTrip(): Trip {
 type TripState = ReturnType<typeof tripReducer>
 const asRoot = (trip: TripState): RootState => ({ trip }) as unknown as RootState
 const hashes = (trip: TripState) =>
-  Object.fromEntries(selectDayRouteRequests(asRoot(trip)).map(r => [r.dayId, r.hash]))
+  Object.fromEntries(selectDayRouteRequests(asRoot(trip)).map((r) => [r.dayId, r.hash]))
 
 // Two days, a hotel, and two stops each.
 function twoDayTrip(): TripState {
   let state = tripReducer(undefined, tripHydrated({ summaries: [], active: baseTrip() }))
-  state = tripReducer(state, addLodging({
-    name: 'Hôtel', coord: [2.33, 48.87], checkIn: '2026-05-01', checkOut: '2026-05-03',
-  }))
+  state = tripReducer(
+    state,
+    addLodging({
+      name: 'Hôtel',
+      coord: [2.33, 48.87],
+      checkIn: '2026-05-01',
+      checkOut: '2026-05-03',
+    }),
+  )
   state = tripReducer(state, setTripDates({ startDate: '2026-05-01', endDate: '2026-05-02' }))
   const [d1, d2] = state.active!.days
   state = tripReducer(state, assignStop({ placeId: 'p1', dayId: d1.id }))
@@ -86,7 +98,7 @@ describe('selectDayRouteRequests', () => {
     expect(selectDayRouteRequests(asRoot(state))).toEqual([])
   })
 
-  it('reordering one day leaves every other day\'s hash untouched', () => {
+  it("reordering one day leaves every other day's hash untouched", () => {
     const before = twoDayTrip()
     const [d1, d2] = before.active!.days
     const after = tripReducer(before, moveStop({ dayId: d2.id, placeId: 'p4', delta: -1 }))
@@ -101,19 +113,19 @@ describe('selectDayRouteRequests', () => {
     const before = twoDayTrip()
     const renamed = {
       ...before,
-      active: { ...before.active!, places: PLACES.map(p => ({ ...p, name: `${p.name}!` })) },
+      active: { ...before.active!, places: PLACES.map((p) => ({ ...p, name: `${p.name}!` })) },
     }
     expect(hashes(renamed)).toEqual(hashes(before))
   })
 
-  it('changing the trip mode changes every day\'s hash', () => {
+  it("changing the trip mode changes every day's hash", () => {
     const before = twoDayTrip()
     const after = tripReducer(before, setTravelMode('driving'))
     const h0 = hashes(before)
     const h1 = hashes(after)
     expect(Object.keys(h1)).toEqual(Object.keys(h0))
     for (const dayId of Object.keys(h0)) expect(h1[dayId]).not.toBe(h0[dayId])
-    expect(selectDayRouteRequests(asRoot(after)).every(r => r.mode === 'driving')).toBe(true)
+    expect(selectDayRouteRequests(asRoot(after)).every((r) => r.mode === 'driving')).toBe(true)
   })
 
   it('a per-day mode override changes only that day', () => {
@@ -124,7 +136,7 @@ describe('selectDayRouteRequests', () => {
     const h1 = hashes(after)
     expect(h1[d1.id]).toBe(h0[d1.id])
     expect(h1[d2.id]).not.toBe(h0[d2.id])
-    const byId = new Map(selectDayRouteRequests(asRoot(after)).map(r => [r.dayId, r.mode]))
+    const byId = new Map(selectDayRouteRequests(asRoot(after)).map((r) => [r.dayId, r.mode]))
     expect(byId.get(d1.id)).toBe('walking')
     expect(byId.get(d2.id)).toBe('driving')
   })

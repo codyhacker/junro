@@ -7,7 +7,12 @@ import type {
 } from 'mapbox-gl'
 import { diff } from '@mapbox/mapbox-gl-style-spec'
 import type { AppStore } from '../../../app/store'
-import { getPalette, applyUiTheme, lightPresetFor, type UiMode } from '../../../shared/constants/uiThemes'
+import {
+  getPalette,
+  applyUiTheme,
+  lightPresetFor,
+  type UiMode,
+} from '../../../shared/constants/uiThemes'
 import { selectAugmentationSpec, type AugmentationSpec } from './styleAugmentation'
 import { registerPinIcons } from './icons'
 
@@ -44,13 +49,16 @@ export class StyleController {
     this.map.on('styleimagemissing', () => registerPinIcons(this.map))
   }
 
-  execute(cmd:
-    | { type: 'STYLE_RECONCILE'; spec: AugmentationSpec }
-    | { type: 'UI_THEME_CHANGE'; mode: UiMode }
+  execute(
+    cmd:
+      | { type: 'STYLE_RECONCILE'; spec: AugmentationSpec }
+      | { type: 'UI_THEME_CHANGE'; mode: UiMode },
   ): void {
     switch (cmd.type) {
-      case 'STYLE_RECONCILE': return this.reconcile(cmd.spec)
-      case 'UI_THEME_CHANGE': return this.handleModeChange(cmd.mode)
+      case 'STYLE_RECONCILE':
+        return this.reconcile(cmd.spec)
+      case 'UI_THEME_CHANGE':
+        return this.handleModeChange(cmd.mode)
     }
   }
 
@@ -88,10 +96,7 @@ export class StyleController {
         if (!this.map.getLayer(layer.id)) this.map.addLayer(layer as AnyLayer)
       }
     } else {
-      const ops = diff(
-        { glyphs: '', ...this.currentAugmentation },
-        { glyphs: '', ...next }
-      )
+      const ops = diff({ glyphs: '', ...this.currentAugmentation }, { glyphs: '', ...next })
       for (const op of ops) this.applyOperation(op)
     }
     this.currentAugmentation = next

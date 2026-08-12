@@ -10,8 +10,8 @@
 // rejects any move which would reorder the anchored subsequence.
 
 export interface OrderingInput {
-  matrix: number[][]                    // (n+1)×(n+1); [0] = depot, [1..n] = stops
-  anchorMinutes?: Record<number, number>   // stop index (1..n) → minutes-since-midnight
+  matrix: number[][] // (n+1)×(n+1); [0] = depot, [1..n] = stops
+  anchorMinutes?: Record<number, number> // stop index (1..n) → minutes-since-midnight
 }
 
 // Total time of a depot → …order… → depot loop.
@@ -24,7 +24,7 @@ export function tourCost(matrix: number[][], order: number[]): number {
 }
 
 function anchoredInOrder(order: number[], anchorMinutes: Record<number, number>): boolean {
-  const seen = order.filter(i => i in anchorMinutes)
+  const seen = order.filter((i) => i in anchorMinutes)
   for (let k = 1; k < seen.length; k++) {
     if (anchorMinutes[seen[k]] < anchorMinutes[seen[k - 1]]) return false
   }
@@ -45,7 +45,10 @@ function cheapestInsert(
     const candidate = [...order.slice(0, pos), stop, ...order.slice(pos)]
     if (!ok(candidate)) continue
     const c = tourCost(matrix, candidate)
-    if (c < bestCost) { bestCost = c; best = candidate }
+    if (c < bestCost) {
+      bestCost = c
+      best = candidate
+    }
   }
   return best ?? [...order, stop]
 }
@@ -55,8 +58,10 @@ export function orderStops({ matrix, anchorMinutes = {} }: OrderingInput): numbe
   if (n <= 1) return n === 1 ? [1] : []
 
   const stops = Array.from({ length: n }, (_, i) => i + 1)
-  const anchors = stops.filter(i => i in anchorMinutes).sort((a, b) => anchorMinutes[a] - anchorMinutes[b])
-  const free = stops.filter(i => !(i in anchorMinutes))
+  const anchors = stops
+    .filter((i) => i in anchorMinutes)
+    .sort((a, b) => anchorMinutes[a] - anchorMinutes[b])
+  const free = stops.filter((i) => !(i in anchorMinutes))
 
   const keepsAnchors = (order: number[]) => anchoredInOrder(order, anchorMinutes)
 

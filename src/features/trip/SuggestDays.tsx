@@ -13,7 +13,7 @@ import { dayLabel, formatDuration } from './DayRail'
 // Never a silent rewrite (PROJECT_PLAN.md §7). Apply runs Stage 3 ordering.
 export function SuggestDays() {
   const store = useStore() as AppStore
-  const trip = useAppSelector(s => s.trip.active)
+  const trip = useAppSelector((s) => s.trip.active)
   const clusters = useAppSelector(selectClusters)
   const unassigned = useAppSelector(selectUnassignedPlaces)
   const days = useAppSelector(selectDays)
@@ -23,17 +23,19 @@ export function SuggestDays() {
 
   if (!trip || days.length === 0 || unassigned.length === 0) return null
 
-  const nameById = new Map(trip.places.map(p => [p.id, p.name]))
+  const nameById = new Map(trip.places.map((p) => [p.id, p.name]))
   const dayIndex = new Map(days.map((d, i) => [d.id, i]))
 
   function runSuggest() {
-    setPreview(suggestDays({
-      clusterResult: clusters,
-      days,
-      places: trip!.places,
-      lodgings: trip!.lodgings,
-      prefs: trip!.prefs,
-    }))
+    setPreview(
+      suggestDays({
+        clusterResult: clusters,
+        days,
+        places: trip!.places,
+        lodgings: trip!.lodgings,
+        prefs: trip!.prefs,
+      }),
+    )
   }
 
   async function apply() {
@@ -71,22 +73,28 @@ export function SuggestDays() {
       )}
 
       <ul className="suggest-rows">
-        {rows.map(a => {
+        {rows.map((a) => {
           const day = days[dayIndex.get(a.dayId) ?? 0]
           return (
             <li key={a.dayId} className="suggest-row">
               <div className="suggest-row-head">
                 <strong>Day {(dayIndex.get(a.dayId) ?? 0) + 1}</strong> · {dayLabel(day.date)}
                 {representativeName(a.placeIds, trip.places) && (
-                  <span className="suggest-row-hood">📍 {representativeName(a.placeIds, trip.places)}</span>
+                  <span className="suggest-row-hood">
+                    📍 {representativeName(a.placeIds, trip.places)}
+                  </span>
                 )}
                 <span className="suggest-row-meta">
-                  {a.placeIds.length} place{a.placeIds.length === 1 ? '' : 's'} · ~{formatDuration(a.estimatedMinutes * 60)}
+                  {a.placeIds.length} place{a.placeIds.length === 1 ? '' : 's'} · ~
+                  {formatDuration(a.estimatedMinutes * 60)}
                   {a.travelModeOverride === 'driving' && ' · 🚗 drive'}
                 </span>
               </div>
               <div className="suggest-row-names">
-                {a.placeIds.map(id => nameById.get(id)).filter(Boolean).join(' · ')}
+                {a.placeIds
+                  .map((id) => nameById.get(id))
+                  .filter(Boolean)
+                  .join(' · ')}
               </div>
             </li>
           )
@@ -95,12 +103,15 @@ export function SuggestDays() {
 
       {preview.unplacedPlaceIds.length > 0 && (
         <div className="suggest-unplaced">
-          {preview.unplacedPlaceIds.length} place{preview.unplacedPlaceIds.length === 1 ? '' : 's'} didn’t fit — they stay in the scrapbook.
+          {preview.unplacedPlaceIds.length} place{preview.unplacedPlaceIds.length === 1 ? '' : 's'}{' '}
+          didn’t fit — they stay in the scrapbook.
         </div>
       )}
 
       <div className="suggest-actions">
-        <button className="junro-secondary" onClick={() => setPreview(null)} disabled={applying}>Dismiss</button>
+        <button className="junro-secondary" onClick={() => setPreview(null)} disabled={applying}>
+          Dismiss
+        </button>
         <button className="junro-primary" onClick={apply} disabled={applying || rows.length === 0}>
           {applying ? 'Planning…' : 'Apply plan'}
         </button>

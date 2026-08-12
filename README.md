@@ -1,6 +1,6 @@
 # Junro
 
-*順路 — "the recommended route": the small arrow signs that guide you through a museum or garden in the ideal order.*
+_順路 — "the recommended route": the small arrow signs that guide you through a museum or garden in the ideal order._
 
 A visual trip planner. Pin the restaurants, cafes, and sights you want to hit, drop in your hotel and dates, and Junro clusters your pins into walkable neighborhoods, assigns them to days, and orders each day into an efficient loop from your hotel and back.
 

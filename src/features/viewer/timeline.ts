@@ -13,10 +13,10 @@ export interface TimedStop {
   placeId: string
   name: string
   category: SavedPlace['category']
-  arrivalMin: number            // minutes since midnight
+  arrivalMin: number // minutes since midnight
   departureMin: number
-  travelFromPrevMin: number     // travel to reach this stop
-  fixed: boolean                // arrival pinned to a reservation
+  travelFromPrevMin: number // travel to reach this stop
+  fixed: boolean // arrival pinned to a reservation
   coord: [number, number]
   address?: string
   notes?: string
@@ -27,8 +27,8 @@ export interface DayTimeline {
   date: string
   lodgingName: string | null
   stops: TimedStop[]
-  returnTravelMin: number       // trip back to the lodging (0 if none)
-  endMin: number                // clock time back at the lodging / last stop
+  returnTravelMin: number // trip back to the lodging (0 if none)
+  endMin: number // clock time back at the lodging / last stop
 }
 
 function toMin(hhmm: string): number {
@@ -84,9 +84,8 @@ export function computeDayTimeline(
     prevCoord = place.coord
   }
 
-  const returnTravelMin = lodging && prevCoord && prevCoord !== lodging.coord
-    ? travelMin(prevCoord, lodging.coord)
-    : 0
+  const returnTravelMin =
+    lodging && prevCoord && prevCoord !== lodging.coord ? travelMin(prevCoord, lodging.coord) : 0
 
   return {
     dayId: day.id,
@@ -99,7 +98,7 @@ export function computeDayTimeline(
 }
 
 export function computeTripTimeline(trip: Trip): DayTimeline[] {
-  const placesById = new Map(trip.places.map(p => [p.id, p]))
-  const lodgingsById = new Map(trip.lodgings.map(l => [l.id, l]))
-  return trip.days.map(d => computeDayTimeline(d, placesById, lodgingsById, trip.prefs))
+  const placesById = new Map(trip.places.map((p) => [p.id, p]))
+  const lodgingsById = new Map(trip.lodgings.map((l) => [l.id, l]))
+  return trip.days.map((d) => computeDayTimeline(d, placesById, lodgingsById, trip.prefs))
 }

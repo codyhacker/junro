@@ -10,7 +10,12 @@ import { tripToIcs } from './ics'
 // .ics drops the itinerary into any calendar app.
 
 function slug(name: string): string {
-  return (name.trim() || 'trip').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'trip'
+  return (
+    (name.trim() || 'trip')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') || 'trip'
+  )
 }
 
 function download(filename: string, mime: string, content: string): void {
@@ -47,7 +52,8 @@ export function parseTripJson(text: string): Trip | null {
       !Array.isArray(trip.places) ||
       !Array.isArray(trip.days) ||
       !Array.isArray(trip.lodgings)
-    ) return null
+    )
+      return null
     return trip
   } catch {
     return null

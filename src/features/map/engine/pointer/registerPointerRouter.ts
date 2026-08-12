@@ -22,18 +22,19 @@ export function registerPointerRouter(
   // Single hit test for one layer at a screen point. Returns null if the
   // layer's mapbox layers aren't in the live style yet (visibility toggles).
   function hitTest(layer: InteractiveLayer, point: Point): GeoJSONFeature | null {
-    const presentLayers = layer.layerIds.filter(id => map.getLayer(id))
+    const presentLayers = layer.layerIds.filter((id) => map.getLayer(id))
     if (presentLayers.length === 0) return null
 
-    const query: PointLike | [PointLike, PointLike] = layer.hitMode === 'bbox'
-      ? (() => {
-          const pad = layer.bboxPadding ?? DEFAULT_BBOX_PADDING
-          return [
-            [point.x - pad, point.y - pad],
-            [point.x + pad, point.y + pad],
-          ]
-        })()
-      : point
+    const query: PointLike | [PointLike, PointLike] =
+      layer.hitMode === 'bbox'
+        ? (() => {
+            const pad = layer.bboxPadding ?? DEFAULT_BBOX_PADDING
+            return [
+              [point.x - pad, point.y - pad],
+              [point.x + pad, point.y + pad],
+            ]
+          })()
+        : point
 
     const features = map.queryRenderedFeatures(query, { layers: presentLayers })
     return features[0] ?? null
@@ -95,7 +96,7 @@ export function registerPointerRouter(
     const allHits = buildAllHits(e.point)
 
     // Cursor: pointer if any layer hit.
-    const anyHit = ordered.some(l => allHits[l.id] !== null)
+    const anyHit = ordered.some((l) => allHits[l.id] !== null)
     map.getCanvas().style.cursor = anyHit ? 'pointer' : ''
 
     const ctx = buildCtx(e.originalEvent, false)
