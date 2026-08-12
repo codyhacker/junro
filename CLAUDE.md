@@ -15,6 +15,8 @@ npm run test      # Vitest, single run
 npx tsc --noEmit  # type-check without building
 ```
 
+**Verify gate** (run before every commit; `/check` and `/commit` use this): `npx tsc --noEmit && npm test -- --run && npm run build`
+
 ## Environment
 
 `.env` in the project root:
@@ -71,3 +73,26 @@ Add a command variant in `commands.ts` → add a case in `MapEngine.execute()` �
 ### External APIs (see PROJECT_PLAN.md §6 for the full decisions)
 
 Mapbox Search Box (geocoding — results are never persisted; ToS), Directions + Matrix (walking/driving; responses cached in-memory only), Isochrone. POI browsing comes from a self-hosted Overture places PMTiles extract per destination. No Google APIs (ToS: must render on Google maps).
+
+## Key contracts & naming
+
+- **Command pattern is law.** React → Redux action → listener → `engine.execute()` → controller → `map.*()`. Never call Mapbox GL from a component. Never add a data source/layer in engine code — add it to `selectAugmentationSpec` (styleAugmentation.ts); `StyleController` diffs the spec and reconciles.
+- **Services touch only HTTP; the engine touches only Mapbox GL.** Both driven by listeners, both write results back through Redux.
+- **Persistence** goes through the async `TripStorage` adapter only. Ids are UUIDv7. Derived caches (routes, matrices, clusters) are **never persisted** — they re-derive from the document.
+- **Undo/redo** is a store-level `withHistory` wrapper that snapshots `trip.active` on each edit. `setDayStops({dayId, placeIds})` claims those ids from every other day, so a same-day reorder and a cross-day move are each a single, atomic, undoable dispatch (see dndStops.ts).
+- **Colours**: day ramp via `dayHexAt`/`dayRgbAt`/`dayColorAt` (shared/constants/dayColors.ts); category pin colours via `PIN_COLORS` (engine/icons.ts). Discovery dots reuse the pin colours. Map source-name constants live in `TripLayerController.ts` (`PLACES_SOURCE`, `DISCOVERY_SOURCE`, …).
+- Custom layers must declare a `slot` (`'bottom' | 'middle' | 'top'`) — Standard's layer-ordering model.
+
+## Gotchas (bite a fresh agent)
+
+- **`dvh` height transitions freeze** in Chromium under a `flex`/`display:contents` chain — the height sticks at its start value. Animate with **inline px** heights, not `dvh` (see the mobile bottom sheet in PlanningPanel.tsx + `useViewportHeight`).
+- **Style-spec expressions**: TS won't accept a spread-built `['match', …]`; type it and cast `as unknown as ExpressionSpecification`.
+- **PMTiles**: a plain `https://…/x.pmtiles` URL on a `type:'vector'` source is auto-detected by Mapbox GL v3 (no `pmtiles://`, no `addProtocol`, no npm dep). The R2 bucket needs CORS allowing the origin + `Range`, exposing `Content-Range`/`Accept-Ranges`/`ETag`. Local dev goes through the Vite `/r2` proxy (vite.config.js) because the dev port isn't on the bucket's CORS allowlist; prod hits R2 directly.
+- **Dev handles**: `window.__store` and `window.__engine` are exposed in dev — read Redux state / the map from the browser console (`__engine.getMap()`).
+- **Verify gate**: `npx tsc --noEmit && npm test -- --run && npm run build`. The in-tool browser's **WebGL context can exhaust** after many reloads (map goes black/grey, JS hangs) — that's tooling, not a bug; verify via `window.__store`/DOM/`curl`, or on the live deploy. `preview_stop`+`preview_start` sometimes recovers it.
+- **Shell cwd can drift** — use absolute paths or `cd /…/junro` before `npm`/`npx` (else `tsc`/`vitest` "not found").
+- **Deploy on push**: pushing `main` triggers the GitHub Pages build. `VITE_MAPBOX_ACCESS_TOKEN` is an Actions secret; never enter tokens/keys yourself.
+
+## Session workflow (Sonnet-driven, fresh-Opus plan/review)
+
+The persistent thread runs **Sonnet**. For a feature: spawn the **`planner`** agent (fresh Opus) to prime memory + produce a batched plan → spawn **`implementer`** agents (Sonnet) for the separable tasks → spawn the **`reviewer`** agent (fresh Opus) to check the result → back to Sonnet. Prime + write **agent memory first** (durable notes: architecture, contracts, naming, gotchas — this file + the memory dir). Haiku slash commands handle chores (`/commit`, `/check`).
