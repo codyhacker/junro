@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { setTripDates } from './tripSlice'
 import { materializeDays } from './days'
-import { DateRangePicker } from './DateRangePicker'
+import { DateRangeField } from './DateRangeField'
 import { LodgingEditor } from './LodgingEditor'
 
 // The Trip tab — configuration, tucked out of the main flow: the date range and
@@ -37,7 +37,7 @@ export function TripTab() {
     <div className="trip-settings">
       <div className="trip-settings-group">
         <span className="trip-settings-label">Dates</span>
-        <DateRangePicker
+        <DateRangeField
           start={start || undefined}
           end={end || undefined}
           onChange={(s, e) => {

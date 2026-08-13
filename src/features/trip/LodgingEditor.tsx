@@ -5,9 +5,7 @@ import { retrieve } from '../search/searchBoxApi'
 import { addLodging, updateLodging, removeLodging } from './tripSlice'
 import { setIsochroneVisible } from '../planner/isochroneSlice'
 import { nextIsoDate } from './days'
-
-const clampDate = (v: string, lo?: string, hi?: string) =>
-  !v ? v : lo && v < lo ? lo : hi && v > hi ? hi : v
+import { DateRangeField } from './DateRangeField'
 
 // Hotels for the Trip tab. Existing hotels list with a ◎ reach action + date
 // range; a ＋ button reveals the search to add another (no static input sitting
@@ -76,41 +74,17 @@ export function LodgingEditor() {
               ×
             </button>
           </div>
-          <div className="trip-settings-dates">
-            <input
-              className="junro-input trip-settings-date"
-              type="date"
-              min={tripStart}
-              max={tripEnd}
-              value={l.checkIn}
-              onChange={(e) =>
-                dispatch(
-                  updateLodging({
-                    id: l.id,
-                    patch: { checkIn: clampDate(e.target.value, tripStart, tripEnd) },
-                  }),
-                )
-              }
-            />
-            <span className="trip-settings-dash">→</span>
-            <input
-              className="junro-input trip-settings-date"
-              type="date"
-              min={l.checkIn || tripStart}
-              max={checkoutMax}
-              value={l.checkOut}
-              onChange={(e) =>
-                dispatch(
-                  updateLodging({
-                    id: l.id,
-                    patch: {
-                      checkOut: clampDate(e.target.value, l.checkIn || tripStart, checkoutMax),
-                    },
-                  }),
-                )
-              }
-            />
-          </div>
+          <DateRangeField
+            start={l.checkIn || undefined}
+            end={l.checkOut || undefined}
+            min={tripStart}
+            max={checkoutMax}
+            startLabel="Check in"
+            endLabel="Check out"
+            onChange={(checkIn, checkOut) =>
+              dispatch(updateLodging({ id: l.id, patch: { checkIn, checkOut } }))
+            }
+          />
         </div>
       ))}
 
@@ -128,27 +102,18 @@ export function LodgingEditor() {
               ×
             </button>
           </div>
-          <div className="trip-settings-dates">
-            <input
-              className="junro-input trip-settings-date"
-              type="date"
-              min={tripStart}
-              max={tripEnd}
-              value={checkIn}
-              onChange={(e) => setCheckIn(clampDate(e.target.value, tripStart, tripEnd))}
-            />
-            <span className="trip-settings-dash">→</span>
-            <input
-              className="junro-input trip-settings-date"
-              type="date"
-              min={checkIn || tripStart}
-              max={checkoutMax}
-              value={checkOut}
-              onChange={(e) =>
-                setCheckOut(clampDate(e.target.value, checkIn || tripStart, checkoutMax))
-              }
-            />
-          </div>
+          <DateRangeField
+            start={checkIn || undefined}
+            end={checkOut || undefined}
+            min={tripStart}
+            max={checkoutMax}
+            startLabel="Check in"
+            endLabel="Check out"
+            onChange={(s, e) => {
+              setCheckIn(s)
+              setCheckOut(e)
+            }}
+          />
           <button
             className="junro-primary trip-settings-apply"
             disabled={!checkIn || !checkOut}

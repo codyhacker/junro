@@ -51,20 +51,38 @@ function buildWeeks(firstIso: string): (string | null)[][] {
   return weeks
 }
 
+// Short trigger label — e.g. "Aug 12". String-sliced, never parsed through
+// `new Date(iso)` (that's UTC midnight and renders a day early in
+// negative-offset zones); the whole app does calendar-day math on strings.
+export const formatIsoShort = (iso: string) =>
+  `${MONTHS[Number(iso.slice(5, 7)) - 1].slice(0, 3)} ${Number(iso.slice(8))}`
+
 export function DateRangePicker({
   start,
   end,
+  min,
+  max,
   onChange,
 }: {
   start?: string
   end?: string
+  min?: string // earliest selectable ISO day, inclusive
+  max?: string // latest selectable ISO day, inclusive
   onChange: (start: string, end: string) => void
 }) {
-  const [view, setView] = useState(() => firstOfMonth(start || todayIso()))
+  const [view, setView] = useState(() => {
+    let v = firstOfMonth(start || min || todayIso())
+    if (min && v < firstOfMonth(min)) v = firstOfMonth(min)
+    if (max && v > firstOfMonth(max)) v = firstOfMonth(max)
+    return v
+  })
   const [pending, setPending] = useState<string | null>(null)
   const [hover, setHover] = useState<string | null>(null)
 
+  const blocked = (iso: string) => (!!min && iso < min) || (!!max && iso > max)
+
   function pick(iso: string) {
+    if (blocked(iso)) return
     if (!pending) {
       setPending(iso)
       return
@@ -96,6 +114,7 @@ export function DateRangePicker({
         <button
           className="cal-nav"
           aria-label="Previous month"
+          disabled={!!min && addMonths(view, -1) < firstOfMonth(min)}
           onClick={() => setView((v) => addMonths(v, -1))}
         >
           ‹
@@ -104,6 +123,7 @@ export function DateRangePicker({
         <button
           className="cal-nav"
           aria-label="Next month"
+          disabled={!!max && addMonths(view, 1) > firstOfMonth(max)}
           onClick={() => setView((v) => addMonths(v, 1))}
         >
           ›
@@ -122,11 +142,16 @@ export function DateRangePicker({
             const isLo = iso === lo
             const isHi = iso === hi
             const inRange = lo && hi && iso > lo && iso < hi
+            const isBlocked = blocked(iso)
             return (
               <button
                 key={i}
                 className={`cal-cell${isLo ? ' cal-start' : ''}${isHi ? ' cal-end' : ''}${inRange ? ' cal-inrange' : ''}${iso === todayIso() ? ' cal-today' : ''}`}
-                onMouseEnter={() => pending && setHover(iso)}
+                disabled={isBlocked}
+                onMouseEnter={() => {
+                  if (isBlocked) return
+                  if (pending) setHover(iso)
+                }}
                 onClick={() => pick(iso)}
               >
                 {Number(iso.slice(8))}
