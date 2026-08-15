@@ -896,9 +896,38 @@ body {
   resize: vertical;
 }
 .place-panel-remove {
-  align-self: flex-start;
+  align-self: flex-end;
   padding: 7px 12px;
   font-size: 12.5px;
+}
+.place-panel-remove.confirming {
+  background: var(--accent-hex);
+  border-color: var(--accent-hex);
+  color: #fff;
+}
+
+/* Day-assignment chips (place panel + Unscheduled section) — one pill per
+   day tinted via --chip-rgb (set inline, mirrors .day-row's --day-rgb); the
+   untinted "Unassigned" chip falls back to the plain accent tone. */
+.day-assign-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.day-assign-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--chip-rgb, var(--accent-rgb)), 0.35);
+  background: rgba(var(--chip-rgb, var(--accent-rgb)), 0.14);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 12px;
+  cursor: pointer;
+}
+.day-assign-chip.active {
+  border-color: rgb(var(--chip-rgb, var(--accent-rgb)));
+  background: rgb(var(--chip-rgb, var(--accent-rgb)));
+  color: #fff;
 }
 
 /* ─── Suggest days ───────────────────────────────────────────────────────── */
@@ -1924,6 +1953,14 @@ body {
 }
 .places-remove:hover {
   color: var(--accent-hex);
+}
+/* Stays visible for the whole confirm window even if the pointer leaves the
+   row — opacity would otherwise revert to 0 via .places-row:hover above. */
+.places-remove.confirming {
+  opacity: 1;
+  border-radius: 999px;
+  background: var(--accent-hex);
+  color: #fff;
 }
 
 /* Lodging add button + secondary getting-around in Plan */

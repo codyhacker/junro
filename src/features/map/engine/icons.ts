@@ -15,6 +15,11 @@ export const PIN_COLORS: Record<PlaceCategory, string> = {
   other: '#6d6f76', // stone
 }
 
+// The lodging pin's color — deliberately outside both the category hues
+// above and the day-color ramp (shared/constants/dayColors.ts), so a hotel
+// never reads as "just another category" or "a day already in progress".
+export const LODGING_PIN_COLOR = '#a3439b' // plum
+
 // 24×24 glyphs, white, drawn inside the badge.
 const GLYPHS: Record<PlaceCategory, string> = {
   // fork + knife
@@ -29,6 +34,10 @@ const GLYPHS: Record<PlaceCategory, string> = {
   other: `<path fill="#fff" d="M12 4.8l1.8 5.4 5.4 1.8-5.4 1.8L12 19.2l-1.8-5.4-5.4-1.8 5.4-1.8L12 4.8z"/>`,
 }
 
+// Bed glyph for the lodging pin — same 24×24 white-silhouette style as the
+// category glyphs above; not part of GLYPHS since lodging isn't a PlaceCategory.
+const LODGING_GLYPH = `<path fill="#fff" d="M4 7h3v10.5H4zM7.2 9h4v3.3H7.2zM4 13.2h16v4.3H4zM5 17.5h1.5v1.8H5zM17 17.5h1.5v1.8H17z"/>`
+
 function pinSvg(category: PlaceCategory): string {
   const color = PIN_COLORS[category]
   // 36×44: rounded badge + short tail, subtle white rim for pop on any basemap.
@@ -39,8 +48,23 @@ function pinSvg(category: PlaceCategory): string {
 </svg>`
 }
 
+// Same badge silhouette as pinSvg, scaled onto a 44×54 board (vs. the
+// category pins' 36×44) so the hotel pin is bigger by construction — not
+// just a larger icon-size at render time — and reads as a more prominent
+// anchor point (item 7).
+function lodgingPinSvg(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="54" viewBox="0 0 44 54">
+  <g transform="scale(1.2222)">
+    <path d="M18 1.5c9.1 0 15 6 15 14.2 0 7.4-5.4 12.9-11.5 15.6L18 41.5l-3.5-10.2C8.4 28.6 3 23.1 3 15.7 3 7.5 8.9 1.5 18 1.5z"
+          fill="${LODGING_PIN_COLOR}" stroke="#ffffff" stroke-width="2.4"/>
+    <g transform="translate(6 4.5)">${LODGING_GLYPH}</g>
+  </g>
+</svg>`
+}
+
 export const CATEGORIES: PlaceCategory[] = ['restaurant', 'cafe', 'sight', 'shop', 'other']
 export const iconName = (category: PlaceCategory) => `junro-pin-${category}`
+export const LODGING_ICON_NAME = 'junro-pin-lodging'
 
 // Rasterize + register every category pin. Idempotent; re-run safely after
 // style resets. Images load async — callers don't need to await (Mapbox
@@ -54,5 +78,12 @@ export function registerPinIcons(map: MapboxMap): void {
       if (!map.hasImage(name)) map.addImage(name, img, { pixelRatio: 2 })
     }
     img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(pinSvg(cat))}`
+  }
+  if (!map.hasImage(LODGING_ICON_NAME)) {
+    const img = new Image(88, 108)
+    img.onload = () => {
+      if (!map.hasImage(LODGING_ICON_NAME)) map.addImage(LODGING_ICON_NAME, img, { pixelRatio: 2 })
+    }
+    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(lodgingPinSvg())}`
   }
 }

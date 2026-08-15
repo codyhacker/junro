@@ -1,9 +1,10 @@
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { setSelectedPlace } from './tripInteractionSlice'
-import { updatePlace, removePlace, assignStop } from './tripSlice'
+import { updatePlace, removePlace } from './tripSlice'
 import { CATEGORY_META } from './categoryMeta'
 import { selectDays } from './selectors'
-import { dayLabel } from './DayRail'
+import { DayAssignChips } from './DayAssignChips'
+import { useConfirmAction } from './useConfirmAction'
 import type { PlaceCategory } from '../../shared/types/trip'
 
 // Detail card for the selected place — edit the note ("why did I save
@@ -18,7 +19,7 @@ export function PlacePanel() {
 
   if (!selectedId || !place) return null
 
-  const assignedDayId = days.find((d) => d.stopIds.includes(place.id))?.id ?? ''
+  const assignedDayId = days.find((d) => d.stopIds.includes(place.id))?.id ?? null
 
   return (
     <div className="place-panel">
@@ -52,23 +53,7 @@ export function PlacePanel() {
         ))}
       </select>
 
-      {days.length > 0 && (
-        <select
-          className="junro-input place-panel-day"
-          aria-label="Assign to a day"
-          value={assignedDayId}
-          onChange={(e) =>
-            dispatch(assignStop({ placeId: place.id, dayId: e.target.value || null }))
-          }
-        >
-          <option value="">Unassigned</option>
-          {days.map((d, i) => (
-            <option key={d.id} value={d.id}>
-              Day {i + 1} · {dayLabel(d.date)}
-            </option>
-          ))}
-        </select>
-      )}
+      {days.length > 0 && <DayAssignChips placeId={place.id} assignedDayId={assignedDayId} />}
 
       <textarea
         className="junro-input place-panel-note"
@@ -85,15 +70,27 @@ export function PlacePanel() {
         rows={2}
       />
 
-      <button
-        className="junro-secondary place-panel-remove"
-        onClick={() => {
-          dispatch(removePlace(place.id))
-          dispatch(setSelectedPlace(null))
-        }}
-      >
-        Remove place
-      </button>
+      <RemoveButton key={place.id} placeId={place.id} />
     </div>
+  )
+}
+
+// Keyed by placeId at the call site above so switching the selected place
+// remounts this fresh — otherwise an armed confirm on one place could carry
+// its "confirming" state over and delete a different one on the next click.
+function RemoveButton({ placeId }: { placeId: string }) {
+  const dispatch = useAppDispatch()
+  const { confirming, trigger } = useConfirmAction(() => {
+    dispatch(removePlace(placeId))
+    dispatch(setSelectedPlace(null))
+  })
+
+  return (
+    <button
+      className={`junro-secondary place-panel-remove${confirming ? ' confirming' : ''}`}
+      onClick={trigger}
+    >
+      {confirming ? 'Confirm remove?' : 'Remove place'}
+    </button>
   )
 }

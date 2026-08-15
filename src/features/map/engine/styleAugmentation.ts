@@ -3,7 +3,7 @@ import type { LayerSpecification, SourceSpecification, ExpressionSpecification }
 import type { RootState } from '../../../app/store'
 import { getPalette } from '../../../shared/constants/uiThemes'
 import { dayColorAt } from '../../../shared/constants/dayColors'
-import { selectDays, selectPlaceDayHex, selectPlaces } from '../../trip/selectors'
+import { selectDays, selectLodgings, selectPlaceDayHex, selectPlaces } from '../../trip/selectors'
 import {
   selectDayRouteRequests,
   selectClusterHullsGeoJSON,
@@ -18,8 +18,9 @@ import {
   ISOCHRONE_SOURCE,
   PENDING_SOURCE,
   DISCOVERY_SOURCE,
+  LODGING_SOURCE,
 } from './TripLayerController'
-import { PIN_COLORS } from './icons'
+import { PIN_COLORS, LODGING_ICON_NAME } from './icons'
 import {
   PLACES_PMTILES_URL,
   DISCOVERY_SOURCE_LAYER,
@@ -87,6 +88,18 @@ const selectPlacesGeoJSON = createSelector([selectPlaces, selectPlaceDayHex], (p
   })),
 }))
 
+// One feature per lodging (mirrors selectPlacesGeoJSON above) — the source
+// behind the always-on hotel pin (item 7). No id/promoteId: unlike places,
+// the lodging pin carries no feature-state (no hover/select interactivity).
+const selectLodgingGeoJSON = createSelector([selectLodgings], (lodgings) => ({
+  type: 'FeatureCollection' as const,
+  features: lodgings.map((l) => ({
+    type: 'Feature' as const,
+    geometry: { type: 'Point' as const, coordinates: l.coord },
+    properties: { name: l.name },
+  })),
+}))
+
 // One feature per routed day, carrying the day's colors. Routing is a per-day
 // pull-up (UX_PLAN.md WS4): only the *selected* day's route draws — routing is
 // available but never the central visual. A day appears only when its stored
@@ -145,6 +158,7 @@ const selectPendingGeoJSON = createSelector(
 export const selectAugmentationSpec = createSelector(
   [
     selectPlacesGeoJSON,
+    selectLodgingGeoJSON,
     selectPendingGeoJSON,
     selectDayRoutesGeoJSON,
     selectClusterHullsGeoJSON,
@@ -156,6 +170,7 @@ export const selectAugmentationSpec = createSelector(
   ],
   (
     placesGeoJSON,
+    lodgingGeoJSON,
     pendingGeoJSON,
     dayRoutesGeoJSON,
     clusterHullsGeoJSON,
@@ -190,6 +205,10 @@ export const selectAugmentationSpec = createSelector(
         type: 'geojson',
         data: placesGeoJSON,
         promoteId: 'id', // UUID property → feature id, for feature-state
+      } as SourceSpecification,
+      [LODGING_SOURCE]: {
+        type: 'geojson',
+        data: lodgingGeoJSON,
       } as SourceSpecification,
       [DAY_ROUTES_SOURCE]: {
         type: 'geojson',
@@ -386,6 +405,24 @@ export const selectAugmentationSpec = createSelector(
           'circle-blur': 0.4,
         },
       } as LayerSpecification,
+      // Lodging halo — declared here, not next to lodging-pin below, so it
+      // renders under places-pins/places-day-ring/the hover layers instead
+      // of washing its translucent disc over them (same reasoning as this
+      // places-halo sitting under places-pins). Always-on, not feature-state
+      // gated, so the hotel reads as a permanent anchor point; reuses
+      // places-halo's vermilion so it's the same design language.
+      {
+        id: 'lodging-halo',
+        type: 'circle',
+        source: LODGING_SOURCE,
+        slot: 'top',
+        paint: {
+          'circle-radius': 22,
+          'circle-color': '#d6583e',
+          'circle-opacity': 0.28,
+          'circle-blur': 0.4,
+        },
+      } as LayerSpecification,
       // Day-color ring — a colored disc at the pin's anchor point, so an
       // assigned pin wears its day at a glance (PROJECT_PLAN.md §8 Phase 2).
       {
@@ -426,6 +463,96 @@ export const selectAugmentationSpec = createSelector(
           'text-halo-width': 1.3,
         },
         minzoom: 8,
+      } as LayerSpecification,
+      // Hover-grown icon — icon-size is a symbol *layout* property, and layout
+      // expressions only accept zoom/feature parameters, never feature-state
+      // (that's paint-only — see places-halo's circle-radius/circle-opacity
+      // above), so "grow on hover" can't be one expression on places-pins
+      // itself. Instead this is a second layer, same icon, drawn over the
+      // base pin: a static (zoom-only) larger size curve, switched on purely
+      // via icon-opacity (paint, feature-state-capable).
+      {
+        id: 'places-pins-hover',
+        type: 'symbol',
+        source: PLACES_SOURCE,
+        slot: 'top',
+        layout: {
+          'icon-image': ['concat', 'junro-pin-', ['get', 'category']],
+          'icon-anchor': 'bottom',
+          'icon-size': ['interpolate', ['linear'], ['zoom'], 8, 0.73, 13, 0.94, 16, 1.18],
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
+        },
+        paint: {
+          'icon-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 1, 0],
+        },
+        // Same floor as places-pins — without it, a hover state that outlives
+        // a scroll-zoom (registerPointerRouter only clears hover on
+        // mousemove/mouseout, not on zoom) could pop one big pin onto an
+        // otherwise pin-free low-zoom map.
+        minzoom: 8,
+      } as LayerSpecification,
+      // Hover-only name label — collision-immune (allow-overlap + ignore-
+      // placement), so a pin's name is reliably readable on hover even when
+      // its permanent label (on places-pins, above) lost the collision fight
+      // in a dense area. The always-on label is untouched; this is additive.
+      {
+        id: 'places-hover-label',
+        type: 'symbol',
+        source: PLACES_SOURCE,
+        slot: 'top',
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
+          'text-size': 11.5,
+          'text-anchor': 'top',
+          'text-offset': [0, 0.35],
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+        },
+        paint: {
+          'text-color': '#3c332b',
+          'text-halo-color': 'rgba(255, 253, 248, 0.95)',
+          'text-halo-width': 1.3,
+          'text-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 1, 0],
+        },
+        // Same floor as places-pins — see places-pins-hover's comment above.
+        minzoom: 8,
+      } as LayerSpecification,
+      // Lodging pin — always-on (not feature-state gated), so the hotel
+      // reads as a permanent, more prominent anchor point than an ordinary
+      // place pin. Its halo (lodging-halo) lives up near places-halo, not
+      // here — see that layer's comment for why — so only the solid icon
+      // itself draws this late (on top of the place layers declared above).
+      {
+        id: 'lodging-pin',
+        type: 'symbol',
+        source: LODGING_SOURCE,
+        slot: 'top',
+        layout: {
+          'icon-image': LODGING_ICON_NAME,
+          'icon-anchor': 'bottom',
+          // The icon's own art board (icons.ts) is already bigger than a
+          // category pin's, so this stays close to 1 instead of growing a
+          // zoom curve the way places-pins' icon-size does.
+          'icon-size': 1,
+          'icon-allow-overlap': true,
+          'text-field': ['get', 'name'],
+          'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
+          'text-size': 11.5,
+          'text-anchor': 'top',
+          'text-offset': [0, 0.35],
+          'text-optional': true,
+        },
+        paint: {
+          'text-color': '#3c332b',
+          'text-halo-color': 'rgba(255, 253, 248, 0.95)',
+          'text-halo-width': 1.3,
+        },
+        // No minzoom: unlike category pins, the hotel should stay a visible
+        // reference point even zoomed far out. Only the label (normal
+        // collision — no allow-overlap/ignore-placement) can still get
+        // dropped near a dense cluster; the icon itself always shows.
       } as LayerSpecification,
       // Discovery labels — after the saved pins so a saved place's name wins
       // any collision; only from z15 to keep the map quiet.

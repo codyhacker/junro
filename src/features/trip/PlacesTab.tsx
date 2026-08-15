@@ -6,6 +6,8 @@ import { flyTo } from '../map/cameraSlice'
 import { selectDays } from './selectors'
 import { CATEGORY_META } from './categoryMeta'
 import { dayHexAt } from '../../shared/constants/dayColors'
+import { useConfirmAction } from './useConfirmAction'
+import type { UiMode } from '../../shared/constants/uiThemes'
 import type { PlaceCategory, SavedPlace } from '../../shared/types/trip'
 
 // The Places tab — the collector home. Every saved place, grouped by category
@@ -68,6 +70,7 @@ export function PlacesTab() {
     other: [],
   }
   for (const p of places) byCat[p.category].push(p)
+  for (const cat of CATEGORY_ORDER) byCat[cat].sort((a, b) => a.name.localeCompare(b.name))
 
   return (
     <div className="places-tab">
@@ -81,43 +84,64 @@ export function PlacesTab() {
             <span className="places-cat-count">{byCat[cat].length}</span>
           </div>
           <ul className="places-list">
-            {byCat[cat].map((p) => {
-              const di = dayOf.get(p.id)
-              return (
-                <li
-                  key={p.id}
-                  className={`places-row${p.id === selectedId ? ' selected' : ''}`}
-                  onMouseEnter={() => dispatch(setHoveredPlace(p.id))}
-                  onMouseLeave={() => dispatch(setHoveredPlace(null))}
-                >
-                  <button
-                    className="places-row-main"
-                    onClick={() => {
-                      dispatch(setSelectedPlace(p.id))
-                      dispatch(flyTo({ center: p.coord, zoom: 15, duration: 1000 }))
-                    }}
-                  >
-                    <span className="places-name">{p.name}</span>
-                    {p.notes && <span className="places-note">{p.notes}</span>}
-                  </button>
-                  {di !== undefined && (
-                    <span className="places-daybadge" style={{ background: dayHexAt(di, uiMode) }}>
-                      D{di + 1}
-                    </span>
-                  )}
-                  <button
-                    className="places-remove"
-                    aria-label={`Remove ${p.name}`}
-                    onClick={() => dispatch(removePlace(p.id))}
-                  >
-                    ×
-                  </button>
-                </li>
-              )
-            })}
+            {byCat[cat].map((p) => (
+              <PlaceRow
+                key={p.id}
+                place={p}
+                selected={p.id === selectedId}
+                dayIndex={dayOf.get(p.id)}
+                uiMode={uiMode}
+              />
+            ))}
           </ul>
         </section>
       ))}
     </div>
+  )
+}
+
+function PlaceRow({
+  place,
+  selected,
+  dayIndex,
+  uiMode,
+}: {
+  place: SavedPlace
+  selected: boolean
+  dayIndex: number | undefined
+  uiMode: UiMode
+}) {
+  const dispatch = useAppDispatch()
+  const { confirming, trigger } = useConfirmAction(() => dispatch(removePlace(place.id)))
+
+  return (
+    <li
+      className={`places-row${selected ? ' selected' : ''}`}
+      onMouseEnter={() => dispatch(setHoveredPlace(place.id))}
+      onMouseLeave={() => dispatch(setHoveredPlace(null))}
+    >
+      <button
+        className="places-row-main"
+        onClick={() => {
+          dispatch(setSelectedPlace(place.id))
+          dispatch(flyTo({ center: place.coord, zoom: 15, duration: 1000 }))
+        }}
+      >
+        <span className="places-name">{place.name}</span>
+        {place.notes && <span className="places-note">{place.notes}</span>}
+      </button>
+      {dayIndex !== undefined && (
+        <span className="places-daybadge" style={{ background: dayHexAt(dayIndex, uiMode) }}>
+          D{dayIndex + 1}
+        </span>
+      )}
+      <button
+        className={`places-remove${confirming ? ' confirming' : ''}`}
+        aria-label={confirming ? `Confirm remove ${place.name}` : `Remove ${place.name}`}
+        onClick={trigger}
+      >
+        {confirming ? '✓' : '×'}
+      </button>
+    </li>
   )
 }
