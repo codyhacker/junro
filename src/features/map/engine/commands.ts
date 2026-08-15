@@ -15,6 +15,7 @@ export type MapCommand =
   // ── Trip places ───────────────────────────────────────────────────────────
   | { type: 'PLACE_HOVER'; placeId: string | null }
   | { type: 'PLACE_SELECT'; placeId: string | null }
+  | { type: 'PLACES_HIGHLIGHT'; placeIds: string[] | null; color: string | null } // suggestion-preview zone glow
   | { type: 'DAY_FOCUS'; dayId: string | null } // fitBounds to day's stops + lodging
   | { type: 'START_FLY_DAY'; dayId: string } // camera-walk the day's route
   | { type: 'STOP_FLY_DAY'; restoreCamera?: boolean }

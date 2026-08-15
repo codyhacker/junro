@@ -24,6 +24,23 @@ export interface OvertureCategoryEntry {
   toPlaceCategory: PlaceCategory
 }
 
+// Chip label + emoji per group. A Record, so TS enforces every member of the
+// OvertureCategoryGroup union has an entry — ALL_OVERTURE_GROUPS below reads
+// its keys instead of maintaining a second list, so the two can't drift out
+// of sync if a group is ever added, renamed, or removed.
+export const OVERTURE_GROUP_META: Record<OvertureCategoryGroup, { label: string; emoji: string }> = {
+  landmarks_culture: { label: 'Landmarks', emoji: '🏛️' },
+  nature_scenic: { label: 'Nature', emoji: '🌳' },
+  food_drink: { label: 'Food & Drink', emoji: '🍽️' },
+  accommodation: { label: 'Hotels', emoji: '🏨' },
+  transit: { label: 'Transit', emoji: '🚉' },
+}
+
+// The 5 groups, in display order for the discovery-drawer chip row (object
+// key order is insertion order for string keys, so this matches the literal
+// order above).
+export const ALL_OVERTURE_GROUPS = Object.keys(OVERTURE_GROUP_META) as OvertureCategoryGroup[]
+
 export const OVERTURE_PLACE_CATEGORIES: OvertureCategoryEntry[] = [
   // landmarks & culture
   { category: 'landmark_and_historical_building', label: 'Landmark',            group: 'landmarks_culture', count: 615602, toPlaceCategory: 'sight' },
@@ -118,4 +135,10 @@ export function overtureToPlaceCategory(category: string): PlaceCategory {
 // Human label for a raw Overture category (falls back to the raw value).
 export function overtureLabel(category: string): string {
   return BY_CATEGORY.get(category)?.label ?? category
+}
+
+// Raw category strings for every entry whose group is in `groups` — feeds the
+// discovery layer's category-chip filter expression.
+export function categoriesForGroups(groups: OvertureCategoryGroup[]): string[] {
+  return OVERTURE_PLACE_CATEGORIES.filter(e => groups.includes(e.group)).map(e => e.category)
 }

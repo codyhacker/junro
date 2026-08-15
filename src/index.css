@@ -417,6 +417,57 @@ body {
   box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.22);
 }
 
+/* Discovery category chips — the drawer that expands under the toggle once
+   it's on. Wrapper animates max-height + opacity (not dvh — see CLAUDE.md);
+   overflow: hidden keeps the collapsed state showing nothing. visibility is
+   delayed on close (and instant on open) so the collapsed chips drop out of
+   the tab order and accessibility tree only once they're fully hidden,
+   rather than sitting there focusable-but-invisible the whole time. 160px
+   gives two comfortably-wrapped chip rows room before anything clips. */
+.discovery-chips-drawer {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    max-height 0.2s ease,
+    opacity 0.15s ease,
+    visibility 0s linear 0.2s;
+}
+.discovery-chips-drawer.open {
+  max-height: 160px;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    max-height 0.2s ease,
+    opacity 0.15s ease;
+}
+.discovery-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 8px;
+}
+.discovery-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--accent-rgb), 0.25);
+  background: rgba(var(--bg-rich-rgb), 0.92);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 12px;
+  cursor: pointer;
+}
+.discovery-chip:hover {
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--text-primary);
+}
+.discovery-chip.active {
+  color: var(--accent-hex);
+  border-color: rgba(var(--accent-rgb), 0.5);
+  background: rgba(var(--accent-rgb), 0.1);
+}
+
 /* ─── Scrapbook ──────────────────────────────────────────────────────────── */
 .scrapbook-toggle {
   position: absolute;
@@ -874,6 +925,74 @@ body {
   padding: 3px 6px;
 }
 
+/* ─── Unscheduled section (Day rail) — modeled on the Places tab's
+   places-cat / places-row rules, not a new visual language. The top hint
+   scrolls the section (bottom of the rail) into view on click. ──────────── */
+.unscheduled-hint {
+  display: block;
+  width: 100%;
+  margin: 0 0 4px;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--accent-hex);
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.unscheduled-section {
+  padding: 4px 0 8px;
+  border-top: 1px solid rgba(var(--accent-rgb), 0.12);
+}
+.unscheduled-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.unscheduled-count {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.unscheduled-list {
+  list-style: none;
+  padding: 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.unscheduled-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+.unscheduled-row:hover {
+  background: rgba(var(--accent-rgb), 0.09);
+}
+.unscheduled-row-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.unscheduled-emoji {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+.unscheduled-name {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
 /* ─── Place panel ────────────────────────────────────────────────────────── */
 .place-panel {
   position: absolute;
@@ -1008,11 +1127,28 @@ body {
   border-radius: 8px;
   background: rgba(var(--bg-rich-rgb), 0.6);
 }
+.suggest-row-main {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
 .suggest-row-head {
   color: var(--text-primary);
   font-size: 12.5px;
 }
 .suggest-row-meta {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 11px;
+  margin-top: 1px;
+}
+.suggest-row-mix {
   display: block;
   color: var(--text-secondary);
   font-size: 11px;
@@ -1044,6 +1180,15 @@ body {
 .suggest-actions .junro-secondary {
   padding: 7px 12px;
   font-size: 12.5px;
+}
+
+/* Suggestion-preview highlight ring — a clicked row previews its zone on the
+   map in its own prospective day color (--day-rgb, set inline); this ring
+   mirrors .day-row.selected's border+background treatment, as a box-shadow
+   since .suggest-row has no border of its own to recolor. */
+.suggest-row.active {
+  background: rgba(var(--day-rgb), 0.24);
+  box-shadow: 0 0 0 1px rgb(var(--day-rgb));
 }
 
 /* ─── Plan nudge (discoverability) ───────────────────────────────────────── */
@@ -1221,15 +1366,19 @@ body {
 
 /* ─── Fly the day button ─────────────────────────────────────────────────── */
 .day-fly {
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 3px 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
   border-radius: 999px;
   border: 1px solid rgba(var(--accent-rgb), 0.4);
   background: rgba(var(--accent-rgb), 0.08);
   color: var(--accent-hex);
+  font-size: 11px;
   cursor: pointer;
-  white-space: nowrap;
 }
 .day-fly:hover {
   background: rgba(var(--accent-rgb), 0.16);
@@ -2021,6 +2170,11 @@ body {
   font-size: 12px;
   color: var(--text-muted);
 }
+.plan-mode-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .plan-mode-toggle {
   display: flex;
   gap: 4px;
@@ -2036,6 +2190,21 @@ body {
   font-family: var(--font-body);
 }
 .plan-mode-btn.active {
+  background: var(--accent-hex);
+  border-color: var(--accent-hex);
+  color: #fff;
+}
+.travel-info-toggle {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid rgba(var(--accent-rgb), 0.25);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+}
+.travel-info-toggle.active {
   background: var(--accent-hex);
   border-color: var(--accent-hex);
   color: #fff;

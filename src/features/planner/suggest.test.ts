@@ -183,4 +183,156 @@ describe('suggestDays', () => {
     const placedOn = assignments.find((a) => a.placeIds.includes('m1'))?.dayId
     expect(placedOn).toBe('d2')
   })
+
+  it('rebalances category mix so a sight-heavy day does not keep all 4 sights when food is nearby', () => {
+    const sights = [
+      place('s1', [2.33, 48.85]),
+      place('s2', [2.3302, 48.8502]),
+      place('s3', [2.3304, 48.8504]),
+      place('s4', [2.3306, 48.8506]),
+    ]
+    const food = [
+      place('f1', [2.332, 48.852], { category: 'restaurant' }),
+      place('f2', [2.3322, 48.8522], { category: 'restaurant' }),
+    ]
+    const places = [...sights, ...food]
+    const clusterResult: ClusterResult = {
+      clusters: [
+        cluster(
+          'cSight',
+          sights.map((p) => p.id),
+          [2.3303, 48.8503],
+        ),
+        cluster(
+          'cFood',
+          food.map((p) => p.id),
+          [2.3321, 48.8521],
+        ),
+      ],
+      excursions: [],
+    }
+    const days = [day('d1', '2026-10-05'), day('d2', '2026-10-06'), day('d3', '2026-10-07')]
+    const { assignments } = suggestDays({
+      clusterResult,
+      days,
+      places,
+      lodgings: [HOTEL],
+      prefs: PREFS,
+    })
+
+    const foodIds = new Set(food.map((p) => p.id))
+    const isAllSightsNoFood = assignments.some(
+      (a) =>
+        sights.every((s) => a.placeIds.includes(s.id)) &&
+        a.placeIds.every((id) => !foodIds.has(id)),
+    )
+    expect(isAllSightsNoFood).toBe(false)
+  })
+
+  it('leaves an over-cap day alone when nothing nearby is available to swap', () => {
+    const sights = [
+      place('s1', [2.33, 48.85]),
+      place('s2', [2.3302, 48.8502]),
+      place('s3', [2.3304, 48.8504]),
+      place('s4', [2.3306, 48.8506]),
+    ]
+    // Far enough from the sight cluster that CATEGORY_SWAP_MAX_KM can't reach it.
+    const food = [place('f1', [2.4, 48.9], { category: 'restaurant' })]
+    const places = [...sights, ...food]
+    const clusterResult: ClusterResult = {
+      clusters: [
+        cluster(
+          'cSight',
+          sights.map((p) => p.id),
+          [2.3303, 48.8503],
+        ),
+        cluster('cFood', ['f1'], [2.4, 48.9]),
+      ],
+      excursions: [],
+    }
+    const days = [day('d1', '2026-10-05'), day('d2', '2026-10-06')]
+    const { assignments, unplacedPlaceIds } = suggestDays({
+      clusterResult,
+      days,
+      places,
+      lodgings: [HOTEL],
+      prefs: PREFS,
+    })
+
+    expect(unplacedPlaceIds).toEqual([])
+    const sightDay = assignments.find((a) => a.placeIds.includes('s1'))
+    expect([...(sightDay?.placeIds ?? [])].sort()).toEqual(['s1', 's2', 's3', 's4'])
+    const foodDay = assignments.find((a) => a.placeIds.includes('f1'))
+    expect(foodDay?.placeIds).toEqual(['f1'])
+  })
+
+  it('never swaps a must-see place onto a day it is closed, to fix a category imbalance (rebalance Pass A)', () => {
+    const days = [day('d1', '2026-10-05'), day('d2', '2026-10-06')] // Mon, Tue
+    const mondayWeekday = weekdayOf('2026-10-05')
+    // Positioned closest to d2's food cluster, so an unguarded
+    // closest-candidate swap would pick it first over s2/s3.
+    const mustMon = place('mustMon', [2.338, 48.858], {
+      priority: 'must',
+      openDays: [mondayWeekday],
+    })
+    const s2 = place('s2', [2.3302, 48.8502])
+    const s3 = place('s3', [2.3304, 48.8504])
+    const f1 = place('f1', [2.34, 48.86], { category: 'restaurant' })
+    const f2 = place('f2', [2.3402, 48.8602], { category: 'restaurant' })
+    const places = [mustMon, s2, s3, f1, f2]
+    const clusterResult: ClusterResult = {
+      clusters: [
+        cluster('cS', ['mustMon', 's2', 's3'], [2.331, 48.851]),
+        cluster('cF', ['f1', 'f2'], [2.3401, 48.8601]),
+      ],
+      excursions: [],
+    }
+    const { assignments } = suggestDays({
+      clusterResult,
+      days,
+      places,
+      lodgings: [HOTEL],
+      prefs: PREFS,
+    })
+
+    // cS (3 sights, over the sight cap) lands on d1 — its only open day —
+    // making d1 a valid Pass-A swap source. mustMon must never be the place
+    // that moves, even though it's geographically the closest candidate.
+    const placedOn = assignments.find((a) => a.placeIds.includes('mustMon'))?.dayId
+    expect(placedOn).toBe('d1')
+  })
+
+  it('never fills a must-see place into a day it is closed, from the unplaced pool (rebalance Pass B)', () => {
+    const days = [day('d1', '2026-10-05'), day('d2', '2026-10-06')] // Mon, Tue
+    const wednesdayWeekday = weekdayOf('2026-10-07')
+    const s1 = place('s1', [2.33, 48.85])
+    const s2 = place('s2', [2.3302, 48.8502])
+    // Only open Wednesday — neither day in this trip is one, so the main
+    // assignment loop correctly leaves it unplaced.
+    const f1 = place('f1', [2.3305, 48.8505], {
+      category: 'restaurant',
+      priority: 'must',
+      openDays: [wednesdayWeekday],
+    })
+    const places = [s1, s2, f1]
+    const clusterResult: ClusterResult = {
+      clusters: [
+        cluster('cS', ['s1', 's2'], [2.3301, 48.8501]),
+        cluster('cF', ['f1'], [2.3305, 48.8505]),
+      ],
+      excursions: [],
+    }
+    const { assignments, unplacedPlaceIds } = suggestDays({
+      clusterResult,
+      days,
+      places,
+      lodgings: [HOTEL],
+      prefs: PREFS,
+    })
+
+    // Pass B sees d1 under the food cap with spare room and f1 well within
+    // swap range — it must not pull f1 in anyway, since f1 isn't open then.
+    expect(unplacedPlaceIds).toEqual(['f1'])
+    expect(assignments.every((a) => !a.placeIds.includes('f1'))).toBe(true)
+  })
 })

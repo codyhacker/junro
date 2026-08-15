@@ -10,6 +10,7 @@ import cameraReducer from '../features/map/cameraSlice'
 
 // ── shell/ ──────────────────────────────────────────────────────────────────
 import uiReducer from '../features/shell/uiSlice'
+import travelInfoReducer from '../features/shell/travelInfoSlice'
 
 // ── trip/ ───────────────────────────────────────────────────────────────────
 import tripReducer from '../features/trip/tripSlice'
@@ -29,6 +30,7 @@ const combined = combineReducers({
   terrain: terrainReducer,
   camera: cameraReducer,
   ui: uiReducer,
+  travelInfo: travelInfoReducer,
   trip: tripReducer,
   tripInteraction: tripInteractionReducer,
   planner: plannerReducer,
@@ -54,6 +56,6 @@ store.subscribe(() => {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
     const s = store.getState()
-    savePersisted({ mapStyle: s.mapStyle, terrain: s.terrain })
+    savePersisted({ mapStyle: s.mapStyle, terrain: s.terrain, travelInfo: s.travelInfo })
   }, 400)
 })

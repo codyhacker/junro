@@ -6,14 +6,15 @@ import {
   setFlyDay,
 } from './tripInteractionSlice'
 import { assignStop, moveStop, setDayStops, setDayTravelMode } from './tripSlice'
-import { selectDays, representativeName } from './selectors'
+import { selectDays, selectUnassignedPlaces, representativeName } from './selectors'
 import { computeStopDrop, type DropTarget } from './dndStops'
 import { selectRequestByDayId, type DayRouteRequest } from '../planner/selectors'
 import type { DayRoute } from '../planner/plannerSlice'
 import { CATEGORY_META } from './categoryMeta'
+import { DayAssignChips } from './DayAssignChips'
 import { dayRgbAt } from '../../shared/constants/dayColors'
 import { haversineKm, roughTransitMinutes } from '../../shared/lib/geo'
-import { useState, type CSSProperties } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
 import type { Day, SavedPlace, TravelMode, Trip } from '../../shared/types/trip'
 
 // Drag-and-drop handles passed down to a day's stop rows (Plan tab). Native
@@ -90,14 +91,17 @@ export function DayRail() {
   const dispatch = useAppDispatch()
   const trip = useAppSelector((s) => s.trip.active)
   const days = useAppSelector(selectDays)
+  const unassigned = useAppSelector(selectUnassignedPlaces)
   const uiMode = useAppSelector((s) => s.mapStyle.uiMode)
   const selectedDayId = useAppSelector((s) => s.tripInteraction.selectedDayId)
   const flyDayId = useAppSelector((s) => s.tripInteraction.flyDayId)
+  const showTravelInfo = useAppSelector((s) => s.travelInfo.showTravelInfo)
   const requestByDayId = useAppSelector(selectRequestByDayId)
   const dayRoutes = useAppSelector((s) => s.planner.dayRoutes)
 
   const [dragId, setDragId] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null)
+  const unscheduledRef = useRef<HTMLElement>(null)
 
   if (!trip || days.length === 0) return null
 
@@ -126,92 +130,128 @@ export function DayRail() {
   }
 
   return (
-    <ul className="day-rail">
-      {days.map((day, i) => {
-        const selected = day.id === selectedDayId
-        const lodging = day.lodgingId ? lodgingById.get(day.lodgingId) : undefined
-        const stops = day.stopIds
-          .map((id) => placeById.get(id))
-          .filter((p): p is SavedPlace => p !== undefined)
-        // Neighborhood label: what area this day is about.
-        const label = representativeName(day.stopIds, trip.places)
+    <>
+      {unassigned.length > 0 && (
+        <button
+          className="unscheduled-hint"
+          onClick={() =>
+            unscheduledRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+          }
+        >
+          {unassigned.length} unscheduled · ↓
+        </button>
+      )}
 
-        return (
-          <li
-            key={day.id}
-            className={`day-row${selected ? ' selected' : ''}${
-              dragId && dropTarget?.kind === 'day' && dropTarget.dayId === day.id ? ' drop-day' : ''
-            }`}
-            style={{ '--day-rgb': dayRgbAt(i, uiMode) } as CSSProperties}
-            // Dropping onto the day (not a specific stop) moves the dragged stop
-            // here. Stop-level handlers stopPropagation, so this only fires over
-            // the header / summary / empty area.
-            onDragOver={
-              dragId
-                ? (e) => {
-                    e.preventDefault()
-                    setDropTarget({ kind: 'day', dayId: day.id })
-                  }
-                : undefined
-            }
-            onDrop={
-              dragId
-                ? (e) => {
-                    e.preventDefault()
-                    handleDrop({ kind: 'day', dayId: day.id })
-                  }
-                : undefined
-            }
-          >
-            {/* Header — click toggles selection (select → frame + expand). */}
-            <button
-              className="day-head"
-              onClick={() => dispatch(setSelectedDay(selected ? null : day.id))}
-              aria-expanded={selected}
+      <ul className="day-rail">
+        {days.map((day, i) => {
+          const selected = day.id === selectedDayId
+          const lodging = day.lodgingId ? lodgingById.get(day.lodgingId) : undefined
+          const stops = day.stopIds
+            .map((id) => placeById.get(id))
+            .filter((p): p is SavedPlace => p !== undefined)
+          // Neighborhood label: what area this day is about.
+          const label = representativeName(day.stopIds, trip.places)
+
+          return (
+            <li
+              key={day.id}
+              className={`day-row${selected ? ' selected' : ''}${
+                dragId && dropTarget?.kind === 'day' && dropTarget.dayId === day.id
+                  ? ' drop-day'
+                  : ''
+              }`}
+              style={{ '--day-rgb': dayRgbAt(i, uiMode) } as CSSProperties}
+              // Dropping onto the day (not a specific stop) moves the dragged stop
+              // here. Stop-level handlers stopPropagation, so this only fires over
+              // the header / summary / empty area.
+              onDragOver={
+                dragId
+                  ? (e) => {
+                      e.preventDefault()
+                      setDropTarget({ kind: 'day', dayId: day.id })
+                    }
+                  : undefined
+              }
+              onDrop={
+                dragId
+                  ? (e) => {
+                      e.preventDefault()
+                      handleDrop({ kind: 'day', dayId: day.id })
+                    }
+                  : undefined
+              }
             >
-              <span className="day-texts">
-                <span className="day-date">
-                  <b>Day {i + 1}</b> · {dayLabel(day.date)}
+              {/* Header — click toggles selection (select → frame + expand). */}
+              <button
+                className="day-head"
+                onClick={() => dispatch(setSelectedDay(selected ? null : day.id))}
+                aria-expanded={selected}
+              >
+                <span className="day-texts">
+                  <span className="day-date">
+                    <b>Day {i + 1}</b> · {dayLabel(day.date)}
+                  </span>
+                  <span className="day-lodging">
+                    {label ? `📍 ${label}` : lodging ? lodging.name : 'No hotel'}
+                  </span>
                 </span>
-                <span className="day-lodging">
-                  {label ? `📍 ${label}` : lodging ? lodging.name : 'No hotel'}
+                <span className="day-count">{day.stopIds.length}</span>
+              </button>
+
+              {/* Collapsed summary: a glanceable strip of the day's activities. */}
+              {!selected && (
+                <div className="day-summary">
+                  {stops.length === 0 ? (
+                    <span className="day-summary-empty">Nothing planned yet</span>
+                  ) : (
+                    stops.map((p) => (
+                      <span key={p.id} className="day-summary-chip" title={p.name}>
+                        {CATEGORY_META[p.category].emoji}
+                      </span>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* Expanded detail: the full schedule for the selected day. */}
+              {selected && (
+                <DayDetail
+                  day={day}
+                  stops={stops}
+                  trip={trip}
+                  lodgingName={lodging?.name ?? null}
+                  request={requestByDayId.get(day.id)}
+                  stored={dayRoutes[day.id]}
+                  flyActive={flyDayId === day.id}
+                  showTravelInfo={showTravelInfo}
+                  dnd={dnd}
+                />
+              )}
+            </li>
+          )
+        })}
+      </ul>
+
+      {unassigned.length > 0 && (
+        <section className="unscheduled-section" ref={unscheduledRef}>
+          <div className="unscheduled-head">
+            <span>Unscheduled</span>
+            <span className="unscheduled-count">{unassigned.length}</span>
+          </div>
+          <ul className="unscheduled-list">
+            {unassigned.map((p) => (
+              <li key={p.id} className="unscheduled-row">
+                <span className="unscheduled-row-head">
+                  <span className="unscheduled-emoji">{CATEGORY_META[p.category].emoji}</span>
+                  <span className="unscheduled-name">{p.name}</span>
                 </span>
-              </span>
-              <span className="day-count">{day.stopIds.length}</span>
-            </button>
-
-            {/* Collapsed summary: a glanceable strip of the day's activities. */}
-            {!selected && (
-              <div className="day-summary">
-                {stops.length === 0 ? (
-                  <span className="day-summary-empty">Nothing planned yet</span>
-                ) : (
-                  stops.map((p) => (
-                    <span key={p.id} className="day-summary-chip" title={p.name}>
-                      {CATEGORY_META[p.category].emoji}
-                    </span>
-                  ))
-                )}
-              </div>
-            )}
-
-            {/* Expanded detail: the full schedule for the selected day. */}
-            {selected && (
-              <DayDetail
-                day={day}
-                stops={stops}
-                trip={trip}
-                lodgingName={lodging?.name ?? null}
-                request={requestByDayId.get(day.id)}
-                stored={dayRoutes[day.id]}
-                flyActive={flyDayId === day.id}
-                dnd={dnd}
-              />
-            )}
-          </li>
-        )
-      })}
-    </ul>
+                <DayAssignChips placeId={p.id} assignedDayId={null} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </>
   )
 }
 
@@ -223,6 +263,7 @@ function DayDetail({
   request,
   stored,
   flyActive,
+  showTravelInfo,
   dnd,
 }: {
   day: Day
@@ -232,6 +273,7 @@ function DayDetail({
   request: DayRouteRequest | undefined
   stored: DayRoute | undefined
   flyActive: boolean
+  showTravelInfo: boolean
   dnd: StopDnd
 }) {
   const dispatch = useAppDispatch()
@@ -270,9 +312,11 @@ function DayDetail({
           {route && (
             <button
               className={`day-fly${flyActive ? ' active' : ''}`}
+              aria-label={flyActive ? 'Stop' : 'Fly the day'}
+              title={flyActive ? 'Stop' : 'Fly the day'}
               onClick={() => dispatch(setFlyDay(flyActive ? null : day.id))}
             >
-              {flyActive ? '◼ Stop' : '▶ Fly the day'}
+              {flyActive ? '◼' : '▶'}
             </button>
           )}
         </div>
@@ -281,7 +325,7 @@ function DayDetail({
       <ul className="day-stops">
         {stops.map((place, idx) => (
           <li key={place.id} className="day-stop-group">
-            {route && request && (
+            {route && request && showTravelInfo && (
               <TravelLeg request={request} route={route} legIndex={idx + legOffset} />
             )}
             <div
@@ -358,7 +402,9 @@ function DayDetail({
 
         {route && request && lodgingName && (
           <li className="day-stop-group">
-            <TravelLeg request={request} route={route} legIndex={stops.length} />
+            {showTravelInfo && (
+              <TravelLeg request={request} route={route} legIndex={stops.length} />
+            )}
             <div className="day-return">↩ back to {lodgingName}</div>
           </li>
         )}

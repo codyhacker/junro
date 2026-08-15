@@ -26,7 +26,11 @@ import {
   DISCOVERY_SOURCE_LAYER,
   DISCOVERY_MIN_ZOOM,
 } from '../../../shared/constants/discovery'
-import { OVERTURE_PLACE_CATEGORIES } from '../../../shared/constants/overturePlaceCategories'
+import {
+  ALL_OVERTURE_GROUPS,
+  categoriesForGroups,
+  OVERTURE_PLACE_CATEGORIES,
+} from '../../../shared/constants/overturePlaceCategories'
 import type { PlaceCategory } from '../../../shared/types/trip'
 
 const EMPTY_FC = { type: 'FeatureCollection' as const, features: [] }
@@ -167,6 +171,7 @@ export const selectAugmentationSpec = createSelector(
     (s: RootState) => s.terrain.terrainExaggeration,
     (s: RootState) => s.mapStyle.uiMode,
     (s: RootState) => s.discovery.visible,
+    (s: RootState) => s.discovery.activeGroups,
   ],
   (
     placesGeoJSON,
@@ -179,9 +184,21 @@ export const selectAugmentationSpec = createSelector(
     terrainExaggeration,
     uiMode,
     discoveryVisible,
+    activeGroups,
   ): AugmentationSpec => {
     const palette = getPalette(uiMode)
     const showDiscovery = discoveryVisible && PLACES_PMTILES_URL.length > 0
+    // Only attach a filter once the user has actually narrowed the categories —
+    // with every group active (the default), the layers stay unfiltered so the
+    // common case pays no extra filter-evaluation cost.
+    const discoveryFilter =
+      activeGroups.length < ALL_OVERTURE_GROUPS.length
+        ? ([
+            'in',
+            ['get', 'category'],
+            ['literal', categoriesForGroups(activeGroups)],
+          ] as unknown as ExpressionSpecification)
+        : null
     const sources: Record<string, SourceSpecification> = {
       'mapbox-dem': {
         type: 'raster-dem',
@@ -242,6 +259,7 @@ export const selectAugmentationSpec = createSelector(
             source: DISCOVERY_SOURCE,
             'source-layer': DISCOVERY_SOURCE_LAYER,
             slot: 'top',
+            ...(discoveryFilter ? { filter: discoveryFilter } : {}),
             minzoom: DISCOVERY_MIN_ZOOM,
             paint: {
               'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3, 16, 5.5, 18, 7],
@@ -261,6 +279,7 @@ export const selectAugmentationSpec = createSelector(
             source: DISCOVERY_SOURCE,
             'source-layer': DISCOVERY_SOURCE_LAYER,
             slot: 'top',
+            ...(discoveryFilter ? { filter: discoveryFilter } : {}),
             minzoom: 15,
             layout: {
               'text-field': ['get', 'name'],
@@ -379,6 +398,10 @@ export const selectAugmentationSpec = createSelector(
       // Discovery dots — under the saved-place halo/pins so saved wins.
       ...discoveryDots,
       // Hover/selection halo — a soft disc under the pin, feature-state driven.
+      // `highlightColor` (suggestion-preview) sits between hover and selected
+      // in size/opacity, and — unlike them — swaps the halo's color to the
+      // day's own prospective color instead of the flat vermilion, so a
+      // previewed day's pins read as "this is what Day N will look like".
       {
         id: 'places-halo',
         type: 'circle',
@@ -389,15 +412,24 @@ export const selectAugmentationSpec = createSelector(
             'case',
             ['boolean', ['feature-state', 'selected'], false],
             22,
+            ['!=', ['feature-state', 'highlightColor'], null],
+            20,
             ['boolean', ['feature-state', 'hover'], false],
             18,
             0,
           ],
-          'circle-color': '#d6583e',
+          'circle-color': [
+            'case',
+            ['!=', ['feature-state', 'highlightColor'], null],
+            ['feature-state', 'highlightColor'],
+            '#d6583e',
+          ],
           'circle-opacity': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
             0.28,
+            ['!=', ['feature-state', 'highlightColor'], null],
+            0.3,
             ['boolean', ['feature-state', 'hover'], false],
             0.18,
             0,

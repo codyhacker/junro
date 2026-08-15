@@ -79,6 +79,24 @@ export function registerMapListeners(engine: MapEngine): () => void {
     }),
   )
 
+  // Suggestion-preview highlight — a clicked SuggestDays row glows its
+  // candidate places in that day's prospective color.
+  unsubs.push(
+    startAppListening({
+      predicate: (_action, currentState, previousState) =>
+        currentState.tripInteraction.previewHighlight !==
+        previousState.tripInteraction.previewHighlight,
+      effect: (_action, api) => {
+        const highlight = api.getState().tripInteraction.previewHighlight
+        engine.execute({
+          type: 'PLACES_HIGHLIGHT',
+          placeIds: highlight?.placeIds ?? null,
+          color: highlight?.color ?? null,
+        })
+      },
+    }),
+  )
+
   // Selecting a day frames it — stops plus the lodging that anchors it.
   unsubs.push(
     startAppListening({

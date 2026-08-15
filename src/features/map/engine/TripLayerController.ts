@@ -19,13 +19,19 @@ export class TripLayerController {
   private store: AppStore
   private hoveredId: string | null = null
   private selectedId: string | null = null
+  private highlightedIds: Set<string> = new Set()
+  private highlightColor: string | null = null
 
   constructor(map: MapboxMap, store: AppStore) {
     this.map = map
     this.store = store
   }
 
-  private setState(id: string | null, key: 'hover' | 'selected', value: boolean): void {
+  private setState(
+    id: string | null,
+    key: 'hover' | 'selected' | 'highlightColor',
+    value: boolean | string | null,
+  ): void {
     if (id === null || !this.map.getSource(PLACES_SOURCE)) return
     this.map.setFeatureState({ source: PLACES_SOURCE, id }, { [key]: value })
   }
@@ -42,6 +48,23 @@ export class TripLayerController {
     this.setState(this.selectedId, 'selected', false)
     this.selectedId = placeId
     this.setState(this.selectedId, 'selected', true)
+  }
+
+  // Suggestion-preview highlight — diffs the incoming id list against
+  // highlightedIds, same shape as setHover/setSelected's diff but over a set
+  // instead of a single id. Clears ids that fell out (to null, which reads
+  // the same as "absent" for the places-halo `!= null` check), then (re)sets
+  // every id in the new set to the one shared color.
+  setHighlighted(placeIds: string[] | null, color: string | null): void {
+    const next = new Set(placeIds ?? [])
+    for (const id of this.highlightedIds) {
+      if (!next.has(id)) this.setState(id, 'highlightColor', null)
+    }
+    for (const id of next) {
+      this.setState(id, 'highlightColor', color)
+    }
+    this.highlightedIds = next
+    this.highlightColor = color
   }
 
   // Frames a day: its stops plus the lodging that anchors it. Bounds come
@@ -63,5 +86,6 @@ export class TripLayerController {
   reapply(): void {
     this.setState(this.hoveredId, 'hover', true)
     this.setState(this.selectedId, 'selected', true)
+    for (const id of this.highlightedIds) this.setState(id, 'highlightColor', this.highlightColor)
   }
 }

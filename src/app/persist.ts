@@ -10,11 +10,19 @@ export function loadPersisted<T>(slice: string): Partial<T> {
   }
 }
 
-export function savePersisted(state: { mapStyle: unknown; terrain: unknown }): void {
+export function savePersisted(state: {
+  mapStyle: unknown
+  terrain: unknown
+  travelInfo: unknown
+}): void {
   try {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ mapStyle: state.mapStyle, terrain: state.terrain }),
+      JSON.stringify({
+        mapStyle: state.mapStyle,
+        terrain: state.terrain,
+        travelInfo: state.travelInfo,
+      }),
     )
   } catch {
     // quota exceeded or private browsing — silently ignore

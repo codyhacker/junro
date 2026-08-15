@@ -111,6 +111,8 @@ export class MapEngine {
         return this.tripLayer.setHover(cmd.placeId)
       case 'PLACE_SELECT':
         return this.tripLayer.setSelected(cmd.placeId)
+      case 'PLACES_HIGHLIGHT':
+        return this.tripLayer.setHighlighted(cmd.placeIds, cmd.color)
       case 'DAY_FOCUS':
         return this.tripLayer.focusDay(cmd.dayId)
       case 'START_FLY_DAY':

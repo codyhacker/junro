@@ -18,6 +18,14 @@ export interface AddCandidate {
   category: PlaceCategory
 }
 
+// A suggestion-preview day being highlighted on the map, in that day's
+// prospective color — set when a SuggestDays row is clicked, cleared on
+// dismiss/apply/re-suggest/unmount.
+export interface PreviewHighlight {
+  placeIds: string[]
+  color: string
+}
+
 // Ephemeral map/UI interaction state — never persisted.
 interface TripInteractionState {
   hoveredPlaceId: string | null
@@ -26,6 +34,7 @@ interface TripInteractionState {
   flyDayId: string | null // day whose route is being camera-walked
   pendingPlace: PendingPlace | null
   addCandidate: AddCandidate | null
+  previewHighlight: PreviewHighlight | null
 }
 
 const initialState: TripInteractionState = {
@@ -35,6 +44,7 @@ const initialState: TripInteractionState = {
   flyDayId: null,
   pendingPlace: null,
   addCandidate: null,
+  previewHighlight: null,
 }
 
 const tripInteractionSlice = createSlice({
@@ -59,6 +69,9 @@ const tripInteractionSlice = createSlice({
     setAddCandidate(state, action: PayloadAction<AddCandidate | null>) {
       state.addCandidate = action.payload
     },
+    setPreviewHighlight(state, action: PayloadAction<PreviewHighlight | null>) {
+      state.previewHighlight = action.payload
+    },
   },
 })
 
@@ -69,5 +82,6 @@ export const {
   setFlyDay,
   setPendingPlace,
   setAddCandidate,
+  setPreviewHighlight,
 } = tripInteractionSlice.actions
 export default tripInteractionSlice.reducer

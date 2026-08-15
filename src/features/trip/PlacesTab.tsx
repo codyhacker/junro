@@ -1,6 +1,6 @@
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { setHoveredPlace, setSelectedPlace } from './tripInteractionSlice'
-import { setDiscoveryVisible } from '../discovery/discoverySlice'
+import { DiscoveryDrawer } from '../discovery/DiscoveryDrawer'
 import { removePlace } from './tripSlice'
 import { flyTo } from '../map/cameraSlice'
 import { selectDays } from './selectors'
@@ -24,34 +24,18 @@ const plural: Record<PlaceCategory, string> = {
 }
 
 export function PlacesTab() {
-  const dispatch = useAppDispatch()
   const trip = useAppSelector((s) => s.trip.active)
   const selectedId = useAppSelector((s) => s.tripInteraction.selectedPlaceId)
   const uiMode = useAppSelector((s) => s.mapStyle.uiMode)
   const days = useAppSelector(selectDays)
-  const discoveryOn = useAppSelector((s) => s.discovery.visible)
 
   if (!trip) return null
   const places = trip.places
 
-  // Discover-nearby toggle — collect from the map (Overture dots), a parallel
-  // path to searching. Lives here in the collector home.
-  const discoverBar = (
-    <button
-      className={`discover-toggle${discoveryOn ? ' active' : ''}`}
-      aria-pressed={discoveryOn}
-      title="Show nearby places on the map — tap a dot to add it"
-      onClick={() => dispatch(setDiscoveryVisible(!discoveryOn))}
-    >
-      <span className="discover-dot" aria-hidden />
-      {discoveryOn ? 'Discovering nearby — tap a dot to add' : 'Discover nearby places'}
-    </button>
-  )
-
   if (places.length === 0) {
     return (
       <div className="places-tab">
-        {discoverBar}
+        <DiscoveryDrawer />
         <div className="places-empty">
           Search above to start collecting — or turn on Discover and tap dots on the map.
         </div>
@@ -74,7 +58,7 @@ export function PlacesTab() {
 
   return (
     <div className="places-tab">
-      {discoverBar}
+      <DiscoveryDrawer />
       {CATEGORY_ORDER.filter((c) => byCat[c].length > 0).map((cat) => (
         <section key={cat} className="places-cat">
           <div className="places-cat-head">

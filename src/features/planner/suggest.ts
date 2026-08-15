@@ -1,6 +1,6 @@
 import clustersKmeans from '@turf/clusters-kmeans'
 import { featureCollection, point } from '@turf/helpers'
-import type { Day, Lodging, SavedPlace, TripPrefs } from '../../shared/types/trip'
+import type { Day, Lodging, PlaceCategory, SavedPlace, TripPrefs } from '../../shared/types/trip'
 import { haversineKm } from '../../shared/lib/geo'
 import type { Cluster, ClusterResult } from './clustering'
 
@@ -12,6 +12,41 @@ import type { Cluster, ClusterResult } from './clustering'
 // Fraction of a day's usable hours available for *dwelling* at stops; the rest
 // is getting around. Rough on purpose — it only has to pack sanely.
 const DWELL_FRACTION = 0.7
+
+// Category balance for the post-process rebalance pass below: a soft per-day
+// ceiling per category group (not a flat per-place count cap), so a
+// suggested day doesn't read as all-sightseeing or all-restaurants. `food`
+// folds cafe + restaurant together; `other` is left uncapped.
+type CategoryGroup = 'sight' | 'food' | 'shop' | 'other'
+const CAPPED_GROUPS: ('sight' | 'food' | 'shop')[] = ['sight', 'food', 'shop']
+const CATEGORY_CAPS: Record<'sight' | 'food' | 'shop', number> = { sight: 2, food: 2, shop: 1 }
+const CATEGORY_SWAP_MAX_KM = 1.5 // how far a rebalance swap may travel a place — keeps it plausible, same spirit as CLUSTER_EPS_KM
+
+function categoryGroup(cat: PlaceCategory): CategoryGroup {
+  switch (cat) {
+    case 'sight':
+      return 'sight'
+    case 'cafe':
+    case 'restaurant':
+      return 'food'
+    case 'shop':
+      return 'shop'
+    default:
+      return 'other'
+  }
+}
+
+function countGroups(
+  placeIds: string[],
+  byId: Map<string, SavedPlace>,
+): Record<CategoryGroup, number> {
+  const counts: Record<CategoryGroup, number> = { sight: 0, food: 0, shop: 0, other: 0 }
+  for (const id of placeIds) {
+    const p = byId.get(id)
+    if (p) counts[categoryGroup(p.category)]++
+  }
+  return counts
+}
 
 export interface DaySuggestion {
   dayId: string
@@ -167,6 +202,112 @@ function mergeToFit(
   return out
 }
 
+// Post-process category-balance pass, run after slots are filled and before
+// `assignments` is built. suggestDays clusters geographically then assigns
+// whole clusters/pieces to days in one shot — there's no per-place loop to
+// hook a balance check into, so this walks the already-assigned slots
+// instead. Geography stays strictly primary: every candidate this pass moves
+// already landed on a geography-validated day. Two bounded single-pass
+// sweeps (not iterate-to-convergence), so runtime is bounded and there's no
+// oscillation by construction.
+function rebalanceCategoryMix(
+  slots: DaySlot[],
+  byId: Map<string, SavedPlace>,
+  unplaced: string[],
+): void {
+  const filled = slots.filter((s) => !s.hasExcursion && s.assigned.length > 0)
+
+  // Pass A — adjacent-day swap. Slots are in day order, and day order already
+  // tracks the proximity chain the piece-assignment loop above used
+  // (chainOrder), so consecutive filled slots are already the closest
+  // available pairing — no extra distance search needed to find a neighbor.
+  for (let i = 0; i < filled.length - 1; i++) {
+    for (const [over, under] of [
+      [filled[i], filled[i + 1]],
+      [filled[i + 1], filled[i]],
+    ] as [DaySlot, DaySlot][]) {
+      // Explicit guard, not an assumption: "over cap" does NOT imply ≥3
+      // members for every cap (e.g. shop's cap is 1, so 2 members is already
+      // over) — this line is what actually prevents emptying a day.
+      if (over.assigned.length <= 1) continue
+      if (under.remainingSlots <= 0 || under.remainingDwell <= 0) continue
+      const overCounts = countGroups(over.assigned, byId)
+      const underCounts = countGroups(under.assigned, byId)
+      // Every group that's simultaneously over on this side and under on the
+      // other — not just the first `.find()` match, which could pick a group
+      // with no actual swap candidate nearby and give up before trying a
+      // group that does.
+      const swappableGroups: CategoryGroup[] = CAPPED_GROUPS.filter(
+        (g) => overCounts[g] > CATEGORY_CAPS[g] && underCounts[g] < CATEGORY_CAPS[g],
+      )
+      if (swappableGroups.length === 0) continue
+
+      const underCentroid = centroid(under.assigned, byId)
+      let closestId: string | null = null
+      let closestKm = Infinity
+      for (const id of over.assigned) {
+        const p = byId.get(id)
+        if (!p || !swappableGroups.includes(categoryGroup(p.category))) continue
+        // A rebalance move must respect the same must-see/open-days
+        // guarantee the main assignment loop enforces — that guarantee lives
+        // in the loop, not in the data, so this later pass has to re-check it.
+        if (!mustPlacesOpen([id], under.weekday, byId)) continue
+        const d = haversineKm(p.coord, underCentroid)
+        if (d < closestKm) {
+          closestKm = d
+          closestId = id
+        }
+      }
+      if (!closestId || closestKm > CATEGORY_SWAP_MAX_KM) continue
+
+      over.assigned.splice(over.assigned.indexOf(closestId), 1)
+      under.assigned.push(closestId)
+      const dwell = byId.get(closestId)?.dwellMin ?? 60
+      over.remainingSlots += 1
+      over.remainingDwell += dwell
+      under.remainingSlots -= 1
+      under.remainingDwell -= dwell
+    }
+  }
+
+  // Pass B — fill from leftovers: give a slot with spare room and an
+  // under-cap category a nearby same-category place still sitting in
+  // `unplaced`, if one exists. No candidate is simply a no-op — that's the
+  // normal "didn't fit nearby" outcome, not a separate code path.
+  for (const slot of filled) {
+    if (slot.remainingSlots <= 0 || slot.remainingDwell <= 0) continue
+    const counts = countGroups(slot.assigned, byId)
+    // Every under-cap group, not just the first — a day under on food but
+    // already at the sight cap shouldn't give up just because 'sight'
+    // happens to be checked first and has no nearby candidate.
+    const underCapGroups: CategoryGroup[] = CAPPED_GROUPS.filter(
+      (g) => counts[g] < CATEGORY_CAPS[g],
+    )
+    if (underCapGroups.length === 0) continue
+
+    const slotCentroid = centroid(slot.assigned, byId)
+    let closestIdx = -1
+    let closestKm = Infinity
+    unplaced.forEach((id, idx) => {
+      const p = byId.get(id)
+      if (!p || !underCapGroups.includes(categoryGroup(p.category))) return
+      if (!mustPlacesOpen([id], slot.weekday, byId)) return
+      const d = haversineKm(p.coord, slotCentroid)
+      if (d < closestKm) {
+        closestKm = d
+        closestIdx = idx
+      }
+    })
+    if (closestIdx < 0 || closestKm > CATEGORY_SWAP_MAX_KM) continue
+
+    const [id] = unplaced.splice(closestIdx, 1)
+    slot.assigned.push(id)
+    const dwell = byId.get(id)?.dwellMin ?? 60
+    slot.remainingSlots -= 1
+    slot.remainingDwell -= dwell
+  }
+}
+
 export function suggestDays({
   clusterResult,
   days,
@@ -264,6 +405,10 @@ export function suggestDays({
     s.remainingSlots -= piece.placeIds.length
     s.remainingDwell -= summedDwell(piece.placeIds, byId)
   })
+
+  // Post-process: nudge the mix toward CATEGORY_CAPS without touching which
+  // neighborhood landed on which day.
+  rebalanceCategoryMix(slots, byId, unplaced)
 
   const assignments: DaySuggestion[] = slots
     .filter((s) => s.assigned.length > 0)
