@@ -157,3 +157,52 @@ export function clusterPlaces(places: ClusterInput[], center: [number, number]):
     excursions: clusterGroup(far, EXCURSION_EPS_KM, 1, 'x', true),
   }
 }
+
+function bboxOf(coords: [number, number][]): [[number, number], [number, number]] | null {
+  if (coords.length === 0) return null
+  const lngs = coords.map((c) => c[0])
+  const lats = coords.map((c) => c[1])
+  return [
+    [Math.min(...lngs), Math.min(...lats)],
+    [Math.max(...lngs), Math.max(...lats)],
+  ]
+}
+
+// Camera-focus bbox for "the place being added right now" (AddPlace.tsx's
+// `frame()`). Frames the local neighborhood or excursion pocket `focus`
+// belongs to, not every saved place in the trip — that's the Item 4 bug
+// (adding a Paris pin was pulling Versailles into frame). Deliberately reuses
+// EXCURSION_KM, the coarse local/far split `clusterPlaces()` itself applies
+// before its fine-grained DBSCAN, not CLUSTER_EPS_KM's walking radius — that's
+// tuned for day-planning and would re-tighten the camera on every
+// neighborhood-to-neighborhood add within the same city.
+export function focusBounds(
+  places: ClusterInput[],
+  destinationCenter: [number, number],
+  focus: [number, number],
+): [[number, number], [number, number]] | null {
+  if (haversineKm(focus, destinationCenter) <= EXCURSION_KM) {
+    // The new place is local: frame every place in the same local/far split,
+    // not just the ones near `focus` — a plain distance filter, no clustering
+    // call needed.
+    const local = places
+      .filter((p) => haversineKm(p.coord, destinationCenter) <= EXCURSION_KM)
+      .map((p) => p.coord)
+    return bboxOf([...local, focus])
+  }
+
+  // The new place is itself a far-flung excursion point: group it with only
+  // its own pocket (EXCURSION_EPS_KM), so a separate far site stays a
+  // separate frame instead of merging every excursion into one wide shot.
+  const { excursions } = clusterPlaces(
+    [...places, { id: '__focus__', coord: focus }],
+    destinationCenter,
+  )
+  const group = excursions.find((c) => c.placeIds.includes('__focus__'))
+  const members = group
+    ? places.filter((p) => group.placeIds.includes(p.id)).map((p) => p.coord)
+    : []
+  // Nothing else in this pocket falls back to a tight box around just
+  // `focus` — the existing "first place in a new area" behavior.
+  return bboxOf([...members, focus])
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { clusterPlaces, type ClusterInput } from './clustering'
+import { clusterPlaces, focusBounds, type ClusterInput } from './clustering'
 
 const PARIS: [number, number] = [2.3522, 48.8566]
 
@@ -64,5 +64,61 @@ describe('clusterPlaces', () => {
 
   it('returns empty for no places', () => {
     expect(clusterPlaces([], PARIS)).toEqual({ clusters: [], excursions: [] })
+  })
+})
+
+describe('focusBounds', () => {
+  // Same 20-pin/4-neighborhood fixture as the Phase 4 verify test above, plus
+  // the excursion pin from the "pulls a far-flung pin out" test.
+  const localPlaces = [
+    ...knot('a', [2.333, 48.854], 5), // Saint-Germain
+    ...knot('b', [2.362, 48.859], 5), // Marais
+    ...knot('c', [2.312, 48.872], 5), // Montmartre-ish
+    ...knot('d', [2.349, 48.844], 5), // Latin Quarter-ish
+  ]
+  const VERSAILLES: ClusterInput = { id: 'versailles', coord: [2.1204, 48.8049] } // ~17 km out
+  const places = [...localPlaces, VERSAILLES]
+
+  it('local add frames every local neighborhood, not just its own sub-cluster, and excludes the far excursion', () => {
+    const focus: [number, number] = [2.3331, 48.8541] // inside Saint-Germain
+    const bounds = focusBounds(places, PARIS, focus)
+    expect(bounds).not.toBeNull()
+    const [[minLng, minLat], [maxLng, maxLat]] = bounds as [[number, number], [number, number]]
+
+    // Every local neighborhood is in frame — Marais and Montmartre-ish are
+    // several blocks from the Saint-Germain focus (well beyond the 700 m
+    // walking-radius epsilon), proving this doesn't over-narrow to just the
+    // sub-cluster the focus belongs to.
+    const localLngs = [...localPlaces.map((p) => p.coord[0]), focus[0]]
+    const localLats = [...localPlaces.map((p) => p.coord[1]), focus[1]]
+    expect(minLng).toBe(Math.min(...localLngs))
+    expect(maxLng).toBe(Math.max(...localLngs))
+    expect(minLat).toBe(Math.min(...localLats))
+    expect(maxLat).toBe(Math.max(...localLats))
+    // The genuinely far-away excursion pin (Versailles) stays out of frame —
+    // this is the Item 4 bug the fix is for.
+    expect(VERSAILLES.coord[0]).toBeLessThan(minLng)
+  })
+
+  it('frames tightly around focus alone when nothing local exists yet (first pin in a new area)', () => {
+    const focus: [number, number] = [2.35, 48.86] // inside Paris, no places saved yet
+    expect(focusBounds([], PARIS, focus)).toEqual([focus, focus])
+  })
+
+  it('excursion add frames only its own pocket, not the whole trip', () => {
+    // Nowhere near central Paris or Versailles — a brand-new, unrelated excursion.
+    const focus: [number, number] = [2.0, 49.2]
+    expect(focusBounds(places, PARIS, focus)).toEqual([focus, focus])
+  })
+
+  it('excursion add merges into an existing nearby excursion pocket', () => {
+    const focus: [number, number] = [2.123, 48.806] // ~250 m from Versailles, same site
+    const bounds = focusBounds(places, PARIS, focus)
+    expect(bounds).not.toBeNull()
+    const [[minLng, minLat], [maxLng, maxLat]] = bounds as [[number, number], [number, number]]
+    expect(minLng).toBe(Math.min(VERSAILLES.coord[0], focus[0]))
+    expect(maxLng).toBe(Math.max(VERSAILLES.coord[0], focus[0]))
+    expect(minLat).toBe(Math.min(VERSAILLES.coord[1], focus[1]))
+    expect(maxLat).toBe(Math.max(VERSAILLES.coord[1], focus[1]))
   })
 })

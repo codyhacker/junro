@@ -299,6 +299,32 @@ body {
 .add-place {
   width: 100%;
   position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+/* Positioning context for .junro-suggestions below — .add-place also has
+   position:relative, but that's no longer the closest ancestor once the mark
+   + wordmark sit beside this wrapper; keep this one, it's not redundant. */
+.add-place-fields {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+.add-place-mark {
+  flex: 0 0 auto;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--accent-hex);
+  padding-top: 9px;
+}
+.add-place-wordmark {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-hex);
+  padding-top: 11px;
 }
 /* Float the search results over the panel below instead of pushing it down. */
 .add-place .junro-suggestions {
@@ -1068,6 +1094,10 @@ body {
     right: 60px; /* leave room for the mode toggle */
     width: auto;
     z-index: 21;
+  }
+  /* Glyph-only on mobile — no room for the wordmark next to the mode toggle. */
+  .add-place-wordmark {
+    display: none;
   }
   .mode-toggle {
     top: 8px;
