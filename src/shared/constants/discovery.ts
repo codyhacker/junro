@@ -9,11 +9,20 @@
 const R2_DEFAULT = 'https://pub-e2d74adde0e44b6dbb3904fb4616f8b5.r2.dev/places.pmtiles'
 
 // In dev, go through the Vite same-origin proxy (see vite.config.js `/r2`) so a
-// local port that isn't on the bucket's CORS allowlist still works. Prod is a
-// static build and hits R2 directly (its origin is CORS-whitelisted).
+// local port that isn't on the bucket's CORS allowlist still works. Must be an
+// *absolute* URL, not just `/r2/places.pmtiles`: Mapbox GL only recognizes a
+// vector source as a raw PMTiles archive (read via byte-range requests) when
+// its own url-extension check can `new URL(url)` the string with no base —
+// that throws on a relative path and silently falls back to treating it as a
+// TileJSON endpoint instead, which pulls the entire ~800MB+ archive in one
+// plain GET (reproduced locally — this guards against regressing that). Prod
+// is a static build and hits R2 directly (its origin is CORS-whitelisted),
+// already absolute either way.
 export const PLACES_PMTILES_URL =
   import.meta.env.VITE_PLACES_PMTILES_URL ||
-  (import.meta.env.DEV ? '/r2/places.pmtiles' : R2_DEFAULT)
+  (import.meta.env.DEV
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/r2/places.pmtiles`
+    : R2_DEFAULT)
 
 // The vector layer id inside places.pmtiles (from the file's own metadata).
 export const DISCOVERY_SOURCE_LAYER = 'places'
