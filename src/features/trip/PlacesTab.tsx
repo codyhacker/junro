@@ -4,7 +4,7 @@ import { DiscoveryDrawer } from '../discovery/DiscoveryDrawer'
 import { removePlace } from './tripSlice'
 import { flyTo } from '../map/cameraSlice'
 import { selectDays } from './selectors'
-import { CATEGORY_META } from './categoryMeta'
+import { CategoryIcon } from '../../shared/components/CategoryIcon'
 import { dayHexAt } from '../../shared/constants/dayColors'
 import { useConfirmAction } from './useConfirmAction'
 import type { UiMode } from '../../shared/constants/uiThemes'
@@ -63,7 +63,7 @@ export function PlacesTab() {
         <section key={cat} className="places-cat">
           <div className="places-cat-head">
             <span>
-              {CATEGORY_META[cat].emoji} {plural[cat]}
+              <CategoryIcon category={cat} /> {plural[cat]}
             </span>
             <span className="places-cat-count">{byCat[cat].length}</span>
           </div>

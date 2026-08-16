@@ -10,7 +10,7 @@ import { selectDays, selectUnassignedPlaces, representativeName } from './select
 import { computeStopDrop, type DropTarget } from './dndStops'
 import { selectRequestByDayId, type DayRouteRequest } from '../planner/selectors'
 import type { DayRoute } from '../planner/plannerSlice'
-import { CATEGORY_META } from './categoryMeta'
+import { CategoryIcon } from '../../shared/components/CategoryIcon'
 import { DayAssignChips } from './DayAssignChips'
 import { dayRgbAt } from '../../shared/constants/dayColors'
 import { haversineKm, roughTransitMinutes } from '../../shared/lib/geo'
@@ -206,7 +206,7 @@ export function DayRail() {
                   ) : (
                     stops.map((p) => (
                       <span key={p.id} className="day-summary-chip" title={p.name}>
-                        {CATEGORY_META[p.category].emoji}
+                        <CategoryIcon category={p.category} />
                       </span>
                     ))
                   )}
@@ -242,7 +242,9 @@ export function DayRail() {
             {unassigned.map((p) => (
               <li key={p.id} className="unscheduled-row">
                 <span className="unscheduled-row-head">
-                  <span className="unscheduled-emoji">{CATEGORY_META[p.category].emoji}</span>
+                  <span className="unscheduled-emoji">
+                    <CategoryIcon category={p.category} />
+                  </span>
                   <span className="unscheduled-name">{p.name}</span>
                 </span>
                 <DayAssignChips placeId={p.id} assignedDayId={null} />
@@ -369,7 +371,9 @@ function DayDetail({
                 onClick={() => dispatch(setSelectedPlace(place.id))}
               >
                 <span className="day-stop-index">{idx + 1}</span>
-                <span className="day-stop-emoji">{CATEGORY_META[place.category].emoji}</span>
+                <span className="day-stop-emoji">
+                  <CategoryIcon category={place.category} />
+                </span>
                 <span className="day-stop-name">{place.name}</span>
               </button>
               <span className="day-stop-actions">

@@ -43,7 +43,7 @@ A second rule for async work: **services touch only HTTP; the engine touches onl
 ### Basemap + theming (one theme, two modes)
 
 - The basemap is **Mapbox Standard** — no basemap picker, no custom style builder. Dark/light maps to Standard's `lightPreset` (`night`/`day`) via `setConfigProperty`, so mode flips never reload the style. `showPointOfInterestLabels` is forced off so Mapbox's POI icons never compete with Junro pins.
-- UI chrome colors are CSS custom properties written by `applyUiTheme` from the single Junro palette (`src/shared/constants/uiThemes.ts`, light + dark variants — vermilion accent, pine secondary). `index.css` uses only `var(--token)` / `rgba(var(--token-rgb), α)`.
+- UI chrome colors are CSS custom properties written by `applyUiTheme` from the single Junro palette (`src/shared/constants/uiThemes.ts`, light + dark variants — moss-green accent, clay-terracotta secondary; earthy palette chosen 2026-08-16 to move away from the original vermilion). `index.css` uses only `var(--token)` / `rgba(var(--token-rgb), α)`. Display font is Space Grotesk (`--font-display`, geometric/technical); body stays Geologica (`--font-body`).
 
 ### Data flow for map state
 

@@ -1,5 +1,5 @@
 @import '@fontsource-variable/geologica';
-@import '@fontsource-variable/fraunces';
+@import '@fontsource-variable/space-grotesk';
 @import 'tailwindcss/theme';
 @import 'tailwindcss/utilities';
 
@@ -33,35 +33,35 @@
        these in sync with the active mode) ──────────────────────────────── */
 :root {
   --font-body: 'Geologica Variable', system-ui, sans-serif;
-  --font-display: 'Fraunces Variable', Georgia, serif;
+  --font-display: 'Space Grotesk Variable', 'Geologica Variable', system-ui, sans-serif;
 
   --bg-deep-rgb: 246, 242, 235;
   --bg-rich-rgb: 255, 253, 248;
   --bg-warm-rgb: 236, 229, 218;
-  --accent-rgb: 214, 88, 62;
-  --accent-hex: #d6583e;
-  --active-start: #d6583e;
-  --active-end: #b64530;
-  --active-border: #c14e36;
-  --active-rgb: 214, 88, 62;
+  --accent-rgb: 74, 107, 66;
+  --accent-hex: #4a6b42;
+  --active-start: #4a6b42;
+  --active-end: #374f31;
+  --active-border: #405d3a;
+  --active-rgb: 74, 107, 66;
   --text-primary: #2d2823;
   --text-secondary: #6d6357;
   --text-light: #453e36;
   --text-muted: #9a9083;
   --text-med: #7e7466;
-  --slider-start: #e07a52;
-  --slider-end: #c14e36;
-  --slider-glow-rgb: 224, 122, 82;
-  --title-start: #d6583e;
-  --title-mid: #c9683c;
-  --title-end: #a8552e;
-  --globe-glow-rgb: 214, 120, 90;
-  --globe-accent-rgb: 224, 140, 100;
+  --slider-start: #6b8f5f;
+  --slider-end: #405d3a;
+  --slider-glow-rgb: 107, 143, 95;
+  --title-start: #4a6b42;
+  --title-mid: #5c7a4f;
+  --title-end: #374f31;
+  --globe-glow-rgb: 90, 120, 80;
+  --globe-accent-rgb: 110, 140, 95;
   --popup-tip-color: rgba(255, 253, 248, 0.98);
   --option-bg: #fffdf8;
   --ctrl-icon-filter: none;
-  --accent-warm-hex: #49796b;
-  --accent-warm-rgb: 73, 121, 107;
+  --accent-warm-hex: #a8683f;
+  --accent-warm-rgb: 168, 104, 63;
 }
 
 * {
@@ -612,8 +612,13 @@ body {
 .discovery-chips {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
-  padding-top: 8px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--accent-rgb), 0.15);
+  background: rgba(var(--accent-rgb), 0.05);
 }
 .discovery-chip {
   padding: 4px 10px;
@@ -1055,6 +1060,7 @@ body {
 .day-stop-emoji {
   font-size: 13px;
   flex-shrink: 0;
+  color: var(--text-secondary);
 }
 .day-stop-name {
   color: var(--text-light);
@@ -1153,6 +1159,7 @@ body {
 .unscheduled-emoji {
   flex-shrink: 0;
   font-size: 14px;
+  color: var(--text-secondary);
 }
 .unscheduled-name {
   color: var(--text-primary);
@@ -1183,6 +1190,7 @@ body {
 }
 .place-panel-emoji {
   font-size: 20px;
+  color: var(--text-secondary);
 }
 .place-panel-titles {
   flex: 1;
@@ -1984,6 +1992,7 @@ body {
   font-size: 15px;
   line-height: 1;
   opacity: 0.9;
+  color: var(--text-secondary);
 }
 .day-summary-empty {
   font-size: 12px;

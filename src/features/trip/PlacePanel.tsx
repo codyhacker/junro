@@ -2,6 +2,7 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { setSelectedPlace } from './tripInteractionSlice'
 import { updatePlace, removePlace } from './tripSlice'
 import { CATEGORY_META } from './categoryMeta'
+import { CategoryIcon } from '../../shared/components/CategoryIcon'
 import { selectDays } from './selectors'
 import { DayAssignChips } from './DayAssignChips'
 import { useConfirmAction } from './useConfirmAction'
@@ -24,7 +25,9 @@ export function PlacePanel() {
   return (
     <div className="place-panel">
       <div className="place-panel-head">
-        <span className="place-panel-emoji">{CATEGORY_META[place.category].emoji}</span>
+        <span className="place-panel-emoji">
+          <CategoryIcon category={place.category} />
+        </span>
         <div className="place-panel-titles">
           <div className="place-panel-name">{place.name}</div>
           {place.address && <div className="place-panel-addr">{place.address}</div>}

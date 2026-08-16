@@ -8,6 +8,7 @@ import { fitBounds } from '../map/cameraSlice'
 import { focusBounds } from '../planner/clustering'
 import type { PlaceCategory } from '../../shared/types/trip'
 import { CATEGORY_META } from './categoryMeta'
+import { JunroMark } from '../../shared/components/JunroMark'
 
 // Search dock (top-left): find a place → confirm card with category +
 // the "why did I save this?" note → save to the scrapbook. A tap on a discovery
@@ -127,7 +128,7 @@ export function AddPlace() {
   return (
     <div className="add-place">
       <span className="add-place-mark" aria-hidden="true">
-        ↱
+        <JunroMark />
       </span>
       <span className="add-place-wordmark">Junro</span>
       <div className="add-place-fields">
