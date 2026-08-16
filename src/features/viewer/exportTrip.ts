@@ -1,6 +1,6 @@
 import type { AppStore } from '../../app/store'
 import type { Trip } from '../../shared/types/trip'
-import { migrateTrip } from '../trip/storage'
+import { migrateTrip, isStructurallyValidTrip } from '../trip/storage'
 import { tripLoaded } from '../trip/tripSlice'
 import { flyTo } from '../map/cameraSlice'
 import { tripToIcs } from './ics'
@@ -39,22 +39,13 @@ export function downloadTripIcs(trip: Trip): void {
 
 // Parse + validate an exported JSON document. Returns null if it isn't a trip
 // (or was written by a newer schema). migrateTrip owns the schema-version
-// judgment; we add a structural guard because this is the one untrusted entry
-// point (a user could drop in any .json), and migrateTrip alone would wave a
-// schema-less object through as "current".
+// judgment; isStructurallyValidTrip (storage.ts) adds a structural guard
+// because this is an untrusted entry point (a user could drop in any .json)
+// and migrateTrip alone would wave a schema-less object through as "current".
 export function parseTripJson(text: string): Trip | null {
   try {
     const trip = migrateTrip(JSON.parse(text))
-    if (
-      !trip ||
-      typeof trip.id !== 'string' ||
-      !trip.destination?.center ||
-      !Array.isArray(trip.places) ||
-      !Array.isArray(trip.days) ||
-      !Array.isArray(trip.lodgings)
-    )
-      return null
-    return trip
+    return trip && isStructurallyValidTrip(trip) ? trip : null
   } catch {
     return null
   }

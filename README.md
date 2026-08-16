@@ -16,8 +16,10 @@ npm run dev
 
 ## Plans
 
-- [PROJECT_PLAN.md](PROJECT_PLAN.md) — v1: trip document, places scrapbook, days + routing, clustering + day suggestions, today view (Phases 0–6)
-- [PLATFORM_PLAN.md](PLATFORM_PLAN.md) — accounts, sync, sharing, collaboration, security (Phases 7–10)
+- [ROADMAP.md](ROADMAP.md) — current status and what's next (start here)
+- [CHANGELOG.md](CHANGELOG.md) — what's shipped, newest first
+- [PROJECT_PLAN.md](PROJECT_PLAN.md) — v1 design: trip document, places scrapbook, days + routing, clustering + day suggestions, today view (Phases 0–6)
+- [PLATFORM_PLAN.md](PLATFORM_PLAN.md) — backend design: accounts, sync, sharing, collaboration, security (Phases 7–10)
 
 ## License
 

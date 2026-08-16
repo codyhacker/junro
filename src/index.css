@@ -135,6 +135,84 @@ body {
   box-shadow: 0 3px 14px rgba(var(--accent-rgb), 0.25);
 }
 
+/* ─── Auth button ────────────────────────────────────────────────────────── */
+/* .auth-button-wrap carries the position (a plain button can't legally
+   contain the popover's own nested <button>s — the HTML parser force-closes
+   a button when it meets a nested one); .auth-button is the visible circle,
+   matching .mode-toggle's sizing/shape exactly at a different position. */
+.auth-button-wrap {
+  position: absolute;
+  top: 16px;
+  right: 64px; /* .mode-toggle is 40px wide at right:16px — this clears it with an 8px gap */
+  /* Above .trip-gate's 30 (not 20, like .mode-toggle): sign-in needs to stay
+     reachable *while* the gate is showing, which is the whole reason this
+     lives outside TripHeaderActions. .auth-button-wrap's own position+z-index
+     opens a stacking context, so this one value also lifts its scrim/popover
+     (.trip-head-scrim/.trip-head-pop, 30/31) above the gate as a unit. */
+  z-index: 31;
+}
+.auth-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  background: rgba(var(--bg-rich-rgb), 0.92);
+  color: var(--text-primary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.auth-button:hover {
+  transform: scale(1.08);
+  box-shadow: 0 3px 14px rgba(var(--accent-rgb), 0.25);
+}
+
+/* Reuses .trip-head-pop's look (border/background/shadow/padding); overrides
+   only positioning, since its anchor here is a 40px circle, not the full-width
+   .scrapbook-head that TripHeaderActions' popover anchors against. */
+.trip-head-pop.auth-pop {
+  top: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  width: min(280px, calc(100vw - 32px));
+}
+.auth-pop-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.auth-pop-email {
+  font-size: 13px;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+.auth-pop-status {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.auth-pop-status-error {
+  color: var(--accent-hex);
+}
+.auth-pop-adopt {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(var(--accent-rgb), 0.15);
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+.auth-pop-adopt-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 /* ─── Shared controls ────────────────────────────────────────────────────── */
 .junro-input {
   width: 100%;
@@ -276,6 +354,95 @@ body {
 }
 .trip-gate-dest {
   position: relative;
+}
+
+/* ─── Trip picker ("Your trips") ─────────────────────────────────────────── */
+/* position: fixed, not absolute, and deliberately no z-index of its own:
+   TripPicker renders inside .auth-button-wrap (position: absolute), which
+   would make inset:0 resolve against that 40px box instead of the viewport
+   if this were position:absolute too. Needs no z-index because position:fixed
+   is still trapped inside .auth-button-wrap's own stacking context (any
+   positioned-with-z-index ancestor traps a fixed descendant's stacking, even
+   though its layout escapes to the viewport) — so the whole overlay already
+   paints at .auth-button-wrap's z-index (31), above .trip-gate's 30, which is
+   the one case that matters here: opening the picker with no local trip yet. */
+.trip-picker-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(var(--bg-deep-rgb), 0.45);
+  backdrop-filter: blur(3px);
+}
+.trip-picker-card {
+  width: min(360px, calc(100vw - 48px));
+  max-height: min(480px, calc(100vh - 96px));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(var(--accent-rgb), 0.25);
+  background: linear-gradient(
+    160deg,
+    rgba(var(--bg-rich-rgb), 0.98),
+    rgba(var(--bg-deep-rgb), 0.96)
+  );
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22);
+}
+.trip-picker-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.trip-picker-status {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.trip-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.trip-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(var(--accent-rgb), 0.06);
+}
+.trip-picker-row-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.trip-picker-row-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.trip-picker-row-dest {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.trip-picker-row-current {
+  color: var(--text-muted);
+  font-size: 12px;
+  flex: 0 0 auto;
+}
+.trip-picker-row-actions {
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.trip-picker-row-delete {
+  color: var(--accent-hex);
 }
 
 /* ─── Add place dock ─────────────────────────────────────────────────────── */
@@ -1210,12 +1377,20 @@ body {
   background: rgba(var(--accent-rgb), 0.18);
 }
 
-/* ─── Undo bar ───────────────────────────────────────────────────────────── */
-.undo-bar {
+/* ─── Top-right stack (sync conflict banner + undo bar) ──────────────────── */
+.top-right-stack {
   position: absolute;
   top: 68px;
   right: 16px;
   z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+/* ─── Undo bar ───────────────────────────────────────────────────────────── */
+.undo-bar {
   display: flex;
   gap: 6px;
 }
@@ -1236,7 +1411,7 @@ body {
     position: absolute;
     top: 8px;
     left: 8px;
-    right: 60px; /* leave room for the mode toggle */
+    right: 104px; /* leave room for the mode toggle + auth button */
     width: auto;
     z-index: 21;
   }
@@ -1248,6 +1423,10 @@ body {
     top: 8px;
     right: 8px;
   } /* align with the search row, not under it */
+  .auth-button-wrap {
+    top: 8px;
+    right: 52px;
+  }
 
   /* Planning panel → draggable bottom sheet. The snap height is an inline px
      value from PlanningPanel (px→px so the transition actually animates); while
@@ -1319,6 +1498,34 @@ body {
 .undo-btn:disabled {
   opacity: 0.35;
   cursor: default;
+}
+
+/* ─── Sync conflict banner ───────────────────────────────────────────────── */
+.sync-conflict-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  background: rgba(var(--bg-rich-rgb), 0.92);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+.sync-conflict-btn {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.sync-conflict-btn:hover {
+  background: rgba(var(--accent-rgb), 0.14);
 }
 
 /* ─── Map unavailable (missing token) ────────────────────────────────────── */

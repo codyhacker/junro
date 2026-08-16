@@ -38,6 +38,23 @@ export function migrateTrip(raw: unknown): Trip | null {
   return doc as unknown as Trip
 }
 
+// Structural validity guard for any untrusted Trip-shaped JSON: an imported
+// .junro.json file (exportTrip.ts's parseTripJson) and a loaded Supabase row
+// (remoteStorage.ts's loadRemoteTrip). migrateTrip only checks schemaVersion
+// numerically — this catches a schema-less/malformed object it would
+// otherwise wave through as "current".
+export function isStructurallyValidTrip(trip: unknown): trip is Trip {
+  if (!trip || typeof trip !== 'object') return false
+  const t = trip as Trip
+  return (
+    typeof t.id === 'string' &&
+    !!t.destination?.center &&
+    Array.isArray(t.places) &&
+    Array.isArray(t.days) &&
+    Array.isArray(t.lodgings)
+  )
+}
+
 // ─── localStorage implementation ─────────────────────────────────────────────
 // Layout: `junro:trip:<id>` per document; `junro:trips:index` holds summaries
 // so list() never deserializes full docs.

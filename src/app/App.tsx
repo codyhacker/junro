@@ -1,11 +1,13 @@
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { MapView } from '../features/map/engine/MapView'
 import { ModeToggle } from '../features/shell/ModeToggle'
+import { AuthButton } from '../features/auth/AuthButton'
 import { TripGate } from '../features/trip/TripGate'
 import { AddPlace } from '../features/trip/AddPlace'
 import { PlanningPanel } from '../features/trip/PlanningPanel'
 import { PlacePanel } from '../features/trip/PlacePanel'
 import { UndoBar } from '../features/trip/UndoBar'
+import { SyncConflictBanner } from '../features/trip/SyncConflictBanner'
 import { ItineraryView } from '../features/viewer/ItineraryView'
 import { TodayView } from '../features/viewer/TodayView'
 
@@ -20,6 +22,7 @@ function App() {
     <div className="map-container">
       <MapView>
         <ModeToggle />
+        <AuthButton />
         <TripGate />
         {/* Left column — search heads it; the tabbed planning panel follows
             (UX_PLAN round 2: Places · Plan · Trip). */}
@@ -28,7 +31,10 @@ function App() {
           <PlanningPanel />
         </div>
         <PlacePanel />
-        <UndoBar />
+        <div className="top-right-stack">
+          <SyncConflictBanner />
+          <UndoBar />
+        </div>
       </MapView>
     </div>
   )
